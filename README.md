@@ -1,74 +1,64 @@
 # Treemap Card for Home Assistant
 
-A custom Lovelace card that displays data as a treemap visualization - similar to stock market heatmaps like Finviz. Rectangle sizes represent relative values, colors indicate performance or status.
+Visualize data as a treemap - like Finviz stock heatmaps. Rectangle sizes show relative values, colors indicate status.
 
-## Features
-
-- **Two data modes**: Entity list with wildcards, or single entity with JSON array attribute
-- **Squarified layout**: Optimized rectangle aspect ratios for readability
-- **Configurable colors**: Custom low/high colors with optional neutral point and clamping
-- **Flexible field mapping**: Map any JSON fields to label, value, size, color
-- **Click actions**: Tap rectangles to open entity more-info dialog
+<img src="docs/humidity-example.png" width="470" alt="Humidity Treemap">
+<img src="docs/portfolio-example.png" width="470" alt="Portfolio Treemap">
 
 ## Installation
 
-### HACS (Recommended)
+### HACS
 
-1. Open HACS in Home Assistant
-2. Go to Frontend > Custom repositories
-3. Add this repository URL
-4. Install "Treemap Card"
-5. Refresh browser
+1. Go to HACS > Frontend > Custom repositories
+2. Add `https://github.com/omachala/ha-treemap-card`
+3. Install "Treemap Card" and refresh browser
 
 ### Manual
 
-1. Download `treemap-card.js` from the [latest release](https://github.com/yourusername/ha-treemap-card/releases)
-2. Copy to `config/www/treemap-card.js`
-3. Add resource in Settings > Dashboards > Resources:
-   ```
-   /local/treemap-card.js
-   ```
+Download `treemap-card.js` from [releases](https://github.com/omachala/ha-treemap-card/releases) to `config/www/`, then add as resource: `/local/treemap-card.js`
 
-## Usage Modes
+## Two Modes
 
-### Mode 1: Entity List
+### Entities Mode
 
-Display multiple entities directly. Uses entity state as value, friendly_name as label.
+Use `entities` to display HA entities directly. Supports wildcards.
 
 ```yaml
 type: custom:treemap-card
-title: Battery Status
+title: Humidity
 entities:
-  - sensor.phone_battery
-  - sensor.tablet_battery
-  - sensor.laptop_battery
+  - sensor.*_humidity
+height: 300
+size:
+  equal: true
+filter:
+  above: 0
+  below: 100
+color:
+  high: '#1157f0'
+  low: '#f0b913'
+  scale:
+    neutral: 60
+    min: 50
+    max: 100
+label:
+  replace: ' Humidity$//'
+value:
+  suffix: ' %'
 ```
 
-### Mode 2: Wildcard Matching
+### JSON Attribute Mode
 
-Match entities by pattern using `*` wildcard.
-
-```yaml
-type: custom:treemap-card
-title: All Batteries
-entities:
-  - sensor.*_battery
-```
-
-### Mode 3: JSON Array from Entity Attribute
-
-Read structured data from a single entity's attribute. Useful for custom sensors with complex data.
+Use `entity` to read an array of objects from an entity attribute. Map any fields to label, value, size, color.
 
 ```yaml
 type: custom:treemap-card
-title: Portfolio
-entity: sensor.portfolio_holdings
-data_attribute: holdings
+entity: sensor.trading_portfolio_holdings
 label:
   param: ticker
 value:
   param: todayPct
-  suffix: '%'
+  suffix: ' %'
 size:
   param: value
 color:
@@ -76,160 +66,81 @@ color:
   high: '#16a34a'
   scale:
     neutral: 0
-    min: -8
-    max: 8
+    min: -4
+    max: 4
+height: 400
 ```
 
-The entity should have an attribute like:
-```json
-{
-  "holdings": [
-    {"ticker": "NVDA", "value": 1500, "todayPct": 2.5},
-    {"ticker": "AMD", "value": 800, "todayPct": -1.2, "icon": "mdi:chip"}
-  ]
-}
-```
-
-## Examples
-
-### Room Temperatures
-
-```yaml
-type: custom:treemap-card
-title: Temperatures
-entities:
-  - sensor.*_temperature
-color:
-  low: '#3b82f6'
-  high: '#ef4444'
-```
-
-### Equal Size Grid
-
-When you want uniform rectangles (only color varies):
-
-```yaml
-type: custom:treemap-card
-title: Status Overview
-entity: sensor.my_data
-size:
-  equal: true
-```
-
-### Custom Labels with Regex Replace
-
-```yaml
-type: custom:treemap-card
-entity: sensor.data
-label:
-  param: name
-  replace: '_temperature//g'
-  prefix: 'Room: '
-```
-
-### Hide Elements
-
-```yaml
-type: custom:treemap-card
-entity: sensor.data
-icon:
-  show: false
-value:
-  show: false
-```
-
-### Color Scale with Neutral Point
-
-For data centered around zero (like percentage changes):
-
-```yaml
-type: custom:treemap-card
-entity: sensor.data
-color:
-  low: '#b91c1c'
-  high: '#16a34a'
-  scale:
-    neutral: 0
-    min: -8
-    max: 8
-```
-
-With this config:
-- `0%` = neutral (gray-ish)
-- `-8%` or below = full red
-- `+8%` or above = full green
-- Values between are interpolated
-
-## Configuration Reference
+## Configuration
 
 ### Data Source
 
 | Option | Description |
 |--------|-------------|
-| `entity` | Single entity with data array in attributes |
+| `entity` | Single entity with array in attributes |
 | `entities` | List of entity IDs (supports `*` wildcards) |
-| `data_attribute` | Attribute name containing data array (default: `holdings`) |
+| `data_attribute` | Attribute containing the array (default: `holdings`) |
 
-### Label (for entity mode with JSON)
+### Label
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `label.param` | `ticker` | Field name for label |
-| `label.show` | `true` | Show/hide label |
-| `label.prefix` | | Text before label |
-| `label.suffix` | | Text after label |
+| `label.param` | `ticker` | Field name for label (JSON mode) |
+| `label.show` | `true` | Show/hide |
+| `label.prefix` | | Text before |
+| `label.suffix` | | Text after |
 | `label.replace` | | Regex: `pattern/replacement/flags` |
 
 ### Value
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `value.param` | `todayPct` | Field name for displayed value |
-| `value.show` | `true` | Show/hide value |
-| `value.prefix` | | Text before value |
-| `value.suffix` | | Text after value |
+| `value.param` | `todayPct` | Field name for value (JSON mode) |
+| `value.show` | `true` | Show/hide |
+| `value.prefix` | | Text before |
+| `value.suffix` | | Text after |
 
 ### Size
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `size.param` | same as `value.param` | Field for rectangle sizing |
-| `size.equal` | `false` | Use equal-sized grid layout |
+| `size.param` | same as `value.param` | Field for sizing |
+| `size.equal` | `false` | Equal-sized rectangles |
 
 ### Color
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `color.low` | `#b91c1c` (red) | Color for low values |
-| `color.high` | `#16a34a` (green) | Color for high values |
-| `color.scale.neutral` | | Center point for color scale |
-| `color.scale.min` | data min | Value at which color is fully low |
-| `color.scale.max` | data max | Value at which color is fully high |
-| `color_param` | same as `value.param` | Field for color calculation |
+| `color.low` | `#b91c1c` | Color for lowest values |
+| `color.high` | `#16a34a` | Color for highest values |
+| `color.scale.neutral` | | Value that should appear gray (e.g., `0` for profit/loss, `50` for percentages) |
+| `color.scale.min` | data min | Clamp floor - values at or below this get full `color.low` (e.g., `-5` means -5% and below are full red) |
+| `color.scale.max` | data max | Clamp ceiling - values at or above this get full `color.high` (e.g., `5` means +5% and above are full green) |
+| `color_param` | same as `value.param` | Which field to use for coloring (if different from display value) |
 
-### Icon
+### Filter
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `icon.param` | `icon` | Field name for MDI icon |
-| `icon.show` | `true` | Show/hide icon |
+| Option | Description |
+|--------|-------------|
+| `filter.above` | Only include values above this |
+| `filter.below` | Only include values below this |
 
 ### Layout
 
 | Option | Default | Description |
 |--------|---------|-------------|
 | `title` | | Card title |
-| `height` | auto | Fixed height in pixels (auto = 80px per item, min 200) |
-| `gap` | `4` | Gap between rectangles in pixels |
+| `height` | auto | Height in pixels |
+| `gap` | `6` | Gap between rectangles |
 
-### Entities Mode Options
-
-These apply when using `entities` instead of `entity`:
+### Entities Mode Only
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `value_attribute` | `state` | Attribute to use as value |
-| `label_attribute` | `friendly_name` | Attribute to use as label |
+| `value_attribute` | `state` | Attribute for value |
+| `label_attribute` | `friendly_name` | Attribute for label |
+| `icon.param` | `icon` | Field for MDI icon |
+| `icon.show` | `true` | Show/hide icons |
 
 ## License
 
