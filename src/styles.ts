@@ -1,0 +1,101 @@
+import { css } from 'lit';
+
+export const styles = css`
+  :host {
+    display: block;
+  }
+
+  ha-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card-content {
+    flex: 1;
+    padding: 16px;
+  }
+
+  .treemap-container {
+    position: relative;
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .treemap-item {
+    position: absolute;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: filter 0.2s ease;
+    border-radius: 8px;
+  }
+
+  .treemap-item:hover {
+    filter: brightness(1.1);
+  }
+
+  .treemap-icon {
+    --mdc-icon-size: 28px;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .treemap-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  .treemap-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .treemap-item.small .treemap-icon {
+    --mdc-icon-size: 20px;
+  }
+
+  .treemap-item.small .treemap-label {
+    font-size: 9px;
+  }
+
+  .treemap-item.small .treemap-value {
+    font-size: 12px;
+  }
+
+  .treemap-item.tiny .treemap-icon {
+    --mdc-icon-size: 16px;
+  }
+
+  .treemap-item.tiny .treemap-label {
+    font-size: 8px;
+  }
+
+  .treemap-item.tiny .treemap-value {
+    display: none;
+  }
+
+  .error {
+    color: var(--error-color, #db4437);
+    padding: 16px;
+  }
+
+  .empty {
+    color: var(--secondary-text-color, #727272);
+    padding: 16px;
+    text-align: center;
+  }
+`;
