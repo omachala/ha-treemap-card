@@ -8,6 +8,9 @@ dist/
 deploy.sh
 bump-cache.sh
 
+# Claude context (local only)
+.claude/
+
 # OS
 .DS_Store
 Thumbs.db
