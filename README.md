@@ -130,7 +130,7 @@ Controls the color gradient from low to high values.
 <tr><td><code>color.scale.neutral</code></td><td></td><td>The value that should appear gray/neutral. For profit/loss, set to <code>0</code> so gains are green and losses are red. For humidity, set to <code>60</code> if that's your ideal level.</td></tr>
 <tr><td><code>color.scale.min</code></td><td>auto (data min)</td><td>Values at or below this get full <code>color.low</code>. Example: set to <code>-5</code> and anything -5% or worse shows as full red, preventing one extreme value from washing out all other colors.</td></tr>
 <tr><td><code>color.scale.max</code></td><td>auto (data max)</td><td>Values at or above this get full <code>color.high</code>. Example: set to <code>5</code> and anything +5% or better shows as full green.</td></tr>
-<tr><td><code>color_param</code></td><td>same as <code>value.param</code></td><td>Which field to use for coloring. Useful when you display one thing but color by another - show temperature but color by how far from target.</td></tr>
+<tr><td><code>color.param</code></td><td>same as <code>value.param</code></td><td>Which field to use for coloring. Useful when you display one thing but color by another - show temperature but color by how far from target.</td></tr>
 </table>
 
 ### Filter

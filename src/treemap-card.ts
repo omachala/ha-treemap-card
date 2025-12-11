@@ -155,7 +155,7 @@ export class TreemapCard extends LitElement {
     const labelParam = this._config?.label?.param || 'label';
     const valueParam = this._config?.value?.param || 'value';
     const sizeParam = this._config?.size?.param || valueParam;
-    const colorParam = this._config?.color_param || valueParam;
+    const colorParam = this._config?.color?.param || valueParam;
     const iconParam = this._config?.icon?.param || 'icon';
 
     return data
@@ -174,13 +174,11 @@ export class TreemapCard extends LitElement {
   }
 
   private _getColorHigh(): string {
-    // color.high = high/good values (green), fallback to deprecated color_high
-    return this._config?.color?.high || this._config?.color_high || '#16a34a';
+    return this._config?.color?.high || '#16a34a';
   }
 
   private _getColorLow(): string {
-    // color.low = low/bad values (red), fallback to deprecated color_low
-    return this._config?.color?.low || this._config?.color_low || '#b91c1c';
+    return this._config?.color?.low || '#b91c1c';
   }
 
   private _getOpacity(): number | undefined {
@@ -188,16 +186,15 @@ export class TreemapCard extends LitElement {
   }
 
   private _getColor(value: number, min: number, max: number): string {
-    // New format: color.scale.*, fallback to deprecated color.*_value
-    const neutral = this._config?.color?.scale?.neutral ?? this._config?.color?.neutral_value;
-    const minValue = this._config?.color?.scale?.min ?? this._config?.color?.min_value ?? min;
-    const maxValue = this._config?.color?.scale?.max ?? this._config?.color?.max_value ?? max;
+    const neutral = this._config?.color?.scale?.neutral;
+    const minValue = this._config?.color?.scale?.min ?? min;
+    const maxValue = this._config?.color?.scale?.max ?? max;
     const opacity = this._getOpacity();
 
     // Clamp value to min/max range
     const clampedValue = Math.max(minValue, Math.min(maxValue, value));
 
-    // If neutral_value is set, use it as the center point
+    // If neutral is set, use it as the center point
     if (neutral !== undefined) {
       // Below neutral: interpolate from low (red) to neutral (mix)
       // Above neutral: interpolate from neutral (mix) to high (green)
@@ -250,9 +247,8 @@ export class TreemapCard extends LitElement {
   private _filterData(data: TreemapItem[]): TreemapItem[] {
     if (!this._config) return data;
 
-    // New format: filter.above/below, fallback to deprecated filter_above/below
-    const filterAbove = this._config.filter?.above ?? this._config.filter_above;
-    const filterBelow = this._config.filter?.below ?? this._config.filter_below;
+    const filterAbove = this._config.filter?.above;
+    const filterBelow = this._config.filter?.below;
 
     return data.filter(item => {
       if (filterAbove !== undefined && item.value <= filterAbove) {
@@ -288,17 +284,15 @@ export class TreemapCard extends LitElement {
 
     // Calculate min/max for color scale (use colorValue)
     const colorValues = data.map(d => d.colorValue);
-    const min = this._config.min ?? Math.min(...colorValues);
-    const max = this._config.max ?? Math.max(...colorValues);
+    const min = Math.min(...colorValues);
+    const max = Math.max(...colorValues);
 
     // Sort data by sizeValue descending (largest first = top-left)
     const sortedData = [...data].sort((a, b) => b.sizeValue - a.sizeValue);
 
     // Generate treemap layout using sizeValue
     // If size.equal mode, give all items equal weight for sizing
-    const sizeEqual = this._config?.size?.equal;
-    const equalSizeLegacy = this._config?.equal_size;
-    const equalSize = sizeEqual === true || equalSizeLegacy === true;
+    const equalSize = this._config?.size?.equal === true;
 
     // squarify uses 'value' field for sizing
     const layoutInput = sortedData.map(d => ({ ...d, value: d.sizeValue }));
@@ -347,10 +341,9 @@ export class TreemapCard extends LitElement {
     const color = this._getColor(rect.colorValue, min, max);
     const sizeClass = this._getSizeClass(rect);
 
-    // Show config with defaults (all true) - new format first, then deprecated
-    const showIcon = this._config?.icon?.show ?? this._config?.show?.icon ?? true;
-    const showLabel = this._config?.label?.show ?? this._config?.show?.label ?? true;
-    const showValue = this._config?.value?.show ?? this._config?.show?.value ?? true;
+    const showIcon = this._config?.icon?.show ?? true;
+    const showLabel = this._config?.label?.show ?? true;
+    const showValue = this._config?.value?.show ?? true;
 
     // Apply label replace regex if configured
     let displayLabel = rect.label;

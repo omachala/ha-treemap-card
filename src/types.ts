@@ -30,46 +30,15 @@ export interface TreemapCardConfig {
   value_attribute?: string;
   // Attribute to use as label (for entities mode)
   label_attribute?: string;
-  // Min value for color scale (optional)
-  min?: number;
-  // Max value for color scale (optional)
-  max?: number;
-  // Color gradient configuration
-  color?: {
-    low?: string; // Color for low values (default: red)
-    high?: string; // Color for high values (default: green)
-    opacity?: number; // Opacity 0-1 (e.g., 0.5 for 50% transparent)
-    scale?: {
-      neutral?: number; // Value where color is neutral/center (e.g., 0)
-      min?: number; // Value at which color is fully low (e.g., -8 for full red)
-      max?: number; // Value at which color is fully high (e.g., 8 for full green)
-    };
-    // @deprecated Use color.scale.neutral instead
-    neutral_value?: number;
-    // @deprecated Use color.scale.min instead
-    min_value?: number;
-    // @deprecated Use color.scale.max instead
-    max_value?: number;
-  };
-  // @deprecated Use color.low instead
-  color_low?: string;
-  // @deprecated Use color.high instead
-  color_high?: string;
+  // Height of the treemap in pixels (default: auto based on item count)
+  height?: number;
+  // Gap between rectangles in pixels (default: 6)
+  gap?: number;
   // Filter configuration
   filter?: {
     above?: number; // Only include values > this
     below?: number; // Only include values < this
   };
-  // @deprecated Use filter.above instead
-  filter_above?: number;
-  // @deprecated Use filter.below instead
-  filter_below?: number;
-  // Height of the treemap in pixels (default: auto based on item count)
-  height?: number;
-  // Gap between rectangles in pixels (default: 6)
-  gap?: number;
-  // Equal size mode: all rectangles same size, only color varies (default: false)
-  equal_size?: boolean;
   // Label configuration
   label?: {
     show?: boolean; // Show label (default: true)
@@ -95,13 +64,17 @@ export interface TreemapCardConfig {
     equal?: boolean; // Equal size rectangles (default: false)
     param?: string; // Field name from data for sizing (default: same as value.param)
   };
-  // Color configuration (determines rectangle color)
-  color_param?: string; // Field name from data for coloring (default: same as value.param)
-  // @deprecated Use label.show, icon.show, value.show instead
-  show?: {
-    icon?: boolean;
-    label?: boolean;
-    value?: boolean;
+  // Color gradient configuration
+  color?: {
+    low?: string; // Color for low values (default: #b91c1c red)
+    high?: string; // Color for high values (default: #16a34a green)
+    opacity?: number; // Opacity 0-1 (e.g., 0.5 for 50% transparent)
+    param?: string; // Field name for color calculation (default: same as value.param)
+    scale?: {
+      neutral?: number; // Value where color is neutral/center (e.g., 0)
+      min?: number; // Value at which color is fully low (e.g., -8 for full red)
+      max?: number; // Value at which color is fully high (e.g., 8 for full green)
+    };
   };
 }
 
