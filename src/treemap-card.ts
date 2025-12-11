@@ -4,7 +4,7 @@ import type { HomeAssistant, TreemapCardConfig, TreemapItem, TreemapRect } from 
 import { squarify } from './squarify';
 import { styles } from './styles';
 
-const CARD_VERSION = '0.4.0';
+const CARD_VERSION = '0.4.1';
 
 console.info(
   `%c TREEMAP-CARD %c v${CARD_VERSION} `,
