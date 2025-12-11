@@ -1,24 +1,21 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
-const isProd = process.env.BUILD_MODE === 'production';
-const fileName = isProd ? 'treemap-card.js' : 'treemap-card-dev.js';
-
 export default defineConfig({
   build: {
     lib: {
       entry: resolve(__dirname, 'src/treemap-card.ts'),
       name: 'TreemapCard',
-      fileName: () => fileName,
+      fileName: () => 'treemap-card.js',
       formats: ['es'],
     },
     rollupOptions: {
       output: {
-        entryFileNames: fileName,
+        entryFileNames: 'treemap-card.js',
       },
     },
-    sourcemap: !isProd,
-    minify: isProd,
+    sourcemap: true,
+    minify: false,
   },
   define: {
     'process.env.NODE_ENV': JSON.stringify('production'),
