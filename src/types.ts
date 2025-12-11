@@ -24,7 +24,7 @@ export interface TreemapCardConfig {
   entities?: string[];
   // Mode 3: Single entity containing data array in attributes
   entity?: string;
-  // Attribute name containing the data array (default: 'holdings')
+  // Attribute name containing the data array (default: 'items')
   data_attribute?: string;
   // Attribute to use as value (for entities mode)
   value_attribute?: string;
@@ -72,7 +72,7 @@ export interface TreemapCardConfig {
   // Label configuration
   label?: {
     show?: boolean; // Show label (default: true)
-    param?: string; // Field name from data (default: 'ticker' or 'label')
+    param?: string; // Field name from data (default: 'label')
     replace?: string; // Regex replacement pattern "pattern/replacement"
     prefix?: string; // Prefix to add before label
     suffix?: string; // Suffix to add after label
@@ -85,7 +85,7 @@ export interface TreemapCardConfig {
   // Value configuration (displayed value)
   value?: {
     show?: boolean; // Show value (default: true)
-    param?: string; // Field name from data (default: 'value')
+    param?: string; // Field name from data for display (default: 'value')
     prefix?: string; // Prefix to add before value
     suffix?: string; // Suffix to add after value (e.g., ' %')
   };

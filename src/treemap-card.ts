@@ -137,15 +137,15 @@ export class TreemapCard extends LitElement {
     const entity = this.hass.states[entityId];
     if (!entity) return [];
 
-    // Get data attribute name from config, default to 'holdings'
-    const dataAttr = this._config?.data_attribute || 'holdings';
+    // Get data attribute name from config, default to 'items'
+    const dataAttr = this._config?.data_attribute || 'items';
     const data = entity.attributes[dataAttr];
 
     if (!Array.isArray(data)) return [];
 
     // Get field mappings from config
-    const labelParam = this._config?.label?.param || 'ticker';
-    const valueParam = this._config?.value?.param || 'todayPct';
+    const labelParam = this._config?.label?.param || 'label';
+    const valueParam = this._config?.value?.param || 'value';
     const sizeParam = this._config?.size?.param || valueParam;
     const colorParam = this._config?.color_param || valueParam;
     const iconParam = this._config?.icon?.param || 'icon';
