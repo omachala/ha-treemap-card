@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "vite build --watch --outDir /home/ondrej/dockers/homeassistant/config/www --emptyOutDir=false",
     "build": "vite build",
+    "build:release": "BUILD_MODE=production vite build",
     "ha": "./deploy.sh",
     "test": "vitest",
     "test:run": "vitest run",

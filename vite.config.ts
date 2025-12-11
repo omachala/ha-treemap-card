@@ -1,24 +1,24 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
-// Use timestamp for dev builds to bust cache
-const devFileName = `treemap-card-dev.js`;
+const isProd = process.env.BUILD_MODE === 'production';
+const fileName = isProd ? 'treemap-card.js' : 'treemap-card-dev.js';
 
 export default defineConfig({
   build: {
     lib: {
       entry: resolve(__dirname, 'src/treemap-card.ts'),
       name: 'TreemapCard',
-      fileName: () => devFileName,
+      fileName: () => fileName,
       formats: ['es'],
     },
     rollupOptions: {
       output: {
-        entryFileNames: devFileName,
+        entryFileNames: fileName,
       },
     },
-    sourcemap: true,
-    minify: false,
+    sourcemap: !isProd,
+    minify: isProd,
   },
   define: {
     'process.env.NODE_ENV': JSON.stringify('production'),
