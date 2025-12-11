@@ -38,6 +38,7 @@ export interface TreemapCardConfig {
   color?: {
     low?: string; // Color for low values (default: red)
     high?: string; // Color for high values (default: green)
+    opacity?: number; // Opacity 0-1 (e.g., 0.5 for 50% transparent)
     scale?: {
       neutral?: number; // Value where color is neutral/center (e.g., 0)
       min?: number; // Value at which color is fully low (e.g., -8 for full red)

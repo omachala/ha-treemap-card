@@ -126,6 +126,7 @@ Controls the color gradient from low to high values.
 <tr><th>Option</th><th>Default</th><th>Description</th></tr>
 <tr><td><code>color.low</code></td><td><code>#b91c1c</code> (red)</td><td>Color for the lowest values.</td></tr>
 <tr><td><code>color.high</code></td><td><code>#16a34a</code> (green)</td><td>Color for the highest values.</td></tr>
+<tr><td><code>color.opacity</code></td><td><code>1</code></td><td>Opacity from 0 to 1. Set to <code>0.5</code> for 50% transparency - useful when you have a background image or want softer colors.</td></tr>
 <tr><td><code>color.scale.neutral</code></td><td></td><td>The value that should appear gray/neutral. For profit/loss, set to <code>0</code> so gains are green and losses are red. For humidity, set to <code>60</code> if that's your ideal level.</td></tr>
 <tr><td><code>color.scale.min</code></td><td>auto (data min)</td><td>Values at or below this get full <code>color.low</code>. Example: set to <code>-5</code> and anything -5% or worse shows as full red, preventing one extreme value from washing out all other colors.</td></tr>
 <tr><td><code>color.scale.max</code></td><td>auto (data max)</td><td>Values at or above this get full <code>color.high</code>. Example: set to <code>5</code> and anything +5% or better shows as full green.</td></tr>

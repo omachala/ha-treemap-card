@@ -27,7 +27,12 @@ function matchesPattern(entityId: string, pattern: string): boolean {
 /**
  * Interpolate between two colors based on value 0-1
  */
-function interpolateColor(color1: string, color2: string, factor: number): string {
+function interpolateColor(
+  color1: string,
+  color2: string,
+  factor: number,
+  opacity?: number
+): string {
   const hex1 = color1.replace('#', '');
   const hex2 = color2.replace('#', '');
 
@@ -43,6 +48,9 @@ function interpolateColor(color1: string, color2: string, factor: number): strin
   const g = Math.round(g1 + (g2 - g1) * factor);
   const b = Math.round(b1 + (b2 - b1) * factor);
 
+  if (opacity !== undefined) {
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  }
   return `rgb(${r}, ${g}, ${b})`;
 }
 
@@ -175,11 +183,16 @@ export class TreemapCard extends LitElement {
     return this._config?.color?.low || this._config?.color_low || '#b91c1c';
   }
 
+  private _getOpacity(): number | undefined {
+    return this._config?.color?.opacity;
+  }
+
   private _getColor(value: number, min: number, max: number): string {
     // New format: color.scale.*, fallback to deprecated color.*_value
     const neutral = this._config?.color?.scale?.neutral ?? this._config?.color?.neutral_value;
     const minValue = this._config?.color?.scale?.min ?? this._config?.color?.min_value ?? min;
     const maxValue = this._config?.color?.scale?.max ?? this._config?.color?.max_value ?? max;
+    const opacity = this._getOpacity();
 
     // Clamp value to min/max range
     const clampedValue = Math.max(minValue, Math.min(maxValue, value));
@@ -192,23 +205,30 @@ export class TreemapCard extends LitElement {
         // value is below neutral - use red side
         // factor 0 = minValue (full red), factor 1 = neutral (50% mix)
         if (minValue >= neutral)
-          return interpolateColor(this._getColorLow(), this._getColorHigh(), 0.5);
+          return interpolateColor(this._getColorLow(), this._getColorHigh(), 0.5, opacity);
         const factor = (clampedValue - minValue) / (neutral - minValue);
-        return interpolateColor(this._getColorLow(), this._getColorHigh(), factor * 0.5);
+        return interpolateColor(this._getColorLow(), this._getColorHigh(), factor * 0.5, opacity);
       } else {
         // value is above neutral - use green side
         // factor 0 = neutral (50% mix), factor 1 = maxValue (full green)
         if (maxValue <= neutral)
-          return interpolateColor(this._getColorLow(), this._getColorHigh(), 0.5);
+          return interpolateColor(this._getColorLow(), this._getColorHigh(), 0.5, opacity);
         const factor = (clampedValue - neutral) / (maxValue - neutral);
-        return interpolateColor(this._getColorLow(), this._getColorHigh(), 0.5 + factor * 0.5);
+        return interpolateColor(
+          this._getColorLow(),
+          this._getColorHigh(),
+          0.5 + factor * 0.5,
+          opacity
+        );
       }
     }
 
     // Default: factor 0 = min (low), factor 1 = max (high)
-    if (maxValue === minValue) return this._getColorHigh();
+    if (maxValue === minValue) {
+      return interpolateColor(this._getColorHigh(), this._getColorHigh(), 1, opacity);
+    }
     const factor = (clampedValue - minValue) / (maxValue - minValue);
-    return interpolateColor(this._getColorLow(), this._getColorHigh(), factor);
+    return interpolateColor(this._getColorLow(), this._getColorHigh(), factor, opacity);
   }
 
   private _getValueColor(value: number, min: number, max: number): string {
