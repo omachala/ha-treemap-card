@@ -4,7 +4,7 @@ import type { HomeAssistant, TreemapCardConfig, TreemapItem, TreemapRect } from 
 import { squarify } from './squarify';
 import { styles } from './styles';
 
-const CARD_VERSION = '0.3.6';
+const CARD_VERSION = '0.4.0';
 
 console.info(
   `%c TREEMAP-CARD %c v${CARD_VERSION} `,
@@ -66,8 +66,6 @@ export class TreemapCard extends LitElement {
       throw new Error('Please define "entities" (list) or "entity" (single with JSON array)');
     }
     this._config = {
-      value_attribute: 'state',
-      label_attribute: 'friendly_name',
       gap: 4, // smaller gap
       ...config,
     };
@@ -93,6 +91,19 @@ export class TreemapCard extends LitElement {
     return [];
   }
 
+  private _isExcluded(entityId: string): boolean {
+    const excludePatterns = this._config?.exclude;
+    if (!excludePatterns || excludePatterns.length === 0) return false;
+    for (const pattern of excludePatterns) {
+      const matches = matchesPattern(entityId, pattern);
+      if (matches) {
+        console.log(`[treemap] Excluding: ${entityId} (matched: ${pattern})`);
+        return true;
+      }
+    }
+    return false;
+  }
+
   private _resolveEntities(patterns: string[]): TreemapItem[] {
     if (!this.hass) return [];
 
@@ -100,14 +111,16 @@ export class TreemapCard extends LitElement {
     const allEntityIds = Object.keys(this.hass.states);
 
     for (const pattern of patterns) {
-      const matchingIds = allEntityIds.filter(id => matchesPattern(id, pattern));
+      const matchingIds = allEntityIds.filter(
+        id => matchesPattern(id, pattern) && !this._isExcluded(id)
+      );
 
       for (const entityId of matchingIds) {
         const entity = this.hass.states[entityId];
         if (!entity) continue;
 
-        const valueAttr = this._config?.value_attribute || 'state';
-        const labelAttr = this._config?.label_attribute || 'friendly_name';
+        const valueAttr = this._config?.value?.attribute || 'state';
+        const labelAttr = this._config?.label?.attribute || 'friendly_name';
 
         let value: number;
         if (valueAttr === 'state') {
@@ -124,6 +137,7 @@ export class TreemapCard extends LitElement {
             : String(entity.attributes[labelAttr] ?? entityId.split('.').pop());
 
         const icon = entity.attributes['icon'] as string | undefined;
+        const unit = entity.attributes['unit_of_measurement'] as string | undefined;
 
         items.push({
           label,
@@ -132,6 +146,7 @@ export class TreemapCard extends LitElement {
           colorValue: value,
           entity_id: entityId,
           icon,
+          unit,
         });
       }
     }
@@ -181,6 +196,10 @@ export class TreemapCard extends LitElement {
     return this._config?.color?.low || '#b91c1c';
   }
 
+  private _getColorMid(): string | undefined {
+    return this._config?.color?.mid;
+  }
+
   private _getOpacity(): number | undefined {
     return this._config?.color?.opacity;
   }
@@ -190,24 +209,44 @@ export class TreemapCard extends LitElement {
     const minValue = this._config?.color?.scale?.min ?? min;
     const maxValue = this._config?.color?.scale?.max ?? max;
     const opacity = this._getOpacity();
+    const midColor = this._getColorMid();
 
     // Clamp value to min/max range
     const clampedValue = Math.max(minValue, Math.min(maxValue, value));
 
-    // If neutral is set, use it as the center point
+    // Calculate the midpoint (neutral if set, otherwise center of range)
+    const midPoint = neutral ?? (minValue + maxValue) / 2;
+
+    // If mid color is defined, use three-color gradient: low -> mid -> high
+    if (midColor) {
+      if (clampedValue <= midPoint) {
+        // Below midpoint: interpolate low -> mid
+        if (minValue >= midPoint) {
+          return interpolateColor(midColor, midColor, 1, opacity);
+        }
+        const factor = (clampedValue - minValue) / (midPoint - minValue);
+        return interpolateColor(this._getColorLow(), midColor, factor, opacity);
+      } else {
+        // Above midpoint: interpolate mid -> high
+        if (maxValue <= midPoint) {
+          return interpolateColor(midColor, midColor, 1, opacity);
+        }
+        const factor = (clampedValue - midPoint) / (maxValue - midPoint);
+        return interpolateColor(midColor, this._getColorHigh(), factor, opacity);
+      }
+    }
+
+    // No mid color - use two-color gradient
+    // If neutral is set, use it as the center point for blending
     if (neutral !== undefined) {
-      // Below neutral: interpolate from low (red) to neutral (mix)
-      // Above neutral: interpolate from neutral (mix) to high (green)
       if (clampedValue <= neutral) {
-        // value is below neutral - use red side
-        // factor 0 = minValue (full red), factor 1 = neutral (50% mix)
+        // Below neutral: interpolate from low to 50% blend
         if (minValue >= neutral)
           return interpolateColor(this._getColorLow(), this._getColorHigh(), 0.5, opacity);
         const factor = (clampedValue - minValue) / (neutral - minValue);
         return interpolateColor(this._getColorLow(), this._getColorHigh(), factor * 0.5, opacity);
       } else {
-        // value is above neutral - use green side
-        // factor 0 = neutral (50% mix), factor 1 = maxValue (full green)
+        // Above neutral: interpolate from 50% blend to high
         if (maxValue <= neutral)
           return interpolateColor(this._getColorLow(), this._getColorHigh(), 0.5, opacity);
         const factor = (clampedValue - neutral) / (maxValue - neutral);
@@ -220,7 +259,7 @@ export class TreemapCard extends LitElement {
       }
     }
 
-    // Default: factor 0 = min (low), factor 1 = max (high)
+    // Default: simple linear gradient from low to high
     if (maxValue === minValue) {
       return interpolateColor(this._getColorHigh(), this._getColorHigh(), 1, opacity);
     }
@@ -272,9 +311,21 @@ export class TreemapCard extends LitElement {
     console.log(`[treemap] v${CARD_VERSION} Config:`, this._config);
     console.log(`[treemap] Raw data: ${rawData.length}, Filtered: ${data.length}`, data);
 
+    // Header: use custom header if header.title is set, otherwise use HA's default title
+    const useCustomHeader = !!this._config.header?.title;
+    const customHeaderTitle = this._config.header?.title;
+    const showCustomHeader = this._config.header?.show ?? !!customHeaderTitle;
+    const headerStyle = this._config.header?.style || '';
+    const cardStyle = this._config.card_style || '';
+    // HA's default header (only if not using custom header)
+    const haTitle = useCustomHeader ? undefined : this._config.title;
+
     if (data.length === 0) {
       return html`
-        <ha-card header="${this._config.title || nothing}">
+        <ha-card header="${haTitle || nothing}" style="${cardStyle}">
+          ${showCustomHeader && customHeaderTitle
+            ? html`<div class="treemap-header" style="${headerStyle}">${customHeaderTitle}</div>`
+            : nothing}
           <div class="card-content">
             <div class="empty">No data available</div>
           </div>
@@ -287,8 +338,25 @@ export class TreemapCard extends LitElement {
     const min = Math.min(...colorValues);
     const max = Math.max(...colorValues);
 
-    // Sort data by sizeValue descending (largest first = top-left)
-    const sortedData = [...data].sort((a, b) => b.sizeValue - a.sizeValue);
+    // Apply inverse sizing if configured (low values get bigger rectangles)
+    if (this._config?.size?.inverse) {
+      const maxSize = Math.max(...data.map(d => d.sizeValue));
+      const minSize = Math.min(...data.map(d => d.sizeValue));
+      data.forEach(d => {
+        d.sizeValue = maxSize + minSize - d.sizeValue;
+      });
+    }
+
+    // Sort data by sizeValue
+    const isAsc = this._config?.order === 'asc';
+    let sortedData = [...data].sort((a, b) =>
+      isAsc ? a.sizeValue - b.sizeValue : b.sizeValue - a.sizeValue
+    );
+
+    // Apply limit if configured
+    if (this._config?.limit !== undefined && this._config.limit > 0) {
+      sortedData = sortedData.slice(0, this._config.limit);
+    }
 
     // Generate treemap layout using sizeValue
     // If size.equal mode, give all items equal weight for sizing
@@ -305,6 +373,7 @@ export class TreemapCard extends LitElement {
         rect.value = original.value;
         rect.colorValue = original.colorValue;
         rect.sizeValue = original.sizeValue;
+        rect.unit = original.unit;
       }
     });
 
@@ -321,7 +390,10 @@ export class TreemapCard extends LitElement {
     );
 
     return html`
-      <ha-card header="${this._config.title || nothing}">
+      <ha-card header="${haTitle || nothing}" style="${cardStyle}">
+        ${showCustomHeader && customHeaderTitle
+          ? html`<div class="treemap-header" style="${headerStyle}">${customHeaderTitle}</div>`
+          : nothing}
         <div class="card-content">
           <div class="treemap-container" style="height: ${height}px">
             ${rects.map(rect => this._renderRect(rect, min, max, height, gap))}
@@ -365,15 +437,25 @@ export class TreemapCard extends LitElement {
     // Apply prefix/suffix
     const labelPrefix = this._config?.label?.prefix || '';
     const labelSuffix = this._config?.label?.suffix || '';
-    const valuePrefix = this._config?.value?.prefix || '';
-    const valueSuffix = this._config?.value?.suffix || '';
+    const valuePrefix = this._config?.value?.prefix;
+    const valueSuffix = this._config?.value?.suffix;
 
     const formattedLabel = `${labelPrefix}${displayLabel}${labelSuffix}`;
-    const formattedValue = `${valuePrefix}${rect.value.toFixed(1)}${valueSuffix}`;
+
+    // If prefix or suffix is defined, use only those. Otherwise, auto-append unit from entity.
+    const hasCustomFormat = valuePrefix !== undefined || valueSuffix !== undefined;
+    const formattedValue = hasCustomFormat
+      ? `${valuePrefix || ''}${rect.value.toFixed(1)}${valueSuffix || ''}`
+      : `${rect.value.toFixed(1)}${rect.unit ? ` ${rect.unit}` : ''}`;
 
     // Calculate gap in percentage terms
     // Container is 100% wide, gap is in pixels, so we need to use calc()
     const halfGap = gap / 2;
+
+    // Custom styles
+    const iconStyle = this._config?.icon?.style || '';
+    const labelStyle = this._config?.label?.style || '';
+    const valueStyle = this._config?.value?.style || '';
 
     return html`
       <div
@@ -388,11 +470,19 @@ export class TreemapCard extends LitElement {
         @click="${() => this._handleClick(rect)}"
         title="${rect.label}: ${rect.value}"
       >
-        ${showIcon && rect.icon
-          ? html`<ha-icon class="treemap-icon" icon="${rect.icon}"></ha-icon>`
+        ${showIcon && (this._config?.icon?.icon || rect.icon)
+          ? html`<ha-icon
+              class="treemap-icon"
+              style="${iconStyle}"
+              icon="${this._config?.icon?.icon || rect.icon}"
+            ></ha-icon>`
           : nothing}
-        ${showLabel ? html`<span class="treemap-label">${formattedLabel}</span>` : nothing}
-        ${showValue ? html`<span class="treemap-value">${formattedValue}</span>` : nothing}
+        ${showLabel
+          ? html`<span class="treemap-label" style="${labelStyle}">${formattedLabel}</span>`
+          : nothing}
+        ${showValue
+          ? html`<span class="treemap-value" style="${valueStyle}">${formattedValue}</span>`
+          : nothing}
       </div>
     `;
   }

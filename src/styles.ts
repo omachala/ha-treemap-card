@@ -11,6 +11,13 @@ export const styles = css`
     flex-direction: column;
   }
 
+  .treemap-header {
+    padding: 8px 16px 0px;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--primary-text-color);
+  }
+
   .card-content {
     flex: 1;
     padding: 16px;
@@ -50,7 +57,6 @@ export const styles = css`
     font-size: 14px;
     font-weight: 600;
     color: white;
-    text-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
     text-align: center;
     overflow: hidden;
     text-overflow: ellipsis;

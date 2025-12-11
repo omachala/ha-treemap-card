@@ -20,20 +20,28 @@ export interface HomeAssistant {
 export interface TreemapCardConfig {
   type: string;
   title?: string;
+  // Header configuration (custom header, more compact than HA default)
+  header?: {
+    show?: boolean; // Show header (default: true if title set)
+    title?: string; // Header title text
+    style?: string; // Custom CSS for header
+  };
   // Mode 1 & 2: List of entities (supports wildcards with *)
   entities?: string[];
+  // Exclude entities matching these patterns (supports wildcards with *)
+  exclude?: string[];
   // Mode 3: Single entity containing data array in attributes
   entity?: string;
   // Attribute name containing the data array (default: 'items')
   data_attribute?: string;
-  // Attribute to use as value (for entities mode)
-  value_attribute?: string;
-  // Attribute to use as label (for entities mode)
-  label_attribute?: string;
   // Height of the treemap in pixels (default: auto based on item count)
   height?: number;
   // Gap between rectangles in pixels (default: 6)
   gap?: number;
+  // Sort order: 'desc' (largest first, default) or 'asc' (smallest first)
+  order?: 'asc' | 'desc';
+  // Limit number of items shown
+  limit?: number;
   // Filter configuration
   filter?: {
     above?: number; // Only include values > this
@@ -42,31 +50,39 @@ export interface TreemapCardConfig {
   // Label configuration
   label?: {
     show?: boolean; // Show label (default: true)
-    param?: string; // Field name from data (default: 'label')
+    param?: string; // Field name from data (default: 'label') - JSON mode
+    attribute?: string; // Entity attribute for label (default: 'friendly_name') - entities mode
     replace?: string; // Regex replacement pattern "pattern/replacement"
     prefix?: string; // Prefix to add before label
     suffix?: string; // Suffix to add after label
+    style?: string; // Custom CSS for label
   };
   // Icon configuration
   icon?: {
     show?: boolean; // Show icon (default: true)
     param?: string; // Field name from data (default: 'icon')
+    icon?: string; // Static icon for all items (e.g., 'mdi:home-thermometer-outline')
+    style?: string; // Custom CSS for icon
   };
   // Value configuration (displayed value)
   value?: {
     show?: boolean; // Show value (default: true)
-    param?: string; // Field name from data for display (default: 'value')
+    param?: string; // Field name from data (default: 'value') - JSON mode
+    attribute?: string; // Entity attribute for value (default: 'state') - entities mode
     prefix?: string; // Prefix to add before value
     suffix?: string; // Suffix to add after value (e.g., ' %')
+    style?: string; // Custom CSS for value
   };
   // Size configuration (determines rectangle size)
   size?: {
     equal?: boolean; // Equal size rectangles (default: false)
     param?: string; // Field name from data for sizing (default: same as value.param)
+    inverse?: boolean; // Inverse sizing - low values get bigger rectangles (default: false)
   };
   // Color gradient configuration
   color?: {
     low?: string; // Color for low values (default: #b91c1c red)
+    mid?: string; // Color for middle/neutral values (optional, e.g., #00b6ed blue)
     high?: string; // Color for high values (default: #16a34a green)
     opacity?: number; // Opacity 0-1 (e.g., 0.5 for 50% transparent)
     param?: string; // Field name for color calculation (default: same as value.param)
@@ -76,6 +92,8 @@ export interface TreemapCardConfig {
       max?: number; // Value at which color is fully high (e.g., 8 for full green)
     };
   };
+  // Custom CSS for the entire card
+  card_style?: string;
 }
 
 /**
@@ -88,6 +106,7 @@ export interface TreemapItem {
   colorValue: number; // Value used for coloring
   entity_id?: string;
   icon?: string;
+  unit?: string; // Unit of measurement (e.g., °C, %, kWh)
 }
 
 /**
@@ -100,6 +119,7 @@ export interface TreemapRect {
   colorValue: number; // Value used for coloring
   entity_id?: string;
   icon?: string;
+  unit?: string; // Unit of measurement (e.g., °C, %, kWh)
   x: number;
   y: number;
   width: number;
