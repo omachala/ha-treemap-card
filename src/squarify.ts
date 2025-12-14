@@ -105,17 +105,21 @@ function layoutRow(
   }
 }
 
-/**
- * Main squarify algorithm
- * @param items - Items with values (can be negative for losses, positive for gains)
- * @param width - Container width
- * @param height - Container height
- * @param compressRange - If true, use sqrt to compress value range so small items are more visible
- */
+interface SquarifyOptions {
+  compressRange?: boolean;
+  equalSize?: boolean;
+  ascending?: boolean;
+}
+
 /**
  * Simple grid layout for equal-sized rectangles
  */
-function gridLayout(items: TreemapItem[], width: number, height: number): TreemapRect[] {
+function gridLayout(
+  items: TreemapItem[],
+  width: number,
+  height: number,
+  ascending = false
+): TreemapRect[] {
   const n = items.length;
   if (n === 0) return [];
 
@@ -131,7 +135,12 @@ function gridLayout(items: TreemapItem[], width: number, height: number): Treema
   const cellWidth = width / cols;
   const cellHeight = height / rows;
 
-  return items.map((item, i) => ({
+  // Sort items by value for grid layout
+  const sortedItems = [...items].sort((a, b) =>
+    ascending ? a.value - b.value : b.value - a.value
+  );
+
+  return sortedItems.map((item, i) => ({
     label: item.label,
     value: item.value,
     sizeValue: item.sizeValue,
@@ -145,18 +154,26 @@ function gridLayout(items: TreemapItem[], width: number, height: number): Treema
   }));
 }
 
+/**
+ * Main squarify algorithm
+ * @param items - Items with values (can be negative for losses, positive for gains)
+ * @param width - Container width
+ * @param height - Container height
+ * @param options - Optional settings: compressRange, equalSize, ascending
+ */
 export function squarify(
   items: TreemapItem[],
   width: number,
   height: number,
-  compressRange = true,
-  equalSize = false
+  options: SquarifyOptions = {}
 ): TreemapRect[] {
+  const { compressRange = true, equalSize = false, ascending = false } = options;
+
   if (items.length === 0) return [];
 
   // Use grid layout for equal sizes
   if (equalSize) {
-    return gridLayout(items, width, height);
+    return gridLayout(items, width, height, ascending);
   }
 
   // Use absolute values for sizing (we want small losses to show as small, big losses as big)
@@ -183,6 +200,7 @@ export function squarify(
     }
   }
 
+  // Always sort descending for optimal layout - we'll flip coordinates later if ascending
   const normalized = validItems
     .map(({ item, sizeValue }) => ({
       item,
@@ -249,6 +267,27 @@ export function squarify(
         const newHeight = rect.width * maxAspectRatio;
         rect.y = rect.y + (rect.height - newHeight) / 2;
         rect.height = newHeight;
+      }
+    }
+  }
+
+  // For ascending order, flip the entire layout by mirroring coordinates
+  // This puts smallest items top-left while keeping their original sizes
+  if (ascending && result.length > 0) {
+    for (const rect of result) {
+      // Mirror: new_x = width - old_x - rect_width, new_y = height - old_y - rect_height
+      rect.x = width - rect.x - rect.width;
+      rect.y = height - rect.y - rect.height;
+    }
+
+    // Normalize: shift all rects so the layout starts at (0,0)
+    // This is needed because aspect ratio post-processing may leave gaps
+    const minX = Math.min(...result.map(r => r.x));
+    const minY = Math.min(...result.map(r => r.y));
+    if (minX !== 0 || minY !== 0) {
+      for (const rect of result) {
+        rect.x -= minX;
+        rect.y -= minY;
       }
     }
   }

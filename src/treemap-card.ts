@@ -4,7 +4,7 @@ import type { HomeAssistant, TreemapCardConfig, TreemapItem, TreemapRect } from 
 import { squarify } from './squarify';
 import { styles } from './styles';
 
-const CARD_VERSION = '0.4.1';
+const CARD_VERSION = '0.4.2';
 
 console.info(
   `%c TREEMAP-CARD %c v${CARD_VERSION} `,
@@ -348,7 +348,11 @@ export class TreemapCard extends LitElement {
     }
 
     // Sort data by sizeValue
-    const isAsc = this._config?.order === 'asc';
+    const orderAsc = this._config?.order === 'asc';
+    const sizeInverse = this._config?.size?.inverse === true;
+    // When size.inverse is true, sizeValues are inverted (small original values become large sizeValues)
+    // So for visual ordering (order: asc = small original values first), we need to flip the ascending flag
+    const isAsc = sizeInverse ? !orderAsc : orderAsc;
     let sortedData = [...data].sort((a, b) =>
       isAsc ? a.sizeValue - b.sizeValue : b.sizeValue - a.sizeValue
     );
@@ -362,20 +366,39 @@ export class TreemapCard extends LitElement {
     // If size.equal mode, give all items equal weight for sizing
     const equalSize = this._config?.size?.equal === true;
 
+    // Build a map of label -> original values for restoration after squarify
+    // squarify reorders items internally, so we can't rely on index matching
+    const originalValues = new Map<
+      string,
+      { value: number; colorValue: number; sizeValue: number; unit?: string }
+    >();
+    for (const d of sortedData) {
+      originalValues.set(d.label, {
+        value: d.value,
+        colorValue: d.colorValue,
+        sizeValue: d.sizeValue,
+        unit: d.unit,
+      });
+    }
+
     // squarify uses 'value' field for sizing
     const layoutInput = sortedData.map(d => ({ ...d, value: d.sizeValue }));
-    const rects = squarify(layoutInput, 100, 100, true, equalSize);
+    const rects = squarify(layoutInput, 100, 100, {
+      compressRange: true,
+      equalSize,
+      ascending: isAsc,
+    });
 
-    // Restore original values after layout
-    rects.forEach((rect, i) => {
-      const original = sortedData[i];
+    // Restore original display values by matching on label
+    for (const rect of rects) {
+      const original = originalValues.get(rect.label);
       if (original) {
         rect.value = original.value;
         rect.colorValue = original.colorValue;
         rect.sizeValue = original.sizeValue;
         rect.unit = original.unit;
       }
-    });
+    }
 
     // Dynamic height: ~80px per item, min 200, no max
     const baseHeight = Math.max(200, data.length * 80);

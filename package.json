@@ -1,6 +1,6 @@
 {
   "name": "ha-treemap-card",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "A treemap card for Home Assistant dashboards",
   "type": "module",
   "main": "dist/treemap-card.js",

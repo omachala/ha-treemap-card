@@ -145,15 +145,48 @@ Controls the number displayed on each rectangle.
 <tr><td><code>value.suffix</code></td><td></td><td>Text after the value. <code>suffix: " %"</code> shows "65 %" instead of "65".</td></tr>
 </table>
 
-### Size
+### Size & Order
 
-Controls how big each rectangle is relative to others.
+**Size** controls how big each rectangle is. **Order** controls where it appears (top-left = first).
+
+| What you want                                  | Configuration                        |
+| ---------------------------------------------- | ------------------------------------ |
+| Biggest values = biggest squares, shown first  | `order: desc` (default)              |
+| Biggest values = biggest squares, shown last   | `order: asc`                         |
+| Smallest values = biggest squares, shown first | `order: desc` + `size.inverse: true` |
+| Smallest values = biggest squares, shown last  | `order: asc` + `size.inverse: true`  |
+| All squares same size                          | `size.equal: true`                   |
+
+**Example: Room temperatures**
+
+Show coldest rooms first with bigger squares (to highlight rooms that need heating):
+
+```yaml
+order: asc
+size:
+  inverse: true
+```
+
+**Example: Stock portfolio**
+
+Show biggest positions first (default), sized by dollar value, colored by daily change:
+
+```yaml
+order: desc
+size:
+  param: value
+value:
+  param: todayPct
+color:
+  param: todayPct
+```
 
 <table width="100%">
 <tr><th>Option</th><th>Default</th><th>Description</th></tr>
 <tr><td><code>size.param</code></td><td>same as <code>value.param</code></td><td>Which field determines rectangle size. For a stock portfolio, you might display <code>todayPct</code> (daily change) but size by <code>value</code> (position size), so bigger positions get bigger rectangles.</td></tr>
 <tr><td><code>size.equal</code></td><td><code>false</code></td><td>Set to <code>true</code> for uniform grid - all rectangles same size. Useful when you only care about color differences, like comparing room temperatures.</td></tr>
 <tr><td><code>size.inverse</code></td><td><code>false</code></td><td>Set to <code>true</code> to invert sizing - low values get bigger rectangles. Useful when lower is better (e.g., response times, error rates).</td></tr>
+<tr><td><code>order</code></td><td><code>desc</code></td><td>Position order: <code>desc</code> puts largest values first (top-left), <code>asc</code> puts smallest first. This only affects position, not size.</td></tr>
 </table>
 
 ### Icon
@@ -199,7 +232,6 @@ Exclude items from the treemap based on their value.
 <tr><th>Option</th><th>Default</th><th>Description</th></tr>
 <tr><td><code>height</code></td><td>auto</td><td>Fixed height in pixels. Auto-height calculates based on item count. Set explicitly like <code>height: 300</code> for consistent sizing.</td></tr>
 <tr><td><code>gap</code></td><td><code>6</code></td><td>Space between rectangles in pixels. Set to <code>0</code> for no gaps, increase for more breathing room.</td></tr>
-<tr><td><code>order</code></td><td><code>desc</code></td><td>Sort order: <code>desc</code> (largest first, top-left) or <code>asc</code> (smallest first).</td></tr>
 <tr><td><code>limit</code></td><td></td><td>Maximum number of items to show. Combined with <code>order: desc</code>, <code>limit: 10</code> shows top 10 largest.</td></tr>
 </table>
 

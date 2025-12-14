@@ -133,4 +133,91 @@ describe('squarify', () => {
     const totalArea = result.reduce((sum, r) => sum + r.width * r.height, 0);
     expect(totalArea).toBeCloseTo(10000);
   });
+
+  it('places largest items first by default (descending)', () => {
+    const items: TreemapItem[] = [
+      makeItem('Small', 10),
+      makeItem('Large', 60),
+      makeItem('Medium', 30),
+    ];
+    const result = squarify(items, 100, 100);
+
+    // Sort by position (top-left first)
+    const sorted = [...result].sort((a, b) => {
+      if (Math.abs(a.y - b.y) > 1) return a.y - b.y;
+      return a.x - b.x;
+    });
+
+    // Largest should be first (top-left position)
+    expect(sorted[0]?.label).toBe('Large');
+  });
+
+  it('places smallest items first when ascending=true', () => {
+    const items: TreemapItem[] = [
+      makeItem('Small', 10),
+      makeItem('Large', 60),
+      makeItem('Medium', 30),
+    ];
+
+    // First check descending (default)
+    const descResult = squarify(items, 100, 100, { ascending: false });
+
+    // In descending, Large should be leftmost (smallest x)
+    const descLarge = descResult.find(r => r.label === 'Large');
+    const descSmall = descResult.find(r => r.label === 'Small');
+    expect(descLarge).toBeDefined();
+    expect(descSmall).toBeDefined();
+    expect(descLarge!.x).toBeLessThan(descSmall!.x);
+
+    const ascResult = squarify(items, 100, 100, { ascending: true });
+
+    // In ascending, Small should be leftmost (smallest x)
+    const ascLarge = ascResult.find(r => r.label === 'Large');
+    const ascSmall = ascResult.find(r => r.label === 'Small');
+    expect(ascLarge).toBeDefined();
+    expect(ascSmall).toBeDefined();
+    expect(ascSmall!.x).toBeLessThan(ascLarge!.x);
+  });
+
+  it('maintains correct sizes regardless of ascending order', () => {
+    const items: TreemapItem[] = [
+      makeItem('Small', 10),
+      makeItem('Large', 60),
+      makeItem('Medium', 30),
+    ];
+
+    const descResult = squarify(items, 100, 100, { ascending: false });
+    const ascResult = squarify(items, 100, 100, { ascending: true });
+
+    // Find Large in both results
+    const largeDesc = descResult.find(r => r.label === 'Large');
+    const largeAsc = ascResult.find(r => r.label === 'Large');
+
+    // Large should have the same area in both (size is not affected by order)
+    const areaDesc = largeDesc!.width * largeDesc!.height;
+    const areaAsc = largeAsc!.width * largeAsc!.height;
+
+    expect(areaDesc).toBeCloseTo(areaAsc, 0);
+  });
+
+  it('grid layout respects ascending order', () => {
+    const items: TreemapItem[] = [
+      makeItem('Small', 10),
+      makeItem('Large', 60),
+      makeItem('Medium', 30),
+    ];
+
+    // Equal size grid, descending (default)
+    const descResult = squarify(items, 100, 100, { equalSize: true, ascending: false });
+    // Equal size grid, ascending
+    const ascResult = squarify(items, 100, 100, { equalSize: true, ascending: true });
+
+    // In descending, Large should be at position 0 (top-left)
+    const descFirst = descResult.find(r => r.x === 0 && r.y === 0);
+    expect(descFirst?.label).toBe('Large');
+
+    // In ascending, Small should be at position 0 (top-left)
+    const ascFirst = ascResult.find(r => r.x === 0 && r.y === 0);
+    expect(ascFirst?.label).toBe('Small');
+  });
 });
