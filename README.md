@@ -1,16 +1,32 @@
-# Treemap Card for Home Assistant
+<p align="center">
+  <img src="docs/icon.png" width="128" alt="Treemap Card Icon">
+</p>
 
-Visualize data as a treemap - like Finviz stock heatmaps. Rectangle sizes show relative values, colors indicate status.
+<h1 align="center">Treemap Card for Home Assistant</h1>
+
+<p align="center">
+  <a href="https://github.com/hacs/integration"><img src="https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge" alt="HACS Default"></a>
+  <a href="https://github.com/omachala/ha-treemap-card/releases"><img src="https://img.shields.io/github/downloads/omachala/ha-treemap-card/total?style=for-the-badge" alt="Downloads"></a>
+  <a href="https://github.com/omachala/ha-treemap-card/releases"><img src="https://img.shields.io/github/v/release/omachala/ha-treemap-card?style=for-the-badge" alt="Version"></a>
+</p>
+
+<p align="center">
+  A custom Lovelace card that displays your Home Assistant data as a treemap. Rectangle sizes represent relative values while colors indicate status - perfect for comparing sensors, portfolios, or any numeric data at a glance.
+</p>
 
 <img src="docs/screenshot.png" width="800" alt="Treemap Card">
 
 ## Installation
 
-### HACS
+### HACS (Recommended)
 
-1. Go to HACS > Frontend > Custom repositories
-2. Add `https://github.com/omachala/ha-treemap-card`
-3. Install "Treemap Card" and refresh browser
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=omachala&repository=ha-treemap-card&category=dashboard)
+
+Or manually:
+
+1. Go to HACS > Frontend
+2. Search for "Treemap Card"
+3. Install and refresh browser
 
 ### Manual
 
