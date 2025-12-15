@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  A custom Lovelace card that displays your Home Assistant data as a treemap. Rectangle sizes represent relative values while colors indicate status - perfect for comparing sensors, portfolios, or any numeric data at a glance.
+  A custom Lovelace card that dynamically visualizes many entities as a treemap. Rectangle sizes represent relative values while colors indicate status - perfect for comparing sensors, portfolios, or any numeric data at a glance.
 </p>
 
 <img src="docs/screenshot.png" width="800" alt="Treemap Card">
@@ -27,6 +27,13 @@ Or manually:
 1. Go to HACS > Frontend
 2. Search for "Treemap Card"
 3. Install and refresh browser
+
+## Supported Entities
+
+The card is optimized for:
+
+- **Numeric sensors** - temperature, humidity, battery levels, energy usage, etc.
+- **Lights** - automatically uses brightness for size, actual light color (RGB/HS) or yellow gradient for dimmable lights
 
 ### Manual
 

@@ -42,6 +42,7 @@ interface RenderedItem {
   y: number;
   width: number;
   height: number;
+  backgroundColor?: string;
 }
 
 // Helper to extract rendered values from the card
@@ -67,6 +68,9 @@ function getRenderedItems(card: TreemapCard): RenderedItem[] {
     const widthMatch = /width:\s*calc\(([0-9.]+)%/.exec(style.cssText);
     const heightMatch = /height:\s*calc\(([0-9.]+)%/.exec(style.cssText);
 
+    // Extract background color from inline style
+    const bgMatch = /background(?:-color)?:\s*([^;]+)/.exec(style.cssText);
+
     result.push({
       label,
       value,
@@ -74,6 +78,7 @@ function getRenderedItems(card: TreemapCard): RenderedItem[] {
       y: topMatch?.[1] ? parseFloat(topMatch[1]) : 0,
       width: widthMatch?.[1] ? parseFloat(widthMatch[1]) : 0,
       height: heightMatch?.[1] ? parseFloat(heightMatch[1]) : 0,
+      backgroundColor: bgMatch?.[1]?.trim(),
     });
   }
 
@@ -444,5 +449,210 @@ describe('TreemapCard JSON Entity Mode', () => {
     // Values must match their labels
     expect(nvda?.value).toBeCloseTo(-5.7, 1);
     expect(goog?.value).toBeCloseTo(0.5, 1);
+  });
+});
+
+describe('TreemapCard Light Entities', () => {
+  let card: TreemapCard;
+
+  beforeEach(() => {
+    if (!customElements.get('treemap-card')) {
+      customElements.define('treemap-card', TreemapCard);
+    }
+    card = new TreemapCard();
+    document.body.appendChild(card);
+  });
+
+  it('renders light with RGB color using actual light color', async () => {
+    // Light with RGB color support, currently showing red at 80% brightness
+    const hass = mockHass([
+      mockEntity('light.living_room', 'on', {
+        friendly_name: 'Living Room',
+        brightness: 204, // 80% of 255
+        rgb_color: [255, 0, 0], // Red
+        color_mode: 'rgb',
+        supported_color_modes: ['rgb', 'brightness'],
+      }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: ['light.living_room'],
+    });
+    card.hass = hass;
+
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    expect(items).toHaveLength(1);
+
+    const light = items[0];
+    expect(light?.label).toBe('Living Room');
+    // Value should show brightness as percentage
+    expect(light?.value).toBeCloseTo(80, 0);
+    // Background should be red with 80% opacity (rgba)
+    expect(light?.backgroundColor).toMatch(/rgba?\(255,\s*0,\s*0/);
+  });
+
+  it('renders light with HS color using actual light color', async () => {
+    // Light with HS color support, showing blue (hue=240, sat=100)
+    const hass = mockHass([
+      mockEntity('light.bedroom', 'on', {
+        friendly_name: 'Bedroom',
+        brightness: 255, // 100%
+        hs_color: [240, 100], // Blue
+        color_mode: 'hs',
+        supported_color_modes: ['hs'],
+      }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: ['light.bedroom'],
+    });
+    card.hass = hass;
+
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    const light = items[0];
+
+    expect(light?.value).toBeCloseTo(100, 0);
+    // Should be blue color
+    expect(light?.backgroundColor).toMatch(/rgba?\(0,\s*0,\s*255|hsl\(240/);
+  });
+
+  it('renders dimmable-only light using brightness gradient', async () => {
+    // Light without color support, just brightness
+    const hass = mockHass([
+      mockEntity('light.hallway', 'on', {
+        friendly_name: 'Hallway',
+        brightness: 127, // ~50%
+        color_mode: 'brightness',
+        supported_color_modes: ['brightness'],
+      }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: ['light.hallway'],
+      color: {
+        low: '#0000ff', // Blue for off
+        high: '#ffff00', // Yellow for 100%
+      },
+    });
+    card.hass = hass;
+
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    const light = items[0];
+
+    expect(light?.value).toBeCloseTo(50, 0);
+    // Should use gradient color between low and high based on brightness
+    expect(light?.backgroundColor).toBeDefined();
+  });
+
+  it('renders off light using low color', async () => {
+    const hass = mockHass([
+      mockEntity('light.kitchen', 'off', {
+        friendly_name: 'Kitchen',
+        supported_color_modes: ['brightness', 'rgb'],
+      }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: ['light.kitchen'],
+      color: {
+        low: '#333333',
+        high: '#ffffff',
+      },
+    });
+    card.hass = hass;
+
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    const light = items[0];
+
+    expect(light?.label).toBe('Kitchen');
+    expect(light?.value).toBe(0);
+    // Off light should use low color
+    expect(light?.backgroundColor).toMatch(/#333|rgb\(51,\s*51,\s*51\)/i);
+  });
+
+  it('sizes light squares based on brightness', async () => {
+    const hass = mockHass([
+      mockEntity('light.bright', 'on', {
+        friendly_name: 'Bright',
+        brightness: 255, // 100%
+        color_mode: 'brightness',
+        supported_color_modes: ['brightness'],
+      }),
+      mockEntity('light.dim', 'on', {
+        friendly_name: 'Dim',
+        brightness: 64, // 25%
+        color_mode: 'brightness',
+        supported_color_modes: ['brightness'],
+      }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: ['light.*'],
+    });
+    card.hass = hass;
+
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    const bright = items.find(i => i.label === 'Bright');
+    const dim = items.find(i => i.label === 'Dim');
+
+    expect(bright).toBeDefined();
+    expect(dim).toBeDefined();
+
+    // Bright (100%) should have larger area than Dim (25%)
+    const brightArea = bright!.width * bright!.height;
+    const dimArea = dim!.width * dim!.height;
+    expect(brightArea).toBeGreaterThan(dimArea);
+  });
+
+  it('renders mixed sensor and light entities correctly', async () => {
+    const hass = mockHass([
+      mockEntity('sensor.temperature', '22.5', {
+        friendly_name: 'Temperature',
+        unit_of_measurement: 'C',
+      }),
+      mockEntity('light.lamp', 'on', {
+        friendly_name: 'Lamp',
+        brightness: 200,
+        rgb_color: [0, 255, 0], // Green
+        color_mode: 'rgb',
+        supported_color_modes: ['rgb'],
+      }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: ['sensor.temperature', 'light.lamp'],
+    });
+    card.hass = hass;
+
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    expect(items).toHaveLength(2);
+
+    const temp = items.find(i => i.label === 'Temperature');
+    const lamp = items.find(i => i.label === 'Lamp');
+
+    // Sensor should show its state value
+    expect(temp?.value).toBeCloseTo(22.5, 1);
+
+    // Light should show brightness percentage and use its RGB color
+    expect(lamp?.value).toBeCloseTo(78, 0); // 200/255 * 100
+    expect(lamp?.backgroundColor).toMatch(/rgba?\(0,\s*255,\s*0/);
   });
 });

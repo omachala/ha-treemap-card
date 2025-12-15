@@ -97,6 +97,17 @@ export interface TreemapCardConfig {
 }
 
 /**
+ * Light entity color information
+ */
+export interface LightColorInfo {
+  rgb?: [number, number, number]; // RGB color (0-255 each)
+  hs?: [number, number]; // Hue (0-360), Saturation (0-100)
+  brightness: number; // 0-100 percentage
+  isOn: boolean;
+  supportsColor: boolean; // Whether light supports RGB/HS colors
+}
+
+/**
  * Treemap data item
  */
 export interface TreemapItem {
@@ -107,6 +118,7 @@ export interface TreemapItem {
   entity_id?: string;
   icon?: string;
   unit?: string; // Unit of measurement (e.g., °C, %, kWh)
+  light?: LightColorInfo; // Light-specific color info (only for light.* entities)
 }
 
 /**
@@ -120,6 +132,7 @@ export interface TreemapRect {
   entity_id?: string;
   icon?: string;
   unit?: string; // Unit of measurement (e.g., °C, %, kWh)
+  light?: LightColorInfo; // Light-specific color info (only for light.* entities)
   x: number;
   y: number;
   width: number;

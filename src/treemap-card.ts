@@ -1,10 +1,17 @@
 import { LitElement, html, nothing, type TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import type { HomeAssistant, TreemapCardConfig, TreemapItem, TreemapRect } from './types';
+import type {
+  HomeAssistant,
+  TreemapCardConfig,
+  TreemapItem,
+  TreemapRect,
+  LightColorInfo,
+  HassEntity,
+} from './types';
 import { squarify } from './squarify';
 import { styles } from './styles';
 
-const CARD_VERSION = '0.4.2';
+const CARD_VERSION = '0.5.0';
 
 console.info(
   `%c TREEMAP-CARD %c v${CARD_VERSION} `,
@@ -22,6 +29,151 @@ function matchesPattern(entityId: string, pattern: string): boolean {
   }
   const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
   return regex.test(entityId);
+}
+
+/**
+ * Check if entity is a light
+ */
+function isLightEntity(entityId: string): boolean {
+  return entityId.startsWith('light.');
+}
+
+/**
+ * Extract light color information from entity attributes
+ */
+function extractLightInfo(entity: HassEntity): LightColorInfo {
+  const attrs = entity.attributes;
+  const isOn = entity.state === 'on';
+  const brightnessRaw = attrs['brightness'] as number | undefined;
+  const brightness = isOn ? Math.round(((brightnessRaw ?? 255) / 255) * 100) : 0;
+
+  // Check supported color modes
+  const supportedModes = (attrs['supported_color_modes'] as string[]) ?? [];
+  const supportsColor = supportedModes.some(mode =>
+    ['rgb', 'rgbw', 'rgbww', 'hs', 'xy'].includes(mode)
+  );
+
+  const result: LightColorInfo = {
+    brightness,
+    isOn,
+    supportsColor,
+  };
+
+  // Extract color if available
+  if (isOn && supportsColor) {
+    const rgbColor = attrs['rgb_color'] as [number, number, number] | undefined;
+    const hsColor = attrs['hs_color'] as [number, number] | undefined;
+
+    if (rgbColor && Array.isArray(rgbColor) && rgbColor.length === 3) {
+      result.rgb = rgbColor;
+    } else if (hsColor && Array.isArray(hsColor) && hsColor.length === 2) {
+      result.hs = hsColor;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Convert HS color to RGB
+ */
+function hsToRgb(h: number, s: number): [number, number, number] {
+  // h: 0-360, s: 0-100
+  const hNorm = h / 360;
+  const sNorm = s / 100;
+  const l = 0.5; // Fixed lightness for vivid colors
+
+  let r: number, g: number, b: number;
+
+  if (sNorm === 0) {
+    r = g = b = l;
+  } else {
+    const hue2rgb = (p: number, q: number, t: number) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    };
+
+    const q = l < 0.5 ? l * (1 + sNorm) : l + sNorm - l * sNorm;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, hNorm + 1 / 3);
+    g = hue2rgb(p, q, hNorm);
+    b = hue2rgb(p, q, hNorm - 1 / 3);
+  }
+
+  return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
+
+/**
+ * Parse a color string (hex, rgb, rgba) and return RGB values
+ */
+function parseColor(color: string): [number, number, number] | null {
+  // Handle hex colors
+  if (color.startsWith('#')) {
+    const hex = color.replace('#', '');
+    return [
+      parseInt(hex.substring(0, 2), 16),
+      parseInt(hex.substring(2, 4), 16),
+      parseInt(hex.substring(4, 6), 16),
+    ];
+  }
+
+  // Handle rgb/rgba colors
+  const rgbMatch = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(color);
+  if (rgbMatch) {
+    return [
+      parseInt(rgbMatch[1] ?? '0', 10),
+      parseInt(rgbMatch[2] ?? '0', 10),
+      parseInt(rgbMatch[3] ?? '0', 10),
+    ];
+  }
+
+  return null;
+}
+
+/**
+ * Calculate relative luminance of a color (0 = dark, 1 = light)
+ * Based on WCAG formula
+ */
+function getLuminance(r: number, g: number, b: number): number {
+  const toLinear = (c: number) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+}
+
+/**
+ * Get contrasting text colors based on background
+ * Icon is always white with opacity, label/value adapt to background
+ */
+function getContrastColors(backgroundColor: string): {
+  icon: string;
+  label: string;
+  value: string;
+} {
+  const rgb = parseColor(backgroundColor);
+  const useDark = rgb ? getLuminance(rgb[0], rgb[1], rgb[2]) > 0.5 : false;
+
+  // Icon is always white with slight opacity
+  const icon = 'rgba(255, 255, 255, 0.85)';
+
+  if (useDark) {
+    return {
+      icon,
+      label: 'rgba(0, 0, 0, 0.9)',
+      value: 'rgba(0, 0, 0, 0.7)',
+    };
+  } else {
+    return {
+      icon,
+      label: 'white',
+      value: 'rgba(255, 255, 255, 0.85)',
+    };
+  }
 }
 
 /**
@@ -119,9 +271,44 @@ export class TreemapCard extends LitElement {
         const entity = this.hass.states[entityId];
         if (!entity) continue;
 
-        const valueAttr = this._config?.value?.attribute || 'state';
         const labelAttr = this._config?.label?.attribute || 'friendly_name';
+        const label =
+          labelAttr === 'entity_id'
+            ? entityId
+            : String(entity.attributes[labelAttr] ?? entityId.split('.').pop());
 
+        const icon = entity.attributes['icon'] as string | undefined;
+
+        // Special handling for light entities
+        if (isLightEntity(entityId)) {
+          const lightInfo = extractLightInfo(entity);
+          const brightness = lightInfo.brightness;
+
+          // Size: off lights get 10%, on lights get 40-100% based on brightness
+          // This ensures on lights are clearly separated from off lights
+          let sizeValue: number;
+          if (!lightInfo.isOn) {
+            sizeValue = 10;
+          } else {
+            // On lights: 40% minimum, scale to 100%
+            sizeValue = 40 + (brightness / 100) * 60;
+          }
+
+          items.push({
+            label,
+            value: brightness, // Display brightness as percentage
+            sizeValue,
+            colorValue: brightness,
+            entity_id: entityId,
+            icon: icon ?? 'mdi:lightbulb',
+            unit: '%',
+            light: lightInfo,
+          });
+          continue;
+        }
+
+        // Standard entity handling
+        const valueAttr = this._config?.value?.attribute || 'state';
         let value: number;
         if (valueAttr === 'state') {
           value = parseFloat(entity.state);
@@ -131,12 +318,6 @@ export class TreemapCard extends LitElement {
 
         if (isNaN(value)) continue;
 
-        const label =
-          labelAttr === 'entity_id'
-            ? entityId
-            : String(entity.attributes[labelAttr] ?? entityId.split('.').pop());
-
-        const icon = entity.attributes['icon'] as string | undefined;
         const unit = entity.attributes['unit_of_measurement'] as string | undefined;
 
         items.push({
@@ -281,6 +462,55 @@ export class TreemapCard extends LitElement {
     if (area < 50) return 'tiny'; // < ~7% x 7%
     if (area < 150) return 'small'; // < ~12% x 12%
     return '';
+  }
+
+  // Default light colors (dark gray to yellow)
+  private _getLightColorOff(): string {
+    return this._config?.color?.low ?? '#333333';
+  }
+
+  private _getLightColorOn(): string {
+    return this._config?.color?.high ?? '#fbbf24'; // Amber/yellow
+  }
+
+  /**
+   * Get background color for a light entity
+   * - Color lights: use actual RGB/HS color with brightness as opacity
+   * - Dimmable lights: use yellow with brightness as opacity
+   * - Off lights: use dark gray
+   */
+  private _getLightColor(rect: TreemapRect): string {
+    const light = rect.light;
+    if (!light) return this._getLightColorOff();
+
+    // Off light: dark color
+    if (!light.isOn) {
+      return this._getLightColorOff();
+    }
+
+    // Brightness as opacity (min 0.3 so it's always visible when on)
+    const opacity = 0.3 + (light.brightness / 100) * 0.7;
+
+    // Color light with RGB - use the actual light color
+    if (light.supportsColor && light.rgb) {
+      const [r, g, b] = light.rgb;
+      return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    }
+
+    // Color light with HS - convert to RGB
+    if (light.supportsColor && light.hs) {
+      const [h, s] = light.hs;
+      const [r, g, b] = hsToRgb(h, s);
+      return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    }
+
+    // Dimmable-only light: yellow with brightness as opacity
+    const onColor = this._getLightColorOn();
+    const hex = onColor.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
   }
 
   private _filterData(data: TreemapItem[]): TreemapItem[] {
@@ -430,10 +660,13 @@ export class TreemapCard extends LitElement {
     rect: TreemapRect,
     min: number,
     max: number,
-    containerHeight: number,
+    _containerHeight: number,
     gap: number
   ): TemplateResult {
-    const color = this._getColor(rect.colorValue, min, max);
+    // Use light-specific color for light entities, otherwise standard color gradient
+    const color = rect.light
+      ? this._getLightColor(rect)
+      : this._getColor(rect.colorValue, min, max);
     const sizeClass = this._getSizeClass(rect);
 
     const showIcon = this._config?.icon?.show ?? true;
@@ -475,10 +708,18 @@ export class TreemapCard extends LitElement {
     // Container is 100% wide, gap is in pixels, so we need to use calc()
     const halfGap = gap / 2;
 
-    // Custom styles
+    // Calculate contrasting text colors based on background
+    const textColors = getContrastColors(color);
+
+    // Custom styles (user styles override auto contrast)
     const iconStyle = this._config?.icon?.style || '';
     const labelStyle = this._config?.label?.style || '';
     const valueStyle = this._config?.value?.style || '';
+
+    // Only apply auto text color if no custom style is set
+    const autoIconStyle = iconStyle || `color: ${textColors.icon};`;
+    const autoLabelStyle = labelStyle || `color: ${textColors.label};`;
+    const autoValueStyle = valueStyle || `color: ${textColors.value};`;
 
     return html`
       <div
@@ -496,15 +737,15 @@ export class TreemapCard extends LitElement {
         ${showIcon && (this._config?.icon?.icon || rect.icon)
           ? html`<ha-icon
               class="treemap-icon"
-              style="${iconStyle}"
+              style="${autoIconStyle}"
               icon="${this._config?.icon?.icon || rect.icon}"
             ></ha-icon>`
           : nothing}
         ${showLabel
-          ? html`<span class="treemap-label" style="${labelStyle}">${formattedLabel}</span>`
+          ? html`<span class="treemap-label" style="${autoLabelStyle}">${formattedLabel}</span>`
           : nothing}
         ${showValue
-          ? html`<span class="treemap-value" style="${valueStyle}">${formattedValue}</span>`
+          ? html`<span class="treemap-value" style="${autoValueStyle}">${formattedValue}</span>`
           : nothing}
       </div>
     `;
