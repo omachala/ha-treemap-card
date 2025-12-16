@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/icon.png" width="128" alt="Treemap Card Icon">
+  <img src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/icon.png" width="128" alt="Treemap Card Icon">
 </p>
 
 <h1 align="center">Treemap Card for Home Assistant</h1>
@@ -14,7 +14,7 @@
   A custom Lovelace card that dynamically visualizes many entities as a treemap. Rectangle sizes represent relative values while colors indicate status - perfect for comparing sensors, portfolios, or any numeric data at a glance.
 </p>
 
-<img src="docs/screenshot.png" width="800" alt="Treemap Card">
+<img src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/screenshot.png" width="800" alt="Treemap Card">
 
 ## Installation
 
@@ -24,9 +24,12 @@
 
 Or manually:
 
-1. Go to HACS > Frontend
+1. Go to HACS → Frontend
 2. Search for "Treemap Card"
-3. Install and refresh browser
+3. Install and restart Home Assistant
+
+> **Note:** If the card doesn't appear after installation, you may need to add the resource manually:
+> Go to **Settings → Dashboards → Resources → Add Resource** and add `/hacsfiles/ha-treemap-card/treemap-card.js` as a JavaScript module.
 
 ## Supported Entities
 
