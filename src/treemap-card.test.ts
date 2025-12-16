@@ -56,7 +56,8 @@ function getRenderedItems(card: TreemapCard): RenderedItem[] {
   for (const item of items) {
     const labelEl = item.querySelector('.treemap-label');
     const valueEl = item.querySelector('.treemap-value');
-    const style = (item as HTMLElement).style;
+    if (!(item instanceof HTMLElement)) continue;
+    const style = item.style;
 
     const label = labelEl?.textContent || '';
     const valueText = valueEl?.textContent || '';

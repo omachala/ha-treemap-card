@@ -77,6 +77,7 @@ export interface TreemapCardConfig {
   size?: {
     equal?: boolean; // Equal size rectangles (default: false)
     param?: string; // Field name from data for sizing (default: same as value.param)
+    attribute?: string; // Entity attribute for sizing (entities mode) - supports computed values like temp_difference
     inverse?: boolean; // Inverse sizing - low values get bigger rectangles (default: false)
   };
   // Color gradient configuration
@@ -86,10 +87,18 @@ export interface TreemapCardConfig {
     high?: string; // Color for high values (default: #16a34a green)
     opacity?: number; // Opacity 0-1 (e.g., 0.5 for 50% transparent)
     param?: string; // Field name for color calculation (default: same as value.param)
+    attribute?: string; // Entity attribute for color calculation (entities mode)
     scale?: {
       neutral?: number; // Value where color is neutral/center (e.g., 0)
       min?: number; // Value at which color is fully low (e.g., -8 for full red)
       max?: number; // Value at which color is fully high (e.g., 8 for full green)
+    };
+    // HVAC action categorical coloring (for climate entities)
+    hvac?: {
+      heating?: string; // Color when heating (default: #ff6b35 orange)
+      cooling?: string; // Color when cooling (default: #4dabf7 blue)
+      idle?: string; // Color when idle (default: #69db7c green)
+      off?: string; // Color when off (default: #868e96 gray)
     };
   };
   // Custom CSS for the entire card
@@ -108,6 +117,18 @@ export interface LightColorInfo {
 }
 
 /**
+ * Climate entity information with computed values
+ */
+export interface ClimateInfo {
+  currentTemperature: number | null; // Current room temperature
+  targetTemperature: number | null; // Target/setpoint temperature
+  tempDifference: number; // Absolute difference from target (always >= 0)
+  tempOffset: number; // Signed difference (negative = below target)
+  hvacAction: 'heating' | 'cooling' | 'idle' | 'off' | null;
+  hvacMode: string | null;
+}
+
+/**
  * Treemap data item
  */
 export interface TreemapItem {
@@ -119,6 +140,7 @@ export interface TreemapItem {
   icon?: string;
   unit?: string; // Unit of measurement (e.g., °C, %, kWh)
   light?: LightColorInfo; // Light-specific color info (only for light.* entities)
+  climate?: ClimateInfo; // Climate-specific info (only for climate.* entities)
 }
 
 /**
@@ -133,6 +155,7 @@ export interface TreemapRect {
   icon?: string;
   unit?: string; // Unit of measurement (e.g., °C, %, kWh)
   light?: LightColorInfo; // Light-specific color info (only for light.* entities)
+  climate?: ClimateInfo; // Climate-specific info (only for climate.* entities)
   x: number;
   y: number;
   width: number;

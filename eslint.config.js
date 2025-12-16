@@ -24,8 +24,24 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-return': 'error',
       '@typescript-eslint/no-unsafe-argument': 'error',
 
-      // Allow type assertions for Lit/HA card patterns
+      // Allow ONLY `as const`; ban all other assertions (`as Type`, `<Type>expr`)
       '@typescript-eslint/consistent-type-assertions': 'off',
+      '@typescript-eslint/prefer-as-const': 'error',
+      '@typescript-eslint/no-unnecessary-type-assertion': 'error',
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'TSAsExpression:not([typeAnnotation.typeName.name="const"])',
+          message:
+            'Type assertions (as Type) are disallowed. Use type guards/predicates instead. ' +
+            'Exception: `as const` is allowed for literal narrowing.',
+        },
+        {
+          selector: 'TSTypeAssertion',
+          message:
+            'Angle-bracket type assertions (<Type>expr) are disallowed. Use type guards/predicates instead.',
+        },
+      ],
 
       // Let TypeScript infer return types
       '@typescript-eslint/explicit-function-return-type': 'off',

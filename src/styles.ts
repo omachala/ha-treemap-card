@@ -53,6 +53,21 @@ export const styles = css`
     color: rgba(255, 255, 255, 0.5);
   }
 
+  /* Pulsing animation for active HVAC states (heating/cooling) */
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .treemap-icon.hvac-active {
+    animation: pulse 2s ease-in-out infinite;
+  }
+
   .treemap-label {
     font-size: 14px;
     font-weight: 600;

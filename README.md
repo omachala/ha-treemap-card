@@ -37,6 +37,78 @@ The card is optimized for:
 
 - **Numeric sensors** - temperature, humidity, battery levels, energy usage, etc.
 - **Lights** - automatically uses brightness for size, actual light color (RGB/HS) or yellow gradient for dimmable lights
+- **Climate** - thermostats and HVAC with smart computed values (see below)
+
+### Climate Entities
+
+Climate entities (thermostats, HVAC) have two special computed values you can use for `size.attribute`, `color.attribute`, or `value.attribute`:
+
+| Value             | What it means                                                                                                                                                                                                                          |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `temp_difference` | How far the current temperature is from the target (always positive). A room that's 3°C too cold and a room that's 3°C too hot both show as `3`. Great for sizing - rooms that need the most attention get the biggest rectangles.     |
+| `temp_offset`     | The signed difference from target. Negative means below target, positive means above. A room at 18°C with target 21°C shows `-3`. A room at 24°C with target 21°C shows `+3`. Great for coloring - blue for too cold, red for too hot. |
+
+You can also color by `hvac_action` to show what each thermostat is actually doing:
+
+```yaml
+color:
+  hvac:
+    heating: '#ff6b35' # orange
+    cooling: '#4dabf7' # blue
+    idle: '#69db7c' # green
+    off: '#868e96' # gray
+```
+
+**Example: Which rooms need attention?**
+
+Show rooms furthest from their target temperature with the biggest rectangles. Color blue if too cold, red if too hot:
+
+```yaml
+type: custom:treemap-card
+header:
+  title: Climate Status
+entities:
+  - climate.*
+size:
+  attribute: temp_difference
+  inverse: true # bigger difference = bigger rectangle
+value:
+  attribute: temp_offset
+  suffix: '°C'
+color:
+  attribute: temp_offset
+  low: '#4dabf7' # blue for cold
+  mid: '#69db7c' # green for on-target
+  high: '#ff6b35' # orange for hot
+  scale:
+    neutral: 0
+    min: -3
+    max: 3
+```
+
+**Example: What's each thermostat doing?**
+
+Equal-sized rectangles showing current temperature, colored by HVAC action:
+
+```yaml
+type: custom:treemap-card
+header:
+  title: Heating Status
+entities:
+  - climate.*
+size:
+  equal: true
+value:
+  attribute: current_temperature
+  suffix: '°C'
+color:
+  attribute: hvac_action
+  hvac:
+    heating: '#ff6b35'
+    cooling: '#4dabf7'
+    idle: '#69db7c'
+    off: '#868e96'
+```
 
 ### Manual
 
@@ -50,7 +122,8 @@ Use `entities` to display HA entities directly. Supports wildcards.
 
 ```yaml
 type: custom:treemap-card
-title: Humidity
+header:
+  title: Humidity
 entities:
   - sensor.*_humidity
 exclude:
