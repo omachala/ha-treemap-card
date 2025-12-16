@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  A custom Lovelace card that dynamically visualizes many entities as a treemap. Rectangle sizes represent relative values while colors indicate status - perfect for comparing sensors, portfolios, or any numeric data at a glance.
+  A custom Lovelace card that dynamically visualizes entities as a treemap. Rectangle sizes represent relative values while colors indicate status - perfect for comparing sensors, lights, thermostats, portfolios or any numeric data at a glance.
 </p>
 
 <img src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/screenshot.png" width="800" alt="Treemap Card">
@@ -31,69 +31,171 @@ Or manually:
 > **Note:** If the card doesn't appear after installation, you may need to add the resource manually:
 > Go to **Settings → Dashboards → Resources → Add Resource** and add `/hacsfiles/ha-treemap-card/treemap-card.js` as a JavaScript module.
 
-## Supported Entities
+### Manual
 
-The card is optimized for:
+Download `treemap-card.js` from [releases](https://github.com/omachala/ha-treemap-card/releases) to `config/www/`, then add as resource: `/local/treemap-card.js`
 
-- **Numeric sensors** - temperature, humidity, battery levels, energy usage, etc.
-- **Lights** - automatically uses brightness for size, actual light color (RGB/HS) or yellow gradient for dimmable lights
-- **Climate** - thermostats and HVAC with smart computed values (see below)
+---
 
-### Climate Entities
+## Data Modes
 
-Climate entities (thermostats, HVAC) have two special computed values you can use for `size.attribute`, `color.attribute`, or `value.attribute`:
+The card supports two ways to get data:
 
-| Value             | What it means                                                                                                                                                                                                                          |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `temp_difference` | How far the current temperature is from the target (always positive). A room that's 3°C too cold and a room that's 3°C too hot both show as `3`. Great for sizing - rooms that need the most attention get the biggest rectangles.     |
-| `temp_offset`     | The signed difference from target. Negative means below target, positive means above. A room at 18°C with target 21°C shows `-3`. A room at 24°C with target 21°C shows `+3`. Great for coloring - blue for too cold, red for too hot. |
+### Entities Mode
 
-You can also color by `hvac_action` to show what each thermostat is actually doing:
+Display Home Assistant entities directly. Supports wildcards to match multiple entities at once.
 
 ```yaml
-color:
-  hvac:
-    heating: '#ff6b35' # orange
-    cooling: '#4dabf7' # blue
-    idle: '#69db7c' # green
-    off: '#868e96' # gray
+type: custom:treemap-card
+entities:
+  - sensor.temperature_*
+  - sensor.humidity_*
+exclude:
+  - sensor.*_battery
 ```
 
-**Example: Which rooms need attention?**
+### JSON Attribute Mode
 
-Show rooms furthest from their target temperature with the biggest rectangles. Color blue if too cold, red if too hot:
+For data where all values come from a single entity as JSON. Since Home Assistant doesn't allow JSON as sensor state values, structured data must be stored in attributes - a common pattern when feeding HA from external sources like Node-RED or custom integrations. This is ideal when you don't want (or can't) create individual sensors for each data item, especially for dynamic lists like stock portfolios, server metrics, or any array of objects.
+
+```yaml
+type: custom:treemap-card
+entity: sensor.my_data
+data_attribute: items
+label:
+  param: name
+value:
+  param: amount
+```
+
+---
+
+## Entity Types
+
+The card is optimized for three entity types, each with special handling.
+
+### Sensors
+
+Standard numeric sensors like temperature, humidity, battery levels, energy usage.
 
 ```yaml
 type: custom:treemap-card
 header:
-  title: Climate Status
+  title: Humidity Levels
+entities:
+  - sensor.*_humidity
+exclude:
+  - sensor.*target*
+size:
+  equal: true
+value:
+  suffix: '%'
+color:
+  low: '#4dabf7'
+  mid: '#69db7c'
+  high: '#ff6b35'
+  scale:
+    neutral: 50
+    min: 30
+    max: 70
+label:
+  replace: ' Humidity$//'
+height: 300
+```
+
+### Lights
+
+Light entities automatically use brightness for sizing and display their actual color.
+
+- **RGB/HS color lights**: Rectangle shows the light's actual color
+- **Dimmable-only lights**: Yellow gradient based on brightness
+- **Off lights**: Uses `color.low` (default: dark gray `#333333`)
+
+```yaml
+type: custom:treemap-card
+header:
+  title: Lights
+entities:
+  - light.*
+color:
+  low: '#1a1a1a'
+  high: '#fbbf24'
+height: 300
+```
+
+**Light-specific behavior:**
+
+| Feature   | Behavior                                 |
+| --------- | ---------------------------------------- |
+| Size      | Based on brightness (brighter = bigger)  |
+| Color     | Actual light color (RGB/HS) if available |
+| Off state | Uses `color.low` value                   |
+| Value     | Shows brightness percentage              |
+
+### Climate
+
+Climate entities (thermostats, HVAC) support special computed values that make it easy to visualize which rooms need attention.
+
+**Standard attributes** you can use:
+
+| Attribute             | What it shows                                       |
+| --------------------- | --------------------------------------------------- |
+| `current_temperature` | Current room temperature                            |
+| `temperature`         | Target/setpoint temperature                         |
+| `hvac_action`         | Current action: `heating`, `cooling`, `idle`, `off` |
+
+**Computed attributes** - calculated automatically for you:
+
+| Attribute         | What it shows                                                                            | Best for                                                           |
+| ----------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `temp_difference` | How far from target (always positive). A room 3°C too cold or 3°C too hot both show `3`. | Sizing rectangles - rooms furthest from target get biggest squares |
+| `temp_offset`     | Direction from target. Too cold = negative, too hot = positive.                          | Coloring - blue for cold, red for hot                              |
+
+**Smart offset behavior**: The card understands your heating/cooling goals:
+
+- **Heating mode**: If the room is already warm enough, offset shows `0` (not a positive number)
+- **Cooling mode**: If the room is already cool enough, offset shows `0` (not a negative number)
+
+Example: Room at 24°C, target 21°C, mode is heating → shows `0.0°C` because it's warm enough. No action needed.
+
+**Example: Temperature offset view**
+
+Show how far each room is from target. Blue = too cold, green = on target, orange = too hot:
+
+```yaml
+type: custom:treemap-card
+header:
+  title: Temperature Offset
 entities:
   - climate.*
 size:
   attribute: temp_difference
-  inverse: true # bigger difference = bigger rectangle
+  inverse: true
 value:
   attribute: temp_offset
   suffix: '°C'
 color:
   attribute: temp_offset
-  low: '#4dabf7' # blue for cold
-  mid: '#69db7c' # green for on-target
-  high: '#ff6b35' # orange for hot
+  low: '#4dabf7'
+  mid: '#69db7c'
+  high: '#ff6b35'
   scale:
     neutral: 0
     min: -3
     max: 3
+label:
+  replace: ^Wiser //
+height: 350
 ```
 
-**Example: What's each thermostat doing?**
+**Example: Current temperature with HVAC status**
 
-Equal-sized rectangles showing current temperature, colored by HVAC action:
+Show current temperature, colored by value but override when actively heating/cooling:
 
 ```yaml
 type: custom:treemap-card
 header:
-  title: Heating Status
+  title: Room Temperatures
 entities:
   - climate.*
 size:
@@ -102,239 +204,123 @@ value:
   attribute: current_temperature
   suffix: '°C'
 color:
-  attribute: hvac_action
+  low: '#4dabf7'
+  mid: '#69db7c'
+  high: '#ff6b35'
+  scale:
+    neutral: 21
+    min: 18
+    max: 24
   hvac:
     heating: '#ff6b35'
     cooling: '#4dabf7'
-    idle: '#69db7c'
-    off: '#868e96'
-```
-
-### Manual
-
-Download `treemap-card.js` from [releases](https://github.com/omachala/ha-treemap-card/releases) to `config/www/`, then add as resource: `/local/treemap-card.js`
-
-## Two Modes
-
-### Entities Mode
-
-Use `entities` to display HA entities directly. Supports wildcards.
-
-```yaml
-type: custom:treemap-card
-header:
-  title: Humidity
-entities:
-  - sensor.*_humidity
-exclude:
-  - sensor.*target*
-height: 300
-gap: 4
-size:
-  equal: true
-filter:
-  above: 0
-  below: 100
-color:
-  low: '#f0b913'
-  high: '#1157f0'
-  opacity: 0.9
-  scale:
-    neutral: 60
-    min: 50
-    max: 100
 label:
-  show: true
-  attribute: friendly_name
-  replace: ' Humidity$//'
-  suffix: ' (room)'
-  style: |
-    text-shadow: 0 0 5px rgba(0,0,0,0.3);
-value:
-  attribute: state
-  suffix: ' %'
-  style: |
-    font-weight: bold;
-icon:
-  show: true
-  icon: mdi:water-percent
-  style: |
-    opacity: 0.8;
-card_style: |
-  border-radius: 12px;
-```
-
-### JSON Attribute Mode
-
-Use `entity` to read an array of objects from an entity attribute. Map any fields to label, value, size, color.
-
-```yaml
-type: custom:treemap-card
-header:
-  show: true
-  title: Portfolio
-  style: |
-    font-size: 16px;
-    padding: 8px 16px;
-entity: sensor.trading_portfolio_holdings
-data_attribute: holdings
-label:
-  param: ticker
-  prefix: '$'
-value:
-  show: true
-  param: todayPct
-  prefix: '+'
-  suffix: ' %'
-size:
-  param: value
-  inverse: false
-color:
-  low: '#b91c1c'
-  mid: '#fbbf24'
-  high: '#16a34a'
-  param: todayPct
-  scale:
-    neutral: 0
-    min: -4
-    max: 4
-icon:
-  param: icon
+  replace: ^Wiser //
 height: 400
-order: desc
-limit: 10
 ```
 
-## Configuration
+**HVAC color behavior:**
+
+When `color.hvac` is configured:
+
+| State                 | Color behavior                                         |
+| --------------------- | ------------------------------------------------------ |
+| `heating`             | Uses `hvac.heating` color (overrides gradient)         |
+| `cooling`             | Uses `hvac.cooling` color (overrides gradient)         |
+| `idle`                | Uses gradient based on value (so you see temp offset)  |
+| `off` / `unavailable` | Always uses `hvac.off` color (default: gray `#868e96`) |
+
+This lets you see temperature-based colors normally, but immediately spot which rooms are actively heating or cooling.
+
+---
+
+## Configuration Reference
 
 ### Data Source
 
-<table width="100%">
-<tr><th>Option</th><th>Default</th><th>Description</th></tr>
-<tr><td><code>entity</code></td><td></td><td>Single entity ID that has an array of objects in its attributes. Use this when you have a custom sensor that outputs structured data like <code>[{label: "A", value: 10}, ...]</code></td></tr>
-<tr><td><code>entities</code></td><td></td><td>List of entity IDs. Supports <code>*</code> wildcards like <code>sensor.*_humidity</code> to match multiple sensors. Each entity becomes one rectangle.</td></tr>
-<tr><td><code>exclude</code></td><td></td><td>List of entity patterns to exclude. Supports <code>*</code> wildcards. Example: <code>exclude: [sensor.*target*, sensor.*boost*]</code> removes matching entities.</td></tr>
-<tr><td><code>data_attribute</code></td><td><code>items</code></td><td>Which attribute contains your array. If your sensor has <code>attributes.holdings = [{...}]</code>, set this to <code>holdings</code>.</td></tr>
-</table>
+| Option           | Default | Description                                                          |
+| ---------------- | ------- | -------------------------------------------------------------------- |
+| `entities`       |         | List of entity IDs. Supports `*` wildcards like `sensor.*_humidity`. |
+| `exclude`        |         | List of entity patterns to exclude. Supports `*` wildcards.          |
+| `entity`         |         | Single entity ID with array data in attributes (JSON mode).          |
+| `data_attribute` | `items` | Which attribute contains the array (JSON mode).                      |
 
 ### Label
 
-Controls what text appears on each rectangle.
-
-<table width="100%">
-<tr><th>Option</th><th>Default</th><th>Description</th></tr>
-<tr><td><code>label.show</code></td><td><code>true</code></td><td>Set to <code>false</code> to hide labels completely.</td></tr>
-<tr><td><code>label.param</code></td><td><code>label</code></td><td><strong>JSON mode only.</strong> Which field from your data to use as the label. If your objects look like <code>{name: "Kitchen", temp: 22}</code>, set this to <code>name</code>.</td></tr>
-<tr><td><code>label.attribute</code></td><td><code>friendly_name</code></td><td><strong>Entities mode only.</strong> Which entity attribute to use as label. Common values: <code>friendly_name</code> (human-readable name like "Kitchen Humidity"), <code>entity_id</code> (raw ID like "sensor.kitchen_humidity"), <code>device_class</code> (type like "humidity", "temperature").</td></tr>
-<tr><td><code>label.replace</code></td><td></td><td>Regex to clean up labels. Format: <code>pattern/replacement/flags</code>. Example: <code> Humidity$//</code> removes " Humidity" suffix from "Kitchen Humidity".</td></tr>
-<tr><td><code>label.prefix</code></td><td></td><td>Text to add before every label. <code>prefix: "Room: "</code> turns "Kitchen" into "Room: Kitchen".</td></tr>
-<tr><td><code>label.suffix</code></td><td></td><td>Text to add after every label.</td></tr>
-</table>
+| Option            | Default         | Description                                                                                               |
+| ----------------- | --------------- | --------------------------------------------------------------------------------------------------------- |
+| `label.show`      | `true`          | Show/hide labels.                                                                                         |
+| `label.param`     | `label`         | Field name for label (JSON mode).                                                                         |
+| `label.attribute` | `friendly_name` | Entity attribute for label (Entities mode).                                                               |
+| `label.replace`   |                 | Regex to clean labels. Format: `pattern/replacement/flags`. Example: `^Wiser //` removes "Wiser " prefix. |
+| `label.prefix`    |                 | Text before label.                                                                                        |
+| `label.suffix`    |                 | Text after label.                                                                                         |
+| `label.style`     |                 | CSS for labels.                                                                                           |
 
 ### Value
 
-Controls the number displayed on each rectangle.
+| Option            | Default | Description                                                                                                                      |
+| ----------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `value.show`      | `true`  | Show/hide values.                                                                                                                |
+| `value.param`     | `value` | Field name for value (JSON mode).                                                                                                |
+| `value.attribute` | `state` | Entity attribute for value (Entities mode). For climate: `current_temperature`, `temperature`, `temp_offset`, `temp_difference`. |
+| `value.prefix`    |         | Text before value.                                                                                                               |
+| `value.suffix`    |         | Text after value. Example: `°C`, `%`.                                                                                            |
+| `value.style`     |         | CSS for values.                                                                                                                  |
 
-<table width="100%">
-<tr><th>Option</th><th>Default</th><th>Description</th></tr>
-<tr><td><code>value.show</code></td><td><code>true</code></td><td>Set to <code>false</code> to hide values, showing only labels.</td></tr>
-<tr><td><code>value.param</code></td><td><code>value</code></td><td><strong>JSON mode only.</strong> Which field to display. If your objects have <code>{temp: 22, humidity: 65}</code> and you want to show humidity, set this to <code>humidity</code>.</td></tr>
-<tr><td><code>value.attribute</code></td><td><code>state</code></td><td><strong>Entities mode only.</strong> Which entity attribute to use as value. Common values: <code>state</code> (main entity value), <code>battery_level</code>, <code>brightness</code>, <code>temperature</code>, <code>humidity</code>, <code>current_position</code> (blinds), <code>volume_level</code> (media players).</td></tr>
-<tr><td><code>value.prefix</code></td><td></td><td>Text before the value. <code>prefix: "$"</code> shows "$100" instead of "100".</td></tr>
-<tr><td><code>value.suffix</code></td><td></td><td>Text after the value. <code>suffix: " %"</code> shows "65 %" instead of "65".</td></tr>
-</table>
+### Size
 
-### Size & Order
-
-**Size** controls how big each rectangle is. **Order** controls where it appears (top-left = first).
-
-| What you want                                  | Configuration                        |
-| ---------------------------------------------- | ------------------------------------ |
-| Biggest values = biggest squares, shown first  | `order: desc` (default)              |
-| Biggest values = biggest squares, shown last   | `order: asc`                         |
-| Smallest values = biggest squares, shown first | `order: desc` + `size.inverse: true` |
-| Smallest values = biggest squares, shown last  | `order: asc` + `size.inverse: true`  |
-| All squares same size                          | `size.equal: true`                   |
-
-**Example: Room temperatures**
-
-Show coldest rooms first with bigger squares (to highlight rooms that need heating):
-
-```yaml
-order: asc
-size:
-  inverse: true
-```
-
-**Example: Stock portfolio**
-
-Show biggest positions first (default), sized by dollar value, colored by daily change:
-
-```yaml
-order: desc
-size:
-  param: value
-value:
-  param: todayPct
-color:
-  param: todayPct
-```
-
-<table width="100%">
-<tr><th>Option</th><th>Default</th><th>Description</th></tr>
-<tr><td><code>size.param</code></td><td>same as <code>value.param</code></td><td>Which field determines rectangle size. For a stock portfolio, you might display <code>todayPct</code> (daily change) but size by <code>value</code> (position size), so bigger positions get bigger rectangles.</td></tr>
-<tr><td><code>size.equal</code></td><td><code>false</code></td><td>Set to <code>true</code> for uniform grid - all rectangles same size. Useful when you only care about color differences, like comparing room temperatures.</td></tr>
-<tr><td><code>size.inverse</code></td><td><code>false</code></td><td>Set to <code>true</code> to invert sizing - low values get bigger rectangles. Useful when lower is better (e.g., response times, error rates).</td></tr>
-<tr><td><code>order</code></td><td><code>desc</code></td><td>Position order: <code>desc</code> puts largest values first (top-left), <code>asc</code> puts smallest first. This only affects position, not size.</td></tr>
-</table>
-
-### Icon
-
-<table width="100%">
-<tr><th>Option</th><th>Default</th><th>Description</th></tr>
-<tr><td><code>icon.show</code></td><td><code>true</code></td><td>Set to <code>false</code> to hide icons.</td></tr>
-<tr><td><code>icon.icon</code></td><td></td><td>Static icon for all items. Example: <code>icon: mdi:thermometer</code> shows thermometer on every rectangle regardless of entity icons.</td></tr>
-<tr><td><code>icon.param</code></td><td><code>icon</code></td><td>Field containing MDI icon name (JSON mode only).</td></tr>
-</table>
+| Option           | Default                   | Description                                                                                                  |
+| ---------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `size.param`     | same as `value.param`     | Field for sizing (JSON mode).                                                                                |
+| `size.attribute` | same as `value.attribute` | Entity attribute for sizing (Entities mode). For climate: `temp_difference` works well with `inverse: true`. |
+| `size.equal`     | `false`                   | All rectangles same size.                                                                                    |
+| `size.inverse`   | `false`                   | Low values get bigger rectangles.                                                                            |
 
 ### Color
 
-Imagine a temperature treemap: you want 20°C to feel "neutral" (yellow), colder rooms trending blue, warmer rooms trending red. Set `neutral: 20` and `mid: '#f0b913'` (yellow). Now rooms at 15°C show blue-ish, 25°C show orange-ish, and 20°C is pure yellow.
+| Option                | Default                   | Description                                                                               |
+| --------------------- | ------------------------- | ----------------------------------------------------------------------------------------- |
+| `color.low`           | `#b91c1c` (red)           | Color for lowest values. Also used for off lights.                                        |
+| `color.mid`           |                           | Optional middle color. Creates three-color gradient: low → mid → high.                    |
+| `color.high`          | `#16a34a` (green)         | Color for highest values.                                                                 |
+| `color.opacity`       | `1`                       | Color opacity (0-1).                                                                      |
+| `color.param`         | same as `value.param`     | Field for coloring (JSON mode).                                                           |
+| `color.attribute`     | same as `value.attribute` | Entity attribute for coloring (Entities mode). For climate: `temp_offset`, `hvac_action`. |
+| `color.scale.neutral` |                           | Value where `mid` color appears. Example: `0` for profit/loss, `21` for temperature.      |
+| `color.scale.min`     | auto                      | Values at or below get full `low` color.                                                  |
+| `color.scale.max`     | auto                      | Values at or above get full `high` color.                                                 |
+| `color.hvac.heating`  | `#ff6b35`                 | Color when actively heating (climate only).                                               |
+| `color.hvac.cooling`  | `#4dabf7`                 | Color when actively cooling (climate only).                                               |
+| `color.hvac.idle`     |                           | Not used - idle falls back to gradient.                                                   |
+| `color.hvac.off`      | `#868e96`                 | Color for off/unavailable climate entities.                                               |
 
-But what if one room is 5°C and another is 35°C? Without limits, those extremes stretch your color scale so much that 18°C and 22°C look almost identical. Fix this with `scale.min: 10` and `scale.max: 30` - now anything below 10°C is full blue, anything above 30°C is full red, and the colors between are properly spread out.
+### Icon
 
-<table width="100%">
-<tr><th>Option</th><th>Default</th><th>Description</th></tr>
-<tr><td><code>color.low</code></td><td><code>#b91c1c</code> (red)</td><td>Color for the lowest values.</td></tr>
-<tr><td><code>color.mid</code></td><td></td><td>Optional color for middle/neutral values. When set, creates a three-color gradient: <code>low -> mid -> high</code>. Example: <code>#00b6ed</code> (blue) for a red-blue-green gradient. The mid color appears at <code>scale.neutral</code> if set, otherwise at the center of the data range.</td></tr>
-<tr><td><code>color.high</code></td><td><code>#16a34a</code> (green)</td><td>Color for the highest values.</td></tr>
-<tr><td><code>color.opacity</code></td><td><code>1</code></td><td>Opacity from 0 to 1. Set to <code>0.5</code> for 50% transparency - useful when you have a background image or want softer colors.</td></tr>
-<tr><td><code>color.param</code></td><td>same as <code>value.param</code></td><td>Which field to use for coloring. Useful when you display one thing but color by another.</td></tr>
-<tr><td><code>color.scale.neutral</code></td><td></td><td>The value where <code>color.mid</code> appears (or the blend point if no mid color). For profit/loss, set to <code>0</code> so gains are green and losses are red. For humidity, set to <code>60</code> if that's your ideal level.</td></tr>
-<tr><td><code>color.scale.min</code></td><td>auto (data min)</td><td>Values at or below this get full <code>color.low</code>. Example: set to <code>-5</code> and anything -5% or worse shows as full red, preventing one extreme value from washing out all other colors.</td></tr>
-<tr><td><code>color.scale.max</code></td><td>auto (data max)</td><td>Values at or above this get full <code>color.high</code>. Example: set to <code>5</code> and anything +5% or better shows as full green.</td></tr>
-</table>
+| Option       | Default | Description                                            |
+| ------------ | ------- | ------------------------------------------------------ |
+| `icon.show`  | `true`  | Show/hide icons.                                       |
+| `icon.icon`  |         | Static icon for all items. Example: `mdi:thermometer`. |
+| `icon.param` | `icon`  | Field containing icon (JSON mode).                     |
+| `icon.style` |         | CSS for icons.                                         |
 
-### Filter
+### Order & Filter
 
-Exclude items from the treemap based on their value.
-
-<table width="100%">
-<tr><th>Option</th><th>Description</th></tr>
-<tr><td><code>filter.above</code></td><td>Only show items with value greater than this. <code>above: 0</code> hides zero and negative values - useful for filtering out "unavailable" sensors that report 0.</td></tr>
-<tr><td><code>filter.below</code></td><td>Only show items with value less than this. <code>below: 100</code> combined with <code>above: 0</code> keeps only valid percentage values (1-99), filtering out sensors reporting 0 or 100 due to errors.</td></tr>
-</table>
+| Option         | Default | Description                                                   |
+| -------------- | ------- | ------------------------------------------------------------- |
+| `order`        | `desc`  | Sort order: `desc` (largest first) or `asc` (smallest first). |
+| `limit`        |         | Maximum items to show.                                        |
+| `filter.above` |         | Only show items with value greater than this.                 |
+| `filter.below` |         | Only show items with value less than this.                    |
 
 ### Layout
 
-<table width="100%">
-<tr><th>Option</th><th>Default</th><th>Description</th></tr>
-<tr><td><code>height</code></td><td>auto</td><td>Fixed height in pixels. Auto-height calculates based on item count. Set explicitly like <code>height: 300</code> for consistent sizing.</td></tr>
-<tr><td><code>gap</code></td><td><code>6</code></td><td>Space between rectangles in pixels. Set to <code>0</code> for no gaps, increase for more breathing room.</td></tr>
-<tr><td><code>limit</code></td><td></td><td>Maximum number of items to show. Combined with <code>order: desc</code>, <code>limit: 10</code> shows top 10 largest.</td></tr>
-</table>
+| Option   | Default | Description                                                                 |
+| -------- | ------- | --------------------------------------------------------------------------- |
+| `height` | auto    | Card height in pixels. Auto-calculates based on row count (~100px per row). |
+| `gap`    | `6`     | Space between rectangles in pixels.                                         |
 
-### Title vs Header
+### Title & Header guide
 
 Two ways to add a title - use one or the other, not both:
 
@@ -356,7 +342,7 @@ header:
 
 If both are set, `header.title` takes precedence and `title` is ignored.
 
-### Styling
+### Styling guide
 
 Customize the appearance with inline CSS. All style options accept multiline YAML strings.
 
@@ -390,6 +376,24 @@ card_style: |
 <tr><td><code>icon.style</code></td><td>CSS for icons. Example: <code>color: white; opacity: 0.8;</code></td></tr>
 <tr><td><code>card_style</code></td><td>CSS for the entire card. Example: <code>background: transparent;</code></td></tr>
 </table>
+
+---
+
+## Size & Order guide
+
+| What you want                                  | Configuration                        |
+| ---------------------------------------------- | ------------------------------------ |
+| Biggest values = biggest squares, shown first  | `order: desc` (default)              |
+| Biggest values = biggest squares, shown last   | `order: asc`                         |
+| Smallest values = biggest squares, shown first | `order: desc` + `size.inverse: true` |
+| Smallest values = biggest squares, shown last  | `order: asc` + `size.inverse: true`  |
+| All squares same size                          | `size.equal: true`                   |
+
+---
+
+## Contributing
+
+Contributions and feedback are warmly welcomed! Feel free to open an issue or submit a pull request.
 
 ## License
 
