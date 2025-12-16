@@ -8,7 +8,7 @@ import { hsToRgb, parseColor, getContrastColors, interpolateColor } from './util
 import { squarify } from './squarify';
 import { styles } from './styles';
 
-const CARD_VERSION = '0.5.1';
+const CARD_VERSION = '0.6.0';
 
 console.info(
   `%c TREEMAP-CARD %c v${CARD_VERSION} `,
