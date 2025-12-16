@@ -17,11 +17,12 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "pnpm typecheck && pnpm format:check && pnpm lint && pnpm test:run",
+    "check:changeset": "node -e \"const fs=require('fs');const files=fs.readdirSync('.changeset').filter(f=>f.endsWith('.md')&&f!=='README.md');if(files.length===0){console.error('Missing changeset! Run: pnpm changeset');process.exit(1)}\"",
     "fix": "pnpm format && pnpm lint:fix",
     "prepare": "simple-git-hooks"
   },
   "simple-git-hooks": {
-    "pre-commit": "pnpm check"
+    "pre-commit": "pnpm check && pnpm check:changeset"
   },
   "keywords": [
     "home-assistant",

@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    # Only allow releases from main branch
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check for changesets
+        id: check
+        run: |
+          if ls .changeset/*.md 1> /dev/null 2>&1 && [ "$(ls .changeset/*.md 2>/dev/null | grep -v README.md | wc -l)" -gt 0 ]; then
+            echo "has_changesets=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changesets=false" >> $GITHUB_OUTPUT
+            echo "No changesets found. Nothing to release."
+          fi
+
+      - name: Version packages
+        if: steps.check.outputs.has_changesets == 'true'
+        run: |
+          pnpm changeset version
+          echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+
+      - name: Build
+        if: steps.check.outputs.has_changesets == 'true'
+        run: pnpm build
+
+      - name: Update version in source
+        if: steps.check.outputs.has_changesets == 'true'
+        run: |
+          # Update CARD_VERSION constant in treemap-card.ts
+          sed -i "s/const CARD_VERSION = '[^']*'/const CARD_VERSION = '${{ env.VERSION }}'/" src/treemap-card.ts
+
+      - name: Commit and push
+        if: steps.check.outputs.has_changesets == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "chore: release v${{ env.VERSION }}"
+          git push
+
+      - name: Extract changelog for release
+        if: steps.check.outputs.has_changesets == 'true'
+        id: changelog
+        run: |
+          # Extract the latest version section from CHANGELOG.md
+          CHANGELOG=$(awk '/^## [0-9]/{if(p) exit; p=1} p' CHANGELOG.md | tail -n +2)
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        if: steps.check.outputs.has_changesets == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: v${{ env.VERSION }}
+          body: ${{ steps.changelog.outputs.CHANGELOG }}
+          files: dist/treemap-card.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
