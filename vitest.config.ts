@@ -5,5 +5,11 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     include: ['src/**/*.test.ts'],
+    coverage: {
+      provider: 'v8',
+      thresholds: {
+        lines: 80,
+      },
+    },
   },
 });

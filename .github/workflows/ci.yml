@@ -29,28 +29,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Check formatting (Prettier)
+      - name: Check formatting
         run: pnpm format:check
 
-      - name: Lint (ESLint)
+      - name: Lint
         run: pnpm lint
 
-      - name: Type check (TypeScript)
+      - name: Type check
         run: pnpm typecheck
 
-      - name: Run tests with coverage
-        run: pnpm vitest run --coverage --coverage.reporter=text --coverage.reporter=json-summary
+      - name: Test with coverage
+        run: pnpm vitest run --coverage
 
-      - name: Check coverage threshold
-        run: |
-          COVERAGE=$(cat coverage/coverage-summary.json | jq '.total.lines.pct')
-          echo "Line coverage: $COVERAGE%"
-          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
-            echo "Coverage $COVERAGE% is below 80% threshold"
-            exit 1
-          fi
-          echo "Coverage check passed"
-
-      - name: Check for changeset
+      - name: Check changeset
         if: github.event_name == 'pull_request'
         run: pnpm changeset status --since=origin/main

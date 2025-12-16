@@ -29,20 +29,10 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Extract changelog
-        id: changelog
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          NOTES=$(awk "/^## ${VERSION}/{found=1; next} /^## [0-9]/{if(found) exit} found" CHANGELOG.md)
-          echo "NOTES<<EOF" >> $GITHUB_OUTPUT
-          echo "$NOTES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          name: ${{ github.ref_name }}
-          body: ${{ steps.changelog.outputs.NOTES }}
+          generate_release_notes: true
           files: dist/treemap-card.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
