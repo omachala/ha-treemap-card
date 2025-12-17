@@ -6,6 +6,9 @@ on:
     paths:
       - package.json
 
+permissions:
+  contents: write
+
 jobs:
   tag:
     name: Create Version Tag
