@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from 'vitest';
-import { TreemapCard } from './treemap-card';
-import type { HomeAssistant, HassEntity } from './types';
+import { TreemapCard } from '../src/treemap-card';
+import type { HomeAssistant, HassEntity } from '../src/types';
 
 // Helper to create a mock HA entity
 function mockEntity(
@@ -353,6 +353,111 @@ describe('TreemapCard Climate Entities', () => {
       for (const item of items) {
         expect(item.backgroundColor).toBeDefined();
       }
+    });
+
+    it('applies opacity to cooling hvac color', async () => {
+      const hass = mockHass([mockClimateEntity('cooling_room', 26, 21, 'cooling')]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['climate.cooling_room'],
+        color: {
+          attribute: 'hvac_action',
+          opacity: 0.8,
+          hvac: {
+            cooling: '#4dabf7',
+          },
+        },
+      });
+      card.hass = hass;
+
+      await card.updateComplete;
+
+      const items = getRenderedItems(card);
+      expect(items).toHaveLength(1);
+      // Should have rgba color with opacity
+      expect(items[0]?.backgroundColor).toMatch(/rgba\(.*,\s*0\.8\)/);
+    });
+
+    it('applies opacity to heating hvac color', async () => {
+      const hass = mockHass([mockClimateEntity('heating_room', 18, 21, 'heating')]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['climate.heating_room'],
+        color: {
+          attribute: 'hvac_action',
+          opacity: 0.5,
+          hvac: {
+            heating: '#ff6b35',
+          },
+        },
+      });
+      card.hass = hass;
+
+      await card.updateComplete;
+
+      const items = getRenderedItems(card);
+      expect(items).toHaveLength(1);
+      // Should have rgba color with opacity
+      expect(items[0]?.backgroundColor).toMatch(/rgba\(.*,\s*0\.5\)/);
+    });
+
+    it('applies opacity to off hvac mode color', async () => {
+      const hass = mockHass([
+        mockEntity('climate.off_room', 'off', {
+          friendly_name: 'Off Room',
+          current_temperature: 20,
+          temperature: 21,
+          hvac_action: 'off',
+        }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['climate.off_room'],
+        color: {
+          opacity: 0.7,
+          hvac: {
+            off: '#868e96',
+          },
+        },
+      });
+      card.hass = hass;
+
+      await card.updateComplete;
+
+      const items = getRenderedItems(card);
+      expect(items).toHaveLength(1);
+      // Should have rgba color with opacity for off state
+      expect(items[0]?.backgroundColor).toMatch(/rgba\(.*,\s*0\.7\)/);
+    });
+
+    it('applies opacity to unavailable hvac mode color', async () => {
+      const hass = mockHass([
+        mockEntity('climate.unavailable_room', 'unavailable', {
+          friendly_name: 'Unavailable Room',
+        }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['climate.unavailable_room'],
+        color: {
+          opacity: 0.6,
+          hvac: {
+            off: '#555555',
+          },
+        },
+      });
+      card.hass = hass;
+
+      await card.updateComplete;
+
+      const items = getRenderedItems(card);
+      expect(items).toHaveLength(1);
+      // Should have rgba color with opacity for unavailable state
+      expect(items[0]?.backgroundColor).toMatch(/rgba\(.*,\s*0\.6\)/);
     });
   });
 
