@@ -60,12 +60,24 @@ jobs:
         if: steps.check.outputs.exists == 'false'
         run: pnpm build
 
+      - name: Extract changelog for version
+        if: steps.check.outputs.exists == 'false'
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          # Extract content between this version header and the next version header
+          NOTES=$(awk "/^## ${VERSION}$/,/^## [0-9]/" CHANGELOG.md | sed '1d;$d' | sed '/^$/d')
+          # Use delimiter to handle multiline
+          echo "NOTES<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Create GitHub Release
         if: steps.check.outputs.exists == 'false'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.version.outputs.VERSION }}
-          generate_release_notes: true
+          body: ${{ steps.changelog.outputs.NOTES }}
           files: dist/treemap-card.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
