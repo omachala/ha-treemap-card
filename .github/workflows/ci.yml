@@ -41,6 +41,12 @@ jobs:
       - name: Test with coverage
         run: pnpm vitest run --coverage
 
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/coverage-final.json
+          fail_ci_if_error: false
+
       - name: Check changeset
         if: github.event_name == 'pull_request'
         run: pnpm changeset status --since=origin/main
