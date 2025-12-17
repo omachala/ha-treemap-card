@@ -382,6 +382,82 @@ card_style: |
 
 ---
 
+## Sparkline
+
+Each rectangle can display a mini chart showing historical data. Sparklines require entities with long-term statistics enabled (most numeric sensors).
+
+```yaml
+type: custom:treemap-card
+entities:
+  - sensor.temperature_*
+sparkline:
+  period: 24h
+```
+
+### Sparkline Options
+
+| Option                 | Default | Description                                                       |
+| ---------------------- | ------- | ----------------------------------------------------------------- |
+| `sparkline.show`       | `true`  | Show/hide sparklines.                                             |
+| `sparkline.period`     | `24h`   | Time period: `12h`, `24h`, `7d`, or `30d`.                        |
+| `sparkline.mode`       | `dark`  | Color mode: `dark` (dark line/fill) or `light` (light line/fill). |
+| `sparkline.line.show`  | `true`  | Show/hide the line.                                               |
+| `sparkline.line.style` |         | Custom CSS for line (SVG properties).                             |
+| `sparkline.fill.show`  | `true`  | Show/hide the filled area under the line.                         |
+| `sparkline.fill.style` |         | Custom CSS for fill (SVG properties).                             |
+
+### Period Details
+
+| Period | Time Range | Data Points | Best For             |
+| ------ | ---------- | ----------- | -------------------- |
+| `12h`  | 12 hours   | ~144        | Detailed recent view |
+| `24h`  | 24 hours   | ~24         | Daily overview       |
+| `7d`   | 7 days     | ~168        | Weekly trends        |
+| `30d`  | 30 days    | ~30         | Monthly trends       |
+
+### Custom Styling Examples
+
+**Red line, no fill:**
+
+```yaml
+sparkline:
+  fill:
+    show: false
+  line:
+    style: |
+      stroke: rgba(255, 0, 0, 0.5);
+      stroke-width: 2;
+```
+
+**Thick white line with light fill:**
+
+```yaml
+sparkline:
+  mode: light
+  line:
+    style: |
+      stroke: rgba(255, 255, 255, 0.8);
+      stroke-width: 3;
+  fill:
+    style: |
+      fill: rgba(255, 255, 255, 0.2);
+```
+
+**Fill only, no line:**
+
+```yaml
+sparkline:
+  line:
+    show: false
+  fill:
+    style: |
+      fill: rgba(0, 0, 0, 0.3);
+```
+
+> **Note:** Sparklines only appear for entities that have long-term statistics in Home Assistant. Climate entities typically don't have statistics, but their associated temperature sensors do.
+
+---
+
 ## Size & Order guide
 
 > **Tip:** You may often prefer `size.equal: true` for a clean, uniform grid layout.

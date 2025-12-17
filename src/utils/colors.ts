@@ -64,7 +64,7 @@ export function parseColor(color: string): [number, number, number] | null {
 
 /**
  * Calculate relative luminance of a color (0 = dark, 1 = light)
- * Based on WCAG formula
+ * Based on WCAG formula - note: non-linear, mid gray ~= 0.21
  */
 export function getLuminance(r: number, g: number, b: number): number {
   const toLinear = (c: number) => {
@@ -72,6 +72,14 @@ export function getLuminance(r: number, g: number, b: number): number {
     return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
   };
   return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+}
+
+/**
+ * Calculate perceived brightness of a color (0 = dark, 1 = light)
+ * Uses simple weighted average - linear scale where 0.5 = mid gray
+ */
+export function getBrightness(r: number, g: number, b: number): number {
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 }
 
 /**
@@ -85,24 +93,21 @@ export interface ContrastColors {
 
 /**
  * Get contrasting text colors based on background
- * Icon is always white with opacity, label/value adapt to background
+ * All colors (icon, label, value) adapt to background brightness
  */
 export function getContrastColors(backgroundColor: string): ContrastColors {
   const rgb = parseColor(backgroundColor);
-  const useDark = rgb ? getLuminance(rgb[0], rgb[1], rgb[2]) > 0.5 : false;
-
-  // Icon is always white with slight opacity
-  const icon = 'rgba(255, 255, 255, 0.85)';
+  const useDark = rgb ? getBrightness(rgb[0], rgb[1], rgb[2]) > 0.5 : false;
 
   if (useDark) {
     return {
-      icon,
+      icon: 'rgba(0, 0, 0, 0.7)',
       label: 'rgba(0, 0, 0, 0.9)',
       value: 'rgba(0, 0, 0, 0.7)',
     };
   } else {
     return {
-      icon,
+      icon: 'rgba(255, 255, 255, 0.85)',
       label: 'white',
       value: 'rgba(255, 255, 255, 0.85)',
     };

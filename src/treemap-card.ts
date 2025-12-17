@@ -5,6 +5,8 @@ import { getNumber, getString } from './utils/predicates';
 import { isLightEntity, extractLightInfo } from './utils/lights';
 import { isClimateEntity, extractClimateInfo, getClimateValue } from './utils/climate';
 import { hsToRgb, parseColor, getContrastColors, interpolateColor } from './utils/colors';
+import { renderSparklineWithData } from './utils/sparkline';
+import { getHistoryData, type HistoryPeriod } from './utils/history';
 import { squarify } from './squarify';
 import { styles } from './styles';
 
@@ -35,6 +37,8 @@ export class TreemapCard extends LitElement {
 
   @property({ attribute: false }) public hass?: HomeAssistant;
   @state() private _config?: TreemapCardConfig;
+  @state() private _sparklineData = new Map<string, number[]>();
+  private _fetchingSparklines = false;
 
   public setConfig(config: TreemapCardConfig): void {
     if (!config.entities && !config.entity) {
@@ -48,6 +52,40 @@ export class TreemapCard extends LitElement {
 
   public getCardSize(): number {
     return 4;
+  }
+
+  protected override updated(): void {
+    void this._fetchSparklineData();
+  }
+
+  private async _fetchSparklineData(): Promise<void> {
+    if (!this.hass || this._fetchingSparklines) return;
+
+    // Check if sparklines are disabled
+    if (this._config?.sparkline?.show === false) return;
+
+    // Get entity IDs from resolved data
+    const data = this._resolveData();
+    const entityIds = data.map(d => d.entity_id).filter((id): id is string => !!id);
+
+    if (entityIds.length === 0) return;
+
+    this._fetchingSparklines = true;
+
+    try {
+      // Get period from config (default: 24h)
+      const period: HistoryPeriod = this._config?.sparkline?.period || '24h';
+
+      // Fetch history data (uses cache internally)
+      const historyData = await getHistoryData(this.hass, entityIds, period);
+
+      // Only update state if we got new data
+      if (historyData.size > 0 && historyData.size !== this._sparklineData.size) {
+        this._sparklineData = historyData;
+      }
+    } finally {
+      this._fetchingSparklines = false;
+    }
   }
 
   private _resolveData(): TreemapItem[] {
@@ -773,6 +811,18 @@ export class TreemapCard extends LitElement {
           : nothing}
         ${showValue
           ? html`<span class="treemap-value" style="${autoValueStyle}">${formattedValue}</span>`
+          : nothing}
+        ${this._config?.sparkline?.show !== false
+          ? html`<div class="treemap-sparkline">
+              ${renderSparklineWithData(
+                rect.entity_id ? this._sparklineData.get(rect.entity_id) : undefined,
+                {
+                  mode: this._config?.sparkline?.mode || 'dark',
+                  line: this._config?.sparkline?.line,
+                  fill: this._config?.sparkline?.fill,
+                }
+              )}
+            </div>`
           : nothing}
       </div>
     `;

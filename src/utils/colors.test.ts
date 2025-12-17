@@ -117,10 +117,10 @@ describe('getContrastColors', () => {
     expect(colors.value).toBe('rgba(255, 255, 255, 0.85)');
   });
 
-  it('always returns white icon with opacity', () => {
+  it('returns dark icon on light backgrounds and light icon on dark backgrounds', () => {
     const lightBg = getContrastColors('#ffffff');
     const darkBg = getContrastColors('#000000');
-    expect(lightBg.icon).toBe('rgba(255, 255, 255, 0.85)');
+    expect(lightBg.icon).toBe('rgba(0, 0, 0, 0.7)');
     expect(darkBg.icon).toBe('rgba(255, 255, 255, 0.85)');
   });
 

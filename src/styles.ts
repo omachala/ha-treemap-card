@@ -50,7 +50,6 @@ export const styles = css`
 
   .treemap-icon {
     --mdc-icon-size: 28px;
-    color: rgba(255, 255, 255, 0.5);
   }
 
   /* Pulsing animation for active HVAC states (heating/cooling) */
@@ -118,5 +117,28 @@ export const styles = css`
     color: var(--secondary-text-color, #727272);
     padding: 16px;
     text-align: center;
+  }
+
+  /* Sparkline styles */
+  .treemap-sparkline {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    pointer-events: none;
+  }
+
+  .treemap-sparkline svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .treemap-item.small .treemap-sparkline {
+    height: 14px;
+  }
+
+  .treemap-item.tiny .treemap-sparkline {
+    display: none;
   }
 `;

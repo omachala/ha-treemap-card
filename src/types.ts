@@ -12,6 +12,7 @@ export interface HassEntity {
 export interface HomeAssistant {
   states: Record<string, HassEntity>;
   callService: (domain: string, service: string, data?: Record<string, unknown>) => Promise<void>;
+  callWS: <T>(msg: Record<string, unknown>) => Promise<T>;
 }
 
 /**
@@ -105,6 +106,20 @@ export interface TreemapCardConfig {
   };
   // Custom CSS for the entire card
   card_style?: string;
+  // Sparkline configuration
+  sparkline?: {
+    show?: boolean; // Show sparklines (default: true)
+    period?: '12h' | '24h' | '7d' | '30d'; // Time period (default: '24h')
+    mode?: 'light' | 'dark'; // Color mode (default: 'dark')
+    line?: {
+      show?: boolean; // Show line (default: true)
+      style?: string; // Custom CSS for line (stroke, stroke-width, etc.)
+    };
+    fill?: {
+      show?: boolean; // Show fill (default: true)
+      style?: string; // Custom CSS for fill (fill color, opacity, etc.)
+    };
+  };
 }
 
 /**
