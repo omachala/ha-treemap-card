@@ -1,5 +1,11 @@
 # ha-treemap-card
 
+## 0.6.2
+
+### Patch Changes
+
+- 63de0dc: Improved release automation
+
 ## 0.6.1
 
 ### Patch Changes
