@@ -220,4 +220,69 @@ describe('squarify', () => {
     const ascFirst = ascResult.find(r => r.x === 0 && r.y === 0);
     expect(ascFirst?.label).toBe('Small');
   });
+
+  it('breaks row when adding item worsens aspect ratio', () => {
+    // Create items where adding the 3rd item would worsen the row's aspect ratio
+    // This triggers the break condition at lines 241-243
+    const items: TreemapItem[] = [
+      makeItem('A', 40),
+      makeItem('B', 40),
+      makeItem('C', 10),
+      makeItem('D', 10),
+    ];
+    const result = squarify(items, 100, 100);
+
+    expect(result).toHaveLength(4);
+    // All items should be placed
+    expect(result.map(r => r.label).sort()).toEqual(['A', 'B', 'C', 'D']);
+  });
+
+  it('corrects extremely wide rectangles', () => {
+    // Create a scenario that produces a wide rectangle needing correction
+    // Very wide container with items of very different sizes
+    const items: TreemapItem[] = [makeItem('Large', 90), makeItem('Tiny', 1)];
+    // Wide container to encourage wide rectangles
+    const result = squarify(items, 200, 50);
+
+    expect(result).toHaveLength(2);
+
+    // All rectangles should have aspect ratio <= 4 after post-processing
+    for (const rect of result) {
+      const aspectRatio = Math.max(rect.width / rect.height, rect.height / rect.width);
+      expect(aspectRatio).toBeLessThanOrEqual(4.1);
+    }
+  });
+
+  it('corrects extremely tall rectangles', () => {
+    // Create a scenario that produces a tall rectangle needing correction
+    const items: TreemapItem[] = [makeItem('Large', 90), makeItem('Tiny', 1)];
+    // Tall container to encourage tall rectangles
+    const result = squarify(items, 50, 200);
+
+    expect(result).toHaveLength(2);
+
+    // All rectangles should have aspect ratio <= 4 after post-processing
+    for (const rect of result) {
+      const aspectRatio = Math.max(rect.width / rect.height, rect.height / rect.width);
+      expect(aspectRatio).toBeLessThanOrEqual(4.1);
+    }
+  });
+
+  it('handles items that force grouping due to remaining count', () => {
+    // When only 1-3 items remain and row has items, they're forced together
+    // This triggers the forceAdd logic at line 239
+    const items: TreemapItem[] = [
+      makeItem('A', 50),
+      makeItem('B', 30),
+      makeItem('C', 15),
+      makeItem('D', 5),
+    ];
+    const result = squarify(items, 100, 100);
+
+    expect(result).toHaveLength(4);
+    // Verify all items are placed and have non-zero area
+    for (const rect of result) {
+      expect(rect.width * rect.height).toBeGreaterThan(0);
+    }
+  });
 });
