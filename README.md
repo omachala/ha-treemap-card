@@ -271,28 +271,14 @@ This lets you see temperature-based colors normally, but immediately spot which 
 
 ### Size
 
-| Option           | Default                   | Description                                                                                                    |
-| ---------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `size.param`     | same as `value.param`     | Field for sizing (JSON mode).                                                                                  |
-| `size.attribute` | same as `value.attribute` | Entity attribute for sizing (Entities mode). For climate: `temp_difference` works well with `inverse: true`.   |
-| `size.equal`     | `false`                   | All rectangles same size.                                                                                      |
-| `size.inverse`   | `false`                   | Low values get bigger rectangles.                                                                              |
-| `size.min`       | auto                      | Minimum size floor in entity units (e.g., `5` for 5W or 5C). Ensures zero-value items visible. `0` hides them. |
-| `size.max`       |                           | Maximum size cap in entity units (e.g., `500` for 500W). Prevents outliers from dominating the layout.         |
-
-> **Note:** `size.min` and `size.max` use the same units as your entity values, not percentages of the layout.
->
-> Example with valve sensors (0-100%):
->
-> - Valve A: 75%, Valve B: 50%, Valve C: 0%, Valve D: 0%
-> - **Default behavior:** Zero-value valves automatically get a small minimum size so they're visible
-> - `size.min: 10` - All valves below 10% are treated as 10% for sizing
-> - `size.min: 0` - Zero-value valves are hidden (no rectangle area)
->
-> Example with power sensors (0-3000W):
->
-> - One device at 2500W dominates the layout, others at 50-200W are tiny
-> - `size.max: 500` - Caps the 2500W device to 500W for sizing, giving other devices more visible space
+| Option           | Default                   | Description                                                                                                     |
+| ---------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `size.param`     | same as `value.param`     | Field for sizing (JSON mode).                                                                                   |
+| `size.attribute` | same as `value.attribute` | Entity attribute for sizing (Entities mode). For climate: `temp_difference` works well with `inverse: true`.    |
+| `size.equal`     | `false`                   | All rectangles same size.                                                                                       |
+| `size.inverse`   | `false`                   | Low values get bigger rectangles.                                                                               |
+| `size.min`       | auto                      | Minimum size floor in entity units (e.g., `5` for 5W or 5°C). Ensures zero-value items visible. `0` hides them. |
+| `size.max`       |                           | Maximum size cap in entity units (e.g., `500` for 500W). Prevents outliers from dominating the layout.          |
 
 ### Color
 
@@ -398,6 +384,10 @@ card_style: |
 
 ## Size & Order guide
 
+> **Tip:** You may often prefer `size.equal: true` for a clean, uniform grid layout.
+
+Below are common sizing and ordering configurations to achieve different visual effects:
+
 | What you want                                     | Configuration                        |
 | ------------------------------------------------- | ------------------------------------ |
 | Biggest values = biggest rectangles, shown first  | `order: desc` (default)              |
@@ -408,6 +398,20 @@ card_style: |
 | Hide zero-value items                             | `size.min: 0`                        |
 | Tame outliers (e.g., cap 1000W at 100W)           | `size.max: 100`                      |
 | Boost small items (e.g., 0-5 become 10)           | `size.min: 10`                       |
+
+> **Note:** `size.min` and `size.max` use the same units as your entity values, not percentages of the layout.
+>
+> Example with valve sensors (0-100%):
+>
+> - Valve A: 75%, Valve B: 50%, Valve C: 0%, Valve D: 0%
+> - **Default behavior:** Zero-value valves automatically get a small minimum size so they're visible
+> - `size.min: 10` - All valves below 10% are treated as 10% for sizing
+> - `size.min: 0` - Zero-value valves are hidden (no rectangle area)
+>
+> Example with power sensors (0-3000W):
+>
+> - One device at 2500W dominates the layout, others at 50-200W are tiny
+> - `size.max: 500` - Caps the 2500W device to 500W for sizing, giving other devices more visible space
 
 ---
 
