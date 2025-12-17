@@ -79,6 +79,8 @@ export interface TreemapCardConfig {
     param?: string; // Field name from data for sizing (default: same as value.param)
     attribute?: string; // Entity attribute for sizing (entities mode) - supports computed values like temp_difference
     inverse?: boolean; // Inverse sizing - low values get bigger rectangles (default: false)
+    min?: number; // Minimum size value floor (default: 5% of max, ensures 0-value items visible)
+    max?: number; // Maximum size value cap (useful for limiting outliers)
   };
   // Color gradient configuration
   color?: {

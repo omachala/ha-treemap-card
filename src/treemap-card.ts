@@ -538,6 +538,29 @@ export class TreemapCard extends LitElement {
       sortedData = sortedData.slice(0, this._config.limit);
     }
 
+    // Apply size.min and size.max to ensure all items are visible
+    // This must happen before squarify which filters out zero-sized items
+    const sizeMax = this._config?.size?.max;
+    const sizeMin = this._config?.size?.min;
+
+    // First apply max cap if configured
+    if (sizeMax !== undefined) {
+      for (const d of sortedData) {
+        if (d.sizeValue > sizeMax) {
+          d.sizeValue = sizeMax;
+        }
+      }
+    }
+
+    // Then apply min floor (default: 5% of max sizeValue)
+    const currentMax = Math.max(...sortedData.map(d => d.sizeValue), 1);
+    const effectiveMin = sizeMin ?? currentMax * 0.05;
+    for (const d of sortedData) {
+      if (d.sizeValue < effectiveMin) {
+        d.sizeValue = effectiveMin;
+      }
+    }
+
     // Generate treemap layout using sizeValue
     // If size.equal mode, give all items equal weight for sizing
     const equalSize = this._config?.size?.equal === true;
