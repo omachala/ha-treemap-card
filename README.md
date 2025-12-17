@@ -8,7 +8,7 @@
   <a href="https://github.com/hacs/integration"><img src="https://img.shields.io/badge/HACS-Default-blue.svg?style=for-the-badge" alt="HACS Default"></a>
   <a href="https://github.com/omachala/ha-treemap-card/releases"><img src="https://img.shields.io/github/downloads/omachala/ha-treemap-card/total?style=for-the-badge" alt="Downloads"></a>
   <a href="https://github.com/omachala/ha-treemap-card/releases"><img src="https://img.shields.io/github/v/release/omachala/ha-treemap-card?style=for-the-badge&color=blue" alt="Version"></a>
-  <a href="https://codecov.io/gh/omachala/ha-treemap-card"><img src="https://img.shields.io/codecov/c/github/omachala/ha-treemap-card?style=for-the-badge&color=darkgreen" alt="Coverage"></a>
+  <a href="https://codecov.io/gh/omachala/ha-treemap-card"><img src="https://img.shields.io/codecov/c/github/omachala/ha-treemap-card?style=for-the-badge" alt="Coverage"></a>
 </p>
 
 <p align="center">
