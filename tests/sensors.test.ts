@@ -203,4 +203,212 @@ describe('Sensor Entities', () => {
     const header = shadow?.querySelector('.treemap-header');
     expect(header?.textContent).toBe('My Custom Header');
   });
+
+  it('renders entities with zero values', async () => {
+    // Reproduces user report: valve sensors with 0% are not shown
+    // https://github.com/user/ha-treemap-card/issues/XX
+    const hass = mockHass([
+      mockEntity('sensor.valve_living_room', '75', {
+        friendly_name: 'Living Room Valve',
+        unit_of_measurement: '%',
+      }),
+      mockEntity('sensor.valve_bedroom', '50', {
+        friendly_name: 'Bedroom Valve',
+        unit_of_measurement: '%',
+      }),
+      mockEntity('sensor.valve_kitchen', '0', {
+        friendly_name: 'Kitchen Valve',
+        unit_of_measurement: '%',
+      }),
+      mockEntity('sensor.valve_bathroom', '0', {
+        friendly_name: 'Bathroom Valve',
+        unit_of_measurement: '%',
+      }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: ['sensor.valve_*'],
+    });
+    card.hass = hass;
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+
+    // All 4 valves should be rendered, including the ones with 0%
+    expect(items).toHaveLength(4);
+    expect(items.find(i => i.label === 'Living Room Valve')).toBeDefined();
+    expect(items.find(i => i.label === 'Bedroom Valve')).toBeDefined();
+    expect(items.find(i => i.label === 'Kitchen Valve')).toBeDefined();
+    expect(items.find(i => i.label === 'Bathroom Valve')).toBeDefined();
+
+    // Zero-value items should have non-zero dimensions (visible)
+    const kitchen = items.find(i => i.label === 'Kitchen Valve');
+    const bathroom = items.find(i => i.label === 'Bathroom Valve');
+    expect(kitchen!.width).toBeGreaterThan(0);
+    expect(kitchen!.height).toBeGreaterThan(0);
+    expect(bathroom!.width).toBeGreaterThan(0);
+    expect(bathroom!.height).toBeGreaterThan(0);
+  });
+
+  it('respects explicit size.min config', async () => {
+    const hass = mockHass([
+      mockEntity('sensor.large', '100', { friendly_name: 'Large' }),
+      mockEntity('sensor.small', '5', { friendly_name: 'Small' }),
+      mockEntity('sensor.zero', '0', { friendly_name: 'Zero' }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: ['sensor.*'],
+      size: { min: 20 }, // Explicit minimum of 20
+    });
+    card.hass = hass;
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    expect(items).toHaveLength(3);
+
+    // All items visible, zero and small get boosted to min
+    const large = items.find(i => i.label === 'Large');
+    const small = items.find(i => i.label === 'Small');
+    const zero = items.find(i => i.label === 'Zero');
+
+    expect(large).toBeDefined();
+    expect(small).toBeDefined();
+    expect(zero).toBeDefined();
+
+    // Small and zero should have similar sizes (both at min floor)
+    const smallArea = small!.width * small!.height;
+    const zeroArea = zero!.width * zero!.height;
+    expect(smallArea).toBeCloseTo(zeroArea, 0);
+  });
+
+  it('respects size.max config to cap outliers', async () => {
+    const hass = mockHass([
+      mockEntity('sensor.outlier', '1000', { friendly_name: 'Outlier' }),
+      mockEntity('sensor.normal_a', '50', { friendly_name: 'Normal A' }),
+      mockEntity('sensor.normal_b', '40', { friendly_name: 'Normal B' }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: ['sensor.*'],
+      size: { max: 100 }, // Cap outlier at 100
+    });
+    card.hass = hass;
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    expect(items).toHaveLength(3);
+
+    // Outlier should be capped, so normal items get reasonable space
+    const outlier = items.find(i => i.label === 'Outlier');
+    const normalA = items.find(i => i.label === 'Normal A');
+
+    expect(outlier).toBeDefined();
+    expect(normalA).toBeDefined();
+
+    // Without cap, outlier would be ~20x larger than normal
+    // With cap at 100, outlier is only 2x larger
+    const outlierArea = outlier!.width * outlier!.height;
+    const normalArea = normalA!.width * normalA!.height;
+    const ratio = outlierArea / normalArea;
+
+    // Ratio should be reasonable (< 5x), not extreme (20x)
+    expect(ratio).toBeLessThan(5);
+  });
+
+  it('allows size.min: 0 to hide zero-value items', async () => {
+    const hass = mockHass([
+      mockEntity('sensor.visible', '50', { friendly_name: 'Visible' }),
+      mockEntity('sensor.hidden', '0', { friendly_name: 'Hidden' }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: ['sensor.*'],
+      size: { min: 0 }, // Disable smart default, keep zero as zero
+    });
+    card.hass = hass;
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+
+    // Zero-value item should be filtered out by squarify (sizeValue = 0)
+    expect(items).toHaveLength(1);
+    expect(items.find(i => i.label === 'Visible')).toBeDefined();
+    expect(items.find(i => i.label === 'Hidden')).toBeUndefined();
+  });
+
+  it('respects both size.min and size.max together', async () => {
+    const hass = mockHass([
+      mockEntity('sensor.outlier', '500', { friendly_name: 'Outlier' }),
+      mockEntity('sensor.normal', '50', { friendly_name: 'Normal' }),
+      mockEntity('sensor.small', '5', { friendly_name: 'Small' }),
+      mockEntity('sensor.zero', '0', { friendly_name: 'Zero' }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: ['sensor.*'],
+      size: { min: 10, max: 100 }, // Floor at 10, cap at 100
+    });
+    card.hass = hass;
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    expect(items).toHaveLength(4);
+
+    const outlier = items.find(i => i.label === 'Outlier');
+    const normal = items.find(i => i.label === 'Normal');
+    const small = items.find(i => i.label === 'Small');
+    const zero = items.find(i => i.label === 'Zero');
+
+    // All should be visible
+    expect(outlier).toBeDefined();
+    expect(normal).toBeDefined();
+    expect(small).toBeDefined();
+    expect(zero).toBeDefined();
+
+    // Outlier (500) capped to 100, normal (50) unchanged
+    // So outlier should be ~2x normal, not 10x
+    const outlierArea = outlier!.width * outlier!.height;
+    const normalArea = normal!.width * normal!.height;
+    expect(outlierArea / normalArea).toBeLessThan(4);
+
+    // Small (5) and zero (0) both floored to 10, should be similar size
+    const smallArea = small!.width * small!.height;
+    const zeroArea = zero!.width * zero!.height;
+    expect(smallArea).toBeCloseTo(zeroArea, 0);
+  });
+
+  it('ignores size.min and size.max when size.equal is true', async () => {
+    const hass = mockHass([
+      mockEntity('sensor.large', '1000', { friendly_name: 'Large' }),
+      mockEntity('sensor.medium', '50', { friendly_name: 'Medium' }),
+      mockEntity('sensor.small', '5', { friendly_name: 'Small' }),
+      mockEntity('sensor.zero', '0', { friendly_name: 'Zero' }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: ['sensor.*'],
+      size: { equal: true, min: 20, max: 100 }, // min/max should be ignored
+    });
+    card.hass = hass;
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    expect(items).toHaveLength(4);
+
+    // With equal size, all items should have the same area
+    const areas = items.map(i => i.width * i.height);
+    const avgArea = areas.reduce((a, b) => a + b, 0) / areas.length;
+
+    for (const area of areas) {
+      // All areas should be within 1% of average (essentially equal)
+      expect(area).toBeCloseTo(avgArea, 0);
+    }
+  });
 });

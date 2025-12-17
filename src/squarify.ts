@@ -196,12 +196,13 @@ export function squarify(
   const totalSizeValue = sizeValues.reduce((a, b) => a + b, 0);
 
   // Filter and map with indices preserved
+  // Note: size.min is applied before squarify, so all items should have sizeValue > 0
   const validItems: { item: TreemapItem; absValue: number; sizeValue: number }[] = [];
   for (let i = 0; i < items.length; i++) {
     const absValue = absValues[i];
     const sizeValue = sizeValues[i];
     const item = items[i];
-    if (absValue !== undefined && absValue > 0 && sizeValue !== undefined && item) {
+    if (absValue !== undefined && sizeValue !== undefined && sizeValue > 0 && item) {
       validItems.push({ item, absValue, sizeValue });
     }
   }
