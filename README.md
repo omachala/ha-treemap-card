@@ -415,6 +415,20 @@ Below are common sizing and ordering configurations to achieve different visual 
 
 ---
 
+## Resources
+
+<a href="https://www.youtube.com/watch?v=1ERc6cNRFZQ">
+  <img src="https://img.youtube.com/vi/1ERc6cNRFZQ/mqdefault.jpg" alt="Video" width="160" align="left" style="margin-right: 12px;">
+</a>
+
+**[2 New HACS Energy Cards You NEED in Home Assistant](https://www.youtube.com/watch?v=1ERc6cNRFZQ)**<br>
+by BeardedTinker<br>
+<img src="https://img.shields.io/badge/YouTube-FF0000?style=flat&logo=youtube&logoColor=white" alt="YouTube">
+
+<br clear="left">
+
+---
+
 ## Contributing
 
 Contributions and feedback are warmly welcomed! Feel free to open an issue or submit a pull request.
