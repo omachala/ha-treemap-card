@@ -14,7 +14,7 @@ declare const __VERSION__: string;
 const CARD_VERSION = __VERSION__;
 
 console.info(
-  `%c TREEMAP-CARD %c v${CARD_VERSION} `,
+  `%c TREEMAP-CARD %c v${CARD_VERSION}`,
   'color: white; background: #3498db; font-weight: bold;',
   'color: #3498db; background: white; font-weight: bold;'
 );
@@ -27,7 +27,7 @@ function matchesPattern(entityId: string, pattern: string): boolean {
   if (!pattern.includes('*')) {
     return entityId === pattern;
   }
-  const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+  const regex = new RegExp('^' + pattern.replaceAll('*', '.*') + '$');
   return regex.test(entityId);
 }
 
@@ -132,11 +132,11 @@ export class TreemapCard extends LitElement {
         const entity = this.hass.states[entityId];
         if (!entity) continue;
 
-        const labelAttr = this._config?.label?.attribute || 'friendly_name';
+        const labelAttribute = this._config?.label?.attribute || 'friendly_name';
         const label =
-          labelAttr === 'entity_id'
+          labelAttribute === 'entity_id'
             ? entityId
-            : String(entity.attributes[labelAttr] ?? entityId.split('.').pop());
+            : String(entity.attributes[labelAttribute] ?? entityId.split('.').pop());
 
         const icon = getString(entity.attributes['icon']);
 
@@ -173,53 +173,65 @@ export class TreemapCard extends LitElement {
           const climateInfo = extractClimateInfo(entity);
 
           // Determine what to display/size/color based on config
-          const valueAttr = this._config?.value?.attribute || 'current_temperature';
-          const sizeAttr = this._config?.size?.attribute || valueAttr;
-          const colorAttr = this._config?.color?.attribute || valueAttr;
+          const valueAttribute = this._config?.value?.attribute || 'current_temperature';
+          const sizeAttribute = this._config?.size?.attribute || valueAttribute;
+          const colorAttribute = this._config?.color?.attribute || valueAttribute;
 
           // Get values (supports computed attributes like temp_difference, temp_offset)
-          let displayValue = getClimateValue(climateInfo, valueAttr);
-          let sizeValue = getClimateValue(climateInfo, sizeAttr);
-          let colorValue = getClimateValue(climateInfo, colorAttr);
+          let displayValue = getClimateValue(climateInfo, valueAttribute);
+          let sizeValue = getClimateValue(climateInfo, sizeAttribute);
+          let colorValue = getClimateValue(climateInfo, colorAttribute);
 
           // Fall back to entity attributes if not a computed value
           if (displayValue === null) {
-            displayValue = getNumber(entity.attributes[valueAttr]) ?? 0;
+            displayValue = getNumber(entity.attributes[valueAttribute]) ?? 0;
           }
           if (sizeValue === null) {
-            sizeValue = getNumber(entity.attributes[sizeAttr]) ?? 0;
+            sizeValue = getNumber(entity.attributes[sizeAttribute]) ?? 0;
           }
           if (colorValue === null) {
-            colorValue = getNumber(entity.attributes[colorAttr]) ?? 0;
+            colorValue = getNumber(entity.attributes[colorAttribute]) ?? 0;
           }
 
           // For numeric operations, convert to numbers
-          const numDisplayValue = typeof displayValue === 'number' ? displayValue : 0;
+          const numberDisplayValue = typeof displayValue === 'number' ? displayValue : 0;
           // Ensure sizeValue has a minimum so items are always visible
-          const numSizeValue =
+          const numberSizeValue =
             typeof sizeValue === 'number' ? Math.max(0.1, Math.abs(sizeValue)) : 0.1;
-          const numColorValue = typeof colorValue === 'number' ? colorValue : 0;
+          const numberColorValue = typeof colorValue === 'number' ? colorValue : 0;
 
           // Determine icon: use entity's custom icon if set, otherwise base on hvac_action
           let climateIcon: string;
           if (icon) {
             // Entity has a custom icon set - use it
             climateIcon = icon;
-          } else if (climateInfo.hvacAction === 'heating') {
-            climateIcon = 'mdi:fire';
-          } else if (climateInfo.hvacAction === 'cooling') {
-            climateIcon = 'mdi:snowflake';
-          } else if (climateInfo.hvacAction === 'off') {
-            climateIcon = 'mdi:thermostat-off';
-          } else {
-            climateIcon = 'mdi:thermostat';
-          }
+          } else
+            switch (climateInfo.hvacAction) {
+              case 'heating': {
+                climateIcon = 'mdi:fire';
+
+                break;
+              }
+              case 'cooling': {
+                climateIcon = 'mdi:snowflake';
+
+                break;
+              }
+              case 'off': {
+                climateIcon = 'mdi:thermostat-off';
+
+                break;
+              }
+              default: {
+                climateIcon = 'mdi:thermostat';
+              }
+            }
 
           items.push({
             label,
-            value: numDisplayValue,
-            sizeValue: numSizeValue,
-            colorValue: numColorValue,
+            value: numberDisplayValue,
+            sizeValue: numberSizeValue,
+            colorValue: numberColorValue,
             entity_id: entityId,
             icon: climateIcon,
             unit: getString(entity.attributes['unit_of_measurement']),
@@ -229,15 +241,15 @@ export class TreemapCard extends LitElement {
         }
 
         // Standard entity handling
-        const valueAttr = this._config?.value?.attribute || 'state';
+        const valueAttribute = this._config?.value?.attribute || 'state';
         let value: number;
-        if (valueAttr === 'state') {
-          value = parseFloat(entity.state);
+        if (valueAttribute === 'state') {
+          value = Number.parseFloat(entity.state);
         } else {
-          value = parseFloat(String(entity.attributes[valueAttr] ?? 0));
+          value = Number.parseFloat(String(entity.attributes[valueAttribute] ?? 0));
         }
 
-        if (isNaN(value)) continue;
+        if (Number.isNaN(value)) continue;
 
         const unit = getString(entity.attributes['unit_of_measurement']);
 
@@ -263,18 +275,20 @@ export class TreemapCard extends LitElement {
     if (!entity) return [];
 
     // Get data attribute name from config, default to 'items'
-    const dataAttr = this._config?.data_attribute || 'items';
-    const data = entity.attributes[dataAttr];
+    const dataAttribute = this._config?.data_attribute || 'items';
+    const data = entity.attributes[dataAttribute];
 
     if (!Array.isArray(data)) return [];
 
     // Get field mappings from config (attribute is primary, param is deprecated alias)
-    const labelAttr = this._config?.label?.attribute ?? this._config?.label?.param ?? 'label';
-    const valueAttr = this._config?.value?.attribute ?? this._config?.value?.param ?? 'value';
-    const sizeAttr = this._config?.size?.attribute ?? this._config?.size?.param ?? valueAttr;
-    const colorAttr = this._config?.color?.attribute ?? this._config?.color?.param ?? valueAttr;
-    const iconAttr = this._config?.icon?.attribute ?? this._config?.icon?.param ?? 'icon';
-    const sparklineAttr = this._config?.sparkline?.attribute;
+    const labelAttribute = this._config?.label?.attribute ?? this._config?.label?.param ?? 'label';
+    const valueAttribute = this._config?.value?.attribute ?? this._config?.value?.param ?? 'value';
+    const sizeAttribute =
+      this._config?.size?.attribute ?? this._config?.size?.param ?? valueAttribute;
+    const colorAttribute =
+      this._config?.color?.attribute ?? this._config?.color?.param ?? valueAttribute;
+    const iconAttribute = this._config?.icon?.attribute ?? this._config?.icon?.param ?? 'icon';
+    const sparklineAttribute = this._config?.sparkline?.attribute;
 
     return data
       .filter((item): item is Record<string, unknown> => {
@@ -283,24 +297,24 @@ export class TreemapCard extends LitElement {
       .map(item => {
         // Extract sparkline data if configured
         let sparklineData: number[] | undefined;
-        if (sparklineAttr) {
-          const rawData = item[sparklineAttr];
+        if (sparklineAttribute) {
+          const rawData = item[sparklineAttribute];
           if (Array.isArray(rawData)) {
             sparklineData = rawData.filter((v): v is number => typeof v === 'number');
           }
         }
 
         return {
-          label: String(item[labelAttr] ?? item['label'] ?? ''),
-          value: Number(item[valueAttr] ?? 0),
-          sizeValue: Math.abs(Number(item[sizeAttr] ?? item[valueAttr] ?? 0)),
-          colorValue: Number(item[colorAttr] ?? item[valueAttr] ?? 0),
-          icon: getString(item[iconAttr]),
+          label: String(item[labelAttribute] ?? item['label'] ?? ''),
+          value: Number(item[valueAttribute] ?? 0),
+          sizeValue: Math.abs(Number(item[sizeAttribute] ?? item[valueAttribute] ?? 0)),
+          colorValue: Number(item[colorAttribute] ?? item[valueAttribute] ?? 0),
+          icon: getString(item[iconAttribute]),
           entity_id: getString(item['entity_id']),
           sparklineData,
         };
       })
-      .filter(item => item.label && !isNaN(item.value));
+      .filter(item => item.label && !Number.isNaN(item.value));
   }
 
   private _getColorHigh(): string {
@@ -415,22 +429,27 @@ export class TreemapCard extends LitElement {
 
     let color: string | undefined;
     switch (hvacAction) {
-      case 'heating':
+      case 'heating': {
         color = hvacConfig.heating ?? defaults.heating;
         break;
-      case 'cooling':
+      }
+      case 'cooling': {
         color = hvacConfig.cooling ?? defaults.cooling;
         break;
-      case 'idle':
+      }
+      case 'idle': {
         color = hvacConfig.idle ?? defaults.idle;
         break;
+      }
       case 'off':
-      case null:
+      case null: {
         // HA often reports null hvac_action when thermostat is off
         color = hvacConfig.off ?? defaults.off;
         break;
-      default:
+      }
+      default: {
         color = defaults.idle;
+      }
     }
 
     if (opacity !== undefined && color) {
@@ -494,9 +513,9 @@ export class TreemapCard extends LitElement {
     // Dimmable-only light: yellow with brightness as opacity
     const onColor = this._getLightColorOn();
     const hex = onColor.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
+    const r = Number.parseInt(hex.slice(0, 2), 16);
+    const g = Number.parseInt(hex.slice(2, 4), 16);
+    const b = Number.parseInt(hex.slice(4, 6), 16);
     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
   }
 
@@ -559,19 +578,19 @@ export class TreemapCard extends LitElement {
     if (this._config?.size?.inverse) {
       const maxSize = Math.max(...data.map(d => d.sizeValue));
       const minSize = Math.min(...data.map(d => d.sizeValue));
-      data.forEach(d => {
+      for (const d of data) {
         d.sizeValue = maxSize + minSize - d.sizeValue;
-      });
+      }
       // Ensure minimum floor after inverse to prevent extreme ratios
       // Without this, items with original max values become near-zero after inverse,
       // and then get destroyed by sqrt compression in squarify
       const invertedMax = Math.max(...data.map(d => d.sizeValue));
       const minFloor = invertedMax * 0.1; // At least 10% of max
-      data.forEach(d => {
+      for (const d of data) {
         if (d.sizeValue < minFloor) {
           d.sizeValue = minFloor;
         }
-      });
+      }
     }
 
     // Sort data by sizeValue
@@ -654,8 +673,8 @@ export class TreemapCard extends LitElement {
     // Dynamic height based on number of rows (not items)
     // Count unique Y positions to estimate rows
     const uniqueYPositions = new Set(rects.map(r => Math.round(r.y)));
-    const numRows = Math.max(1, uniqueYPositions.size);
-    const baseHeight = Math.max(150, numRows * 100); // 100px per row, min 150px
+    const numberRows = Math.max(1, uniqueYPositions.size);
+    const baseHeight = Math.max(150, numberRows * 100); // 100px per row, min 150px
     const height = this._config.height ?? baseHeight;
     const gap = this._config.gap ?? 6;
 
@@ -774,8 +793,8 @@ export class TreemapCard extends LitElement {
     const formattedLabel = `${labelPrefix}${displayLabel}${labelSuffix}`;
 
     // Add + sign for positive temp_offset values (negative already has -, zero has no sign)
-    const isTempOffset = this._config?.value?.attribute === 'temp_offset';
-    const signPrefix = isTempOffset && rect.value > 0 ? '+' : '';
+    const isTemperatureOffset = this._config?.value?.attribute === 'temp_offset';
+    const signPrefix = isTemperatureOffset && rect.value > 0 ? '+' : '';
 
     // If prefix or suffix is defined, use only those. Otherwise, auto-append unit from entity.
     const hasCustomFormat = valuePrefix !== undefined || valueSuffix !== undefined;

@@ -47,7 +47,7 @@ describe('squarify', () => {
 
     // Total area should be preserved
     const totalArea = result.reduce((sum, r) => sum + r.width * r.height, 0);
-    expect(totalArea).toBeCloseTo(10000);
+    expect(totalArea).toBeCloseTo(10_000);
 
     // Each item should have roughly half the area
     for (const rect of result) {
@@ -131,7 +131,7 @@ describe('squarify', () => {
     expect(result).toHaveLength(2);
 
     const totalArea = result.reduce((sum, r) => sum + r.width * r.height, 0);
-    expect(totalArea).toBeCloseTo(10000);
+    expect(totalArea).toBeCloseTo(10_000);
   });
 
   it('places largest items first by default (descending)', () => {

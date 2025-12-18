@@ -16,13 +16,13 @@ export function isLightEntity(entityId: string): boolean {
  * Extract light color information from entity attributes
  */
 export function extractLightInfo(entity: HassEntity): LightColorInfo {
-  const attrs = entity.attributes;
+  const attributes = entity.attributes;
   const isOn = entity.state === 'on';
-  const brightnessRaw = getNumber(attrs['brightness']);
+  const brightnessRaw = getNumber(attributes['brightness']);
   const brightness = isOn ? Math.round(((brightnessRaw ?? 255) / 255) * 100) : 0;
 
   // Check supported color modes
-  const supportedModes = getStringArray(attrs['supported_color_modes']);
+  const supportedModes = getStringArray(attributes['supported_color_modes']);
   const supportsColor = supportedModes.some(mode =>
     ['rgb', 'rgbw', 'rgbww', 'hs', 'xy'].includes(mode)
   );
@@ -35,8 +35,8 @@ export function extractLightInfo(entity: HassEntity): LightColorInfo {
 
   // Extract color if available
   if (isOn && supportsColor) {
-    const rgbColor = getRgbColor(attrs['rgb_color']);
-    const hsColor = getHsColor(attrs['hs_color']);
+    const rgbColor = getRgbColor(attributes['rgb_color']);
+    const hsColor = getHsColor(attributes['hs_color']);
 
     if (rgbColor) {
       result.rgb = rgbColor;

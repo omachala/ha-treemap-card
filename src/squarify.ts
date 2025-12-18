@@ -21,13 +21,13 @@ function worst(row: number[], width: number): number {
   if (row.length === 0) return Infinity;
 
   const sum = row.reduce((a, b) => a + b, 0);
-  const maxVal = Math.max(...row);
-  const minVal = Math.min(...row);
+  const maxValue = Math.max(...row);
+  const minValue = Math.min(...row);
 
   const w2 = width * width;
   const s2 = sum * sum;
 
-  return Math.max((w2 * maxVal) / s2, s2 / (w2 * minVal));
+  return Math.max((w2 * maxValue) / s2, s2 / (w2 * minValue));
 }
 
 /**
@@ -39,7 +39,7 @@ function layoutRow(
   container: Container,
   vertical: boolean
 ): { rects: TreemapRect[]; remaining: Container } {
-  const sum = row.reduce((acc, r) => acc + r.normalizedValue, 0);
+  const sum = row.reduce((accumulator, r) => accumulator + r.normalizedValue, 0);
 
   const rects: TreemapRect[] = [];
   let offset = 0;
@@ -146,7 +146,7 @@ function gridLayout(
     ascending ? a.value - b.value : b.value - a.value
   );
 
-  return sortedItems.map((item, i) => ({
+  return sortedItems.map((item, index) => ({
     label: item.label,
     value: item.value,
     sizeValue: item.sizeValue,
@@ -156,8 +156,8 @@ function gridLayout(
     light: item.light,
     climate: item.climate,
     sparklineData: item.sparklineData,
-    x: (i % cols) * cellWidth,
-    y: Math.floor(i / cols) * cellHeight,
+    x: (index % cols) * cellWidth,
+    y: Math.floor(index / cols) * cellHeight,
     width: cellWidth,
     height: cellHeight,
   }));
@@ -201,10 +201,9 @@ export function squarify(
   // Filter and map with indices preserved
   // Note: size.min is applied before squarify, so all items should have sizeValue > 0
   const validItems: { item: TreemapItem; absValue: number; sizeValue: number }[] = [];
-  for (let i = 0; i < items.length; i++) {
-    const absValue = absValues[i];
-    const sizeValue = sizeValues[i];
-    const item = items[i];
+  for (const [index, item] of items.entries()) {
+    const absValue = absValues[index];
+    const sizeValue = sizeValues[index];
     if (absValue !== undefined && sizeValue !== undefined && sizeValue > 0 && item) {
       validItems.push({ item, absValue, sizeValue });
     }

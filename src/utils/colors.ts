@@ -43,9 +43,9 @@ export function parseColor(color: string): [number, number, number] | null {
   if (color.startsWith('#')) {
     const hex = color.replace('#', '');
     return [
-      parseInt(hex.substring(0, 2), 16),
-      parseInt(hex.substring(2, 4), 16),
-      parseInt(hex.substring(4, 6), 16),
+      Number.parseInt(hex.slice(0, 2), 16),
+      Number.parseInt(hex.slice(2, 4), 16),
+      Number.parseInt(hex.slice(4, 6), 16),
     ];
   }
 
@@ -53,9 +53,9 @@ export function parseColor(color: string): [number, number, number] | null {
   const rgbMatch = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(color);
   if (rgbMatch) {
     return [
-      parseInt(rgbMatch[1] ?? '0', 10),
-      parseInt(rgbMatch[2] ?? '0', 10),
-      parseInt(rgbMatch[3] ?? '0', 10),
+      Number.parseInt(rgbMatch[1] ?? '0', 10),
+      Number.parseInt(rgbMatch[2] ?? '0', 10),
+      Number.parseInt(rgbMatch[3] ?? '0', 10),
     ];
   }
 
@@ -63,14 +63,18 @@ export function parseColor(color: string): [number, number, number] | null {
 }
 
 /**
+ * Convert sRGB channel value to linear RGB for luminance calculation
+ */
+function toLinear(channel: number): number {
+  const normalized = channel / 255;
+  return normalized <= 0.039_28 ? normalized / 12.92 : Math.pow((normalized + 0.055) / 1.055, 2.4);
+}
+
+/**
  * Calculate relative luminance of a color (0 = dark, 1 = light)
  * Based on WCAG formula - note: non-linear, mid gray ~= 0.21
  */
 export function getLuminance(r: number, g: number, b: number): number {
-  const toLinear = (c: number) => {
-    const s = c / 255;
-    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
-  };
   return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
 }
 
@@ -126,13 +130,13 @@ export function interpolateColor(
   const hex1 = color1.replace('#', '');
   const hex2 = color2.replace('#', '');
 
-  const r1 = parseInt(hex1.substring(0, 2), 16);
-  const g1 = parseInt(hex1.substring(2, 4), 16);
-  const b1 = parseInt(hex1.substring(4, 6), 16);
+  const r1 = Number.parseInt(hex1.slice(0, 2), 16);
+  const g1 = Number.parseInt(hex1.slice(2, 4), 16);
+  const b1 = Number.parseInt(hex1.slice(4, 6), 16);
 
-  const r2 = parseInt(hex2.substring(0, 2), 16);
-  const g2 = parseInt(hex2.substring(2, 4), 16);
-  const b2 = parseInt(hex2.substring(4, 6), 16);
+  const r2 = Number.parseInt(hex2.slice(0, 2), 16);
+  const g2 = Number.parseInt(hex2.slice(2, 4), 16);
+  const b2 = Number.parseInt(hex2.slice(4, 6), 16);
 
   const r = Math.round(r1 + (r2 - r1) * factor);
   const g = Math.round(g1 + (g2 - g1) * factor);

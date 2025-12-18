@@ -30,15 +30,15 @@ export function getSparklinePoints(
   const { width = 100, height = 20 } = options;
   const verticalPadding = 1; // Small padding top/bottom for line visibility
 
-  const minVal = Math.min(...data);
-  const maxVal = Math.max(...data);
-  const range = maxVal - minVal || 1;
+  const minValue = Math.min(...data);
+  const maxValue = Math.max(...data);
+  const range = maxValue - minValue || 1;
 
   const linePoints = data
-    .map((val, i) => {
-      const x = (i / (data.length - 1)) * width;
+    .map((value, index) => {
+      const x = (index / (data.length - 1)) * width;
       const y =
-        height - verticalPadding - ((val - minVal) / range) * (height - verticalPadding * 2);
+        height - verticalPadding - ((value - minValue) / range) * (height - verticalPadding * 2);
       return `${x.toFixed(1)},${y.toFixed(1)}`;
     })
     .join(' ');
