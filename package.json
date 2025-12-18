@@ -6,7 +6,8 @@
   "main": "dist/treemap-card.js",
   "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "dev": "vite build --watch --outDir /home/ondrej/dockers/homeassistant/config/www --emptyOutDir=false",
+    "dev": "vite serve --config vite.dev.config.ts",
+    "dev:ha": "vite build --watch --outDir /home/ondrej/dockers/homeassistant/config/www --emptyOutDir=false",
     "build": "vite build",
     "ha": "./deploy.sh",
     "test": "vitest",

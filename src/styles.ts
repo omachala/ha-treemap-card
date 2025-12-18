@@ -50,6 +50,7 @@ export const styles = css`
 
   .treemap-icon {
     --mdc-icon-size: 28px;
+    opacity: 0.85;
   }
 
   /* Pulsing animation for active HVAC states (heating/cooling) */
@@ -76,12 +77,14 @@ export const styles = css`
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 100%;
+    opacity: 0.9;
   }
 
   .treemap-value {
     font-size: 14px;
     font-weight: 500;
     color: rgba(255, 255, 255, 0.85);
+    opacity: 0.85;
   }
 
   .treemap-item.small .treemap-icon {

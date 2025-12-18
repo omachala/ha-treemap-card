@@ -113,7 +113,7 @@ describe('getContrastColors', () => {
 
   it('returns light text for dark backgrounds', () => {
     const colors = getContrastColors('#000000');
-    expect(colors.label).toBe('white');
+    expect(colors.label).toBe('rgba(255, 255, 255, 0.95)');
     expect(colors.value).toBe('rgba(255, 255, 255, 0.85)');
   });
 
@@ -126,7 +126,7 @@ describe('getContrastColors', () => {
 
   it('handles invalid color strings gracefully', () => {
     const colors = getContrastColors('invalid');
-    expect(colors.label).toBe('white');
+    expect(colors.label).toBe('rgba(255, 255, 255, 0.95)');
     expect(colors.value).toBe('rgba(255, 255, 255, 0.85)');
   });
 });

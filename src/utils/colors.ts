@@ -108,7 +108,7 @@ export function getContrastColors(backgroundColor: string): ContrastColors {
   } else {
     return {
       icon: 'rgba(255, 255, 255, 0.85)',
-      label: 'white',
+      label: 'rgba(255, 255, 255, 0.95)',
       value: 'rgba(255, 255, 255, 0.85)',
     };
   }

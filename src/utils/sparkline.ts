@@ -52,22 +52,31 @@ export function getSparklinePoints(
 /**
  * Get sparkline colors based on mode.
  */
-function getSparklineColors(mode: SparklineMode): { line: string; fill: string } {
+function getSparklineColors(mode: SparklineMode): {
+  line: string;
+  fillTop: string;
+  fillBottom: string;
+} {
   if (mode === 'light') {
     return {
       line: 'rgba(255, 255, 255, 0.25)',
-      fill: 'rgba(255, 255, 255, 0.15)',
+      fillTop: 'rgba(255, 255, 255, 0.25)',
+      fillBottom: 'rgba(255, 255, 255, 0.12)',
     };
   }
   // dark mode (default)
   return {
-    line: 'rgba(0, 0, 0, 0.2)',
-    fill: 'rgba(0, 0, 0, 0.12)',
+    line: 'rgba(0, 0, 0, 0.15)',
+    fillTop: 'rgba(0, 0, 0, 0.2)',
+    fillBottom: 'rgba(0, 0, 0, 0.1)',
   };
 }
 
+// Counter for unique gradient IDs
+let gradientIdCounter = 0;
+
 /**
- * Render a sparkline SVG with fill and line.
+ * Render a sparkline SVG with gradient fill and line.
  */
 export function renderSparkline(data: number[], options: SparklineOptions = {}): SVGTemplateResult {
   const { width = 100, height = 20, mode = 'dark', line, fill } = options;
@@ -75,14 +84,32 @@ export function renderSparkline(data: number[], options: SparklineOptions = {}):
   const colors = getSparklineColors(mode);
 
   const showFill = fill?.show !== false;
-  const showLine = line?.show !== false;
+  const showLine = line?.show !== false; // Line visible by default
 
-  // Build styles: custom style overrides defaults
-  const fillStyle = fill?.style || `fill: ${colors.fill};`;
-  const lineStyle = line?.style || `stroke: ${colors.line}; stroke-width: 1.5;`;
+  // Generate unique gradient ID for this sparkline
+  const gradientId = `sparkline-gradient-${gradientIdCounter++}`;
+
+  // Custom fill style overrides gradient
+  const useCustomFill = !!fill?.style;
+  const fillStyle = fill?.style || `fill: url(#${gradientId});`;
+  // Default stroke color is always applied, custom style can override or add properties
+  const defaultLineStyle = `stroke: ${colors.line}; stroke-width: 1.5;`;
+  const lineStyle = line?.style ? `${defaultLineStyle} ${line.style}` : defaultLineStyle;
 
   return svg`
     <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+      ${
+        showFill && !useCustomFill
+          ? svg`
+        <defs>
+          <linearGradient id="${gradientId}" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color: ${colors.fillTop};" />
+            <stop offset="100%" style="stop-color: ${colors.fillBottom};" />
+          </linearGradient>
+        </defs>
+      `
+          : nothing
+      }
       ${showFill ? svg`<polygon points="${fillPoints}" style="${fillStyle}" />` : nothing}
       ${showLine ? svg`<polyline points="${linePoints}" style="fill: none; stroke-linecap: round; stroke-linejoin: round; ${lineStyle}" />` : nothing}
     </svg>

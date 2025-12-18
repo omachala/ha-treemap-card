@@ -257,26 +257,9 @@ export function squarify(
     if (container.width <= 0 || container.height <= 0) break;
   }
 
-  // Post-process: fix rectangles with extreme aspect ratios (> 4:1)
-  // This happens when a small item is left alone at the end
-  const maxAspectRatio = 4;
-  for (const rect of result) {
-    const aspectRatio = Math.max(rect.width / rect.height, rect.height / rect.width);
-    if (aspectRatio > maxAspectRatio) {
-      // Shrink the long dimension to achieve max aspect ratio
-      if (rect.width > rect.height) {
-        // Too wide - shrink width, keep centered
-        const newWidth = rect.height * maxAspectRatio;
-        rect.x = rect.x + (rect.width - newWidth) / 2;
-        rect.width = newWidth;
-      } else {
-        // Too tall - shrink height, keep centered
-        const newHeight = rect.width * maxAspectRatio;
-        rect.y = rect.y + (rect.height - newHeight) / 2;
-        rect.height = newHeight;
-      }
-    }
-  }
+  // Note: We intentionally do NOT post-process aspect ratios here
+  // Shrinking individual rectangles would break row consistency
+  // (items in the same row must have the same height/width)
 
   // For ascending order, flip the entire layout by mirroring coordinates
   // This puts smallest items top-left while keeping their original sizes

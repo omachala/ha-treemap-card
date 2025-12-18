@@ -268,25 +268,38 @@ export class TreemapCard extends LitElement {
 
     if (!Array.isArray(data)) return [];
 
-    // Get field mappings from config
-    const labelParam = this._config?.label?.param || 'label';
-    const valueParam = this._config?.value?.param || 'value';
-    const sizeParam = this._config?.size?.param || valueParam;
-    const colorParam = this._config?.color?.param || valueParam;
-    const iconParam = this._config?.icon?.param || 'icon';
+    // Get field mappings from config (attribute is primary, param is deprecated alias)
+    const labelAttr = this._config?.label?.attribute ?? this._config?.label?.param ?? 'label';
+    const valueAttr = this._config?.value?.attribute ?? this._config?.value?.param ?? 'value';
+    const sizeAttr = this._config?.size?.attribute ?? this._config?.size?.param ?? valueAttr;
+    const colorAttr = this._config?.color?.attribute ?? this._config?.color?.param ?? valueAttr;
+    const iconAttr = this._config?.icon?.attribute ?? this._config?.icon?.param ?? 'icon';
+    const sparklineAttr = this._config?.sparkline?.attribute;
 
     return data
       .filter((item): item is Record<string, unknown> => {
         return typeof item === 'object' && item !== null;
       })
-      .map(item => ({
-        label: String(item[labelParam] ?? item['label'] ?? ''),
-        value: Number(item[valueParam] ?? 0),
-        sizeValue: Math.abs(Number(item[sizeParam] ?? item[valueParam] ?? 0)),
-        colorValue: Number(item[colorParam] ?? item[valueParam] ?? 0),
-        icon: getString(item[iconParam]),
-        entity_id: getString(item['entity_id']),
-      }))
+      .map(item => {
+        // Extract sparkline data if configured
+        let sparklineData: number[] | undefined;
+        if (sparklineAttr) {
+          const rawData = item[sparklineAttr];
+          if (Array.isArray(rawData)) {
+            sparklineData = rawData.filter((v): v is number => typeof v === 'number');
+          }
+        }
+
+        return {
+          label: String(item[labelAttr] ?? item['label'] ?? ''),
+          value: Number(item[valueAttr] ?? 0),
+          sizeValue: Math.abs(Number(item[sizeAttr] ?? item[valueAttr] ?? 0)),
+          colorValue: Number(item[colorAttr] ?? item[valueAttr] ?? 0),
+          icon: getString(item[iconAttr]),
+          entity_id: getString(item['entity_id']),
+          sparklineData,
+        };
+      })
       .filter(item => item.label && !isNaN(item.value));
   }
 
@@ -590,9 +603,10 @@ export class TreemapCard extends LitElement {
       }
     }
 
-    // Then apply min floor (default: 5% of max sizeValue)
+    // Then apply min floor (default: 15% of max sizeValue)
+    // Higher default ensures items with 0 or small values remain visible
     const currentMax = Math.max(...sortedData.map(d => d.sizeValue), 1);
-    const effectiveMin = sizeMin ?? currentMax * 0.05;
+    const effectiveMin = sizeMin ?? currentMax * 0.15;
     for (const d of sortedData) {
       if (d.sizeValue < effectiveMin) {
         d.sizeValue = effectiveMin;
@@ -815,7 +829,8 @@ export class TreemapCard extends LitElement {
         ${this._config?.sparkline?.show !== false
           ? html`<div class="treemap-sparkline">
               ${renderSparklineWithData(
-                rect.entity_id ? this._sparklineData.get(rect.entity_id) : undefined,
+                rect.sparklineData ??
+                  (rect.entity_id ? this._sparklineData.get(rect.entity_id) : undefined),
                 {
                   mode: this._config?.sparkline?.mode || 'dark',
                   line: this._config?.sparkline?.line,
