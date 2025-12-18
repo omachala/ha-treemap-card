@@ -423,7 +423,7 @@ Below are common sizing and ordering configurations to achieve different visual 
 
 **[2 New HACS Energy Cards You NEED in Home Assistant](https://www.youtube.com/watch?v=1ERc6cNRFZQ)**<br>
 by BeardedTinker<br>
-<img src="https://img.shields.io/badge/YouTube-FF0000?style=flat&logo=youtube&logoColor=white" alt="YouTube">
+<a href="https://www.youtube.com/watch?v=1ERc6cNRFZQ"><img src="https://img.shields.io/badge/YouTube-FF0000?style=flat&logo=youtube&logoColor=white" alt="YouTube"></a>
 
 <br clear="left">
 
