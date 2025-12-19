@@ -1,4 +1,4 @@
-import { LitElement, html, nothing, type TemplateResult } from 'lit';
+import { LitElement, html, nothing, type TemplateResult, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type { HomeAssistant, TreemapCardConfig, TreemapItem, TreemapRect } from './types';
 import { getNumber, getString, matchesPattern } from './utils/predicates';
@@ -33,6 +33,87 @@ export class TreemapCard extends LitElement {
   @state() private _config?: TreemapCardConfig;
   @state() private _sparklineData = new Map<string, number[]>();
   private _fetchingSparklines = false;
+  private _lastRelevantStates: string | undefined;
+  private _cachedData: TreemapItem[] | undefined;
+  private _cachedDataHash: string | undefined;
+  private _sparklineDebounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+  /**
+   * Optimize re-renders: only update when relevant entity states change
+   */
+  protected override shouldUpdate(changedProps: PropertyValues): boolean {
+    // Always update if config or sparkline data changed
+    if (changedProps.has('_config') || changedProps.has('_sparklineData')) {
+      return true;
+    }
+
+    // For hass changes, check if relevant entities changed
+    if (changedProps.has('hass') && this.hass && this._config) {
+      const relevantStates = this._getRelevantStatesHash();
+      if (relevantStates !== this._lastRelevantStates) {
+        this._lastRelevantStates = relevantStates;
+        return true;
+      }
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Get a hash of relevant entity states for change detection
+   */
+  private _getRelevantStatesHash(): string {
+    if (!this.hass) return '';
+
+    const entityIds = this._getConfiguredEntityIds();
+    const states: string[] = [];
+
+    for (const id of entityIds) {
+      const entity = this.hass.states[id];
+      if (entity) {
+        // Include state and key attributes that affect rendering
+        states.push(`${id}:${entity.state}:${entity.last_updated}`);
+      }
+    }
+
+    return states.join('|');
+  }
+
+  /**
+   * Get entity IDs from config (supports wildcards)
+   */
+  private _getConfiguredEntityIds(): string[] {
+    if (!this.hass || !this._config) return [];
+
+    // For JSON mode, just the single entity
+    if (this._config.entity) {
+      return [this._config.entity];
+    }
+
+    // For entities mode, expand wildcards
+    if (this._config.entities) {
+      const allEntityIds = Object.keys(this.hass.states);
+      const result: string[] = [];
+
+      for (const pattern of this._config.entities) {
+        if (pattern.includes('*')) {
+          // Wildcard pattern - match against all entities
+          for (const id of allEntityIds) {
+            if (matchesPattern(id, pattern)) {
+              result.push(id);
+            }
+          }
+        } else {
+          result.push(pattern);
+        }
+      }
+
+      return result;
+    }
+
+    return [];
+  }
 
   public setConfig(config: TreemapCardConfig): void {
     if (!config.entities && !config.entity) {
@@ -49,7 +130,20 @@ export class TreemapCard extends LitElement {
   }
 
   protected override updated(): void {
-    void this._fetchSparklineData();
+    // Debounce sparkline fetching to reduce API calls
+    if (this._sparklineDebounceTimer) {
+      clearTimeout(this._sparklineDebounceTimer);
+    }
+    this._sparklineDebounceTimer = setTimeout(() => {
+      void this._fetchSparklineData();
+    }, 100);
+  }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    if (this._sparklineDebounceTimer) {
+      clearTimeout(this._sparklineDebounceTimer);
+    }
   }
 
   private async _fetchSparklineData(): Promise<void> {
@@ -85,17 +179,28 @@ export class TreemapCard extends LitElement {
   private _resolveData(): TreemapItem[] {
     if (!this.hass || !this._config) return [];
 
+    // Check cache - use states hash for cache key
+    const currentHash = this._lastRelevantStates;
+    if (this._cachedData && this._cachedDataHash === currentHash) {
+      return this._cachedData;
+    }
+
     // Mode 1 & 2: entities list (with wildcard support)
+    let data: TreemapItem[];
     if (this._config.entities) {
-      return this._resolveEntities(this._config.entities);
+      data = this._resolveEntities(this._config.entities);
+    } else if (this._config.entity) {
+      // Mode 3: single entity with JSON array
+      data = this._resolveJsonEntity(this._config.entity);
+    } else {
+      data = [];
     }
 
-    // Mode 3: single entity with JSON array
-    if (this._config.entity) {
-      return this._resolveJsonEntity(this._config.entity);
-    }
+    // Cache the result
+    this._cachedData = data;
+    this._cachedDataHash = currentHash;
 
-    return [];
+    return data;
   }
 
   private _isExcluded(entityId: string): boolean {
