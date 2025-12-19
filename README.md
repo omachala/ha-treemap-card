@@ -15,16 +15,16 @@
   A custom Lovelace card that dynamically visualizes entities as a treemap. Rectangle sizes represent relative values while colors indicate status - perfect for comparing sensors, lights, thermostats, portfolios or any numeric data at a glance.
 </p>
 
-<table>
+<table border="0" cellspacing="0" cellpadding="8">
 <tr>
-<td>
+<td border="0">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/humidity-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/humidity.png">
   <img alt="Humidity sensors" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/humidity.png">
 </picture>
 </td>
-<td>
+<td border="0">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/climate-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/climate.png">
@@ -33,14 +33,14 @@
 </td>
 </tr>
 <tr>
-<td>
+<td border="0">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/lights-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/lights.png">
   <img alt="Light entities" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/lights.png">
 </picture>
 </td>
-<td>
+<td border="0">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/resources-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/resources.png">
