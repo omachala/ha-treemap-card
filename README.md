@@ -15,7 +15,40 @@
   A custom Lovelace card that dynamically visualizes entities as a treemap. Rectangle sizes represent relative values while colors indicate status - perfect for comparing sensors, lights, thermostats, portfolios or any numeric data at a glance.
 </p>
 
-<img src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/screenshot.png" width="800" alt="Treemap Card">
+<table>
+<tr>
+<td>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/humidity-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/humidity.png">
+  <img alt="Humidity sensors" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/humidity.png">
+</picture>
+</td>
+<td>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/climate-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/climate.png">
+  <img alt="Climate entities" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/climate.png">
+</picture>
+</td>
+</tr>
+<tr>
+<td>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/lights-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/lights.png">
+  <img alt="Light entities" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/lights.png">
+</picture>
+</td>
+<td>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/resources-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/resources.png">
+  <img alt="Resource usage" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/resources.png">
+</picture>
+</td>
+</tr>
+</table>
 
 ### Why Treemap Card?
 
@@ -61,6 +94,12 @@ exclude:
 ### JSON Attribute Mode
 
 For data where all values come from a single entity as JSON. Since Home Assistant doesn't allow JSON as sensor state values, structured data must be stored in attributes - a common pattern when feeding HA from external sources like Node-RED or custom integrations. This is ideal when you don't want (or can't) create individual sensors for each data item, especially for dynamic lists like stock portfolios, server metrics, or any array of objects.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/stocks-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/stocks.png">
+  <img alt="Stock portfolio treemap" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/stocks.png">
+</picture>
 
 ```yaml
 type: custom:treemap-card
@@ -378,6 +417,12 @@ card_style: |
 ## Sparkline
 
 Each rectangle can display a mini chart showing historical data.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/radiators-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/radiators.png">
+  <img alt="Radiator sensors with sparklines" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/radiators.png">
+</picture>
 
 **Entities mode:** Uses Home Assistant's long-term statistics (most numeric sensors).
 
