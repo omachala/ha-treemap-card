@@ -1,4 +1,4 @@
-import type { TreemapItem, TreemapRect } from './types';
+import type { TreemapItem, TreemapRect } from '../types';
 
 /**
  * Squarified treemap algorithm

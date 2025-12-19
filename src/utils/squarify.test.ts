@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { squarify } from './squarify';
-import type { TreemapItem } from './types';
+import type { TreemapItem } from '../types';
 
 // Helper to create test items with required fields
 function makeItem(label: string, value: number, entityId?: string): TreemapItem {

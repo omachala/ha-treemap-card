@@ -147,3 +147,171 @@ export function interpolateColor(
   }
   return `rgb(${r}, ${g}, ${b})`;
 }
+
+/**
+ * Options for gradient color calculation
+ */
+export interface GradientColorOptions {
+  colorHigh: string;
+  colorLow: string;
+  colorMid?: string;
+  scaleMin?: number;
+  scaleMax?: number;
+  neutral?: number;
+  opacity?: number;
+}
+
+/**
+ * Calculate gradient color for a value within a range
+ * Supports two-color and three-color gradients with optional neutral point
+ */
+export function getGradientColor(
+  value: number,
+  min: number,
+  max: number,
+  options: GradientColorOptions
+): string {
+  const { colorHigh, colorLow, colorMid, opacity } = options;
+  const minValue = options.scaleMin ?? min;
+  const maxValue = options.scaleMax ?? max;
+  const neutral = options.neutral;
+
+  // Clamp value to min/max range
+  const clampedValue = Math.max(minValue, Math.min(maxValue, value));
+
+  // Calculate the midpoint (neutral if set, otherwise center of range)
+  const midPoint = neutral ?? (minValue + maxValue) / 2;
+
+  // If mid color is defined, use three-color gradient: low -> mid -> high
+  if (colorMid) {
+    if (clampedValue <= midPoint) {
+      // Below midpoint: interpolate low -> mid
+      if (minValue >= midPoint) {
+        return interpolateColor(colorMid, colorMid, 1, opacity);
+      }
+      const factor = (clampedValue - minValue) / (midPoint - minValue);
+      return interpolateColor(colorLow, colorMid, factor, opacity);
+    } else {
+      // Above midpoint: interpolate mid -> high
+      if (maxValue <= midPoint) {
+        return interpolateColor(colorMid, colorMid, 1, opacity);
+      }
+      const factor = (clampedValue - midPoint) / (maxValue - midPoint);
+      return interpolateColor(colorMid, colorHigh, factor, opacity);
+    }
+  }
+
+  // No mid color - use two-color gradient
+  // If neutral is set, use it as the center point for blending
+  if (neutral !== undefined) {
+    if (clampedValue <= neutral) {
+      // Below neutral: interpolate from low to 50% blend
+      if (minValue >= neutral) return interpolateColor(colorLow, colorHigh, 0.5, opacity);
+      const factor = (clampedValue - minValue) / (neutral - minValue);
+      return interpolateColor(colorLow, colorHigh, factor * 0.5, opacity);
+    } else {
+      // Above neutral: interpolate from 50% blend to high
+      if (maxValue <= neutral) return interpolateColor(colorLow, colorHigh, 0.5, opacity);
+      const factor = (clampedValue - neutral) / (maxValue - neutral);
+      return interpolateColor(colorLow, colorHigh, 0.5 + factor * 0.5, opacity);
+    }
+  }
+
+  // Default: simple linear gradient from low to high
+  if (maxValue === minValue) {
+    return interpolateColor(colorHigh, colorHigh, 1, opacity);
+  }
+  const factor = (clampedValue - minValue) / (maxValue - minValue);
+  return interpolateColor(colorLow, colorHigh, factor, opacity);
+}
+
+/**
+ * HVAC color configuration
+ */
+export interface HvacColorConfig {
+  heating?: string;
+  cooling?: string;
+  idle?: string;
+  off?: string;
+}
+
+/**
+ * Default HVAC colors
+ */
+const DEFAULT_HVAC_COLORS: Required<HvacColorConfig> = {
+  heating: '#ff6b35', // orange
+  cooling: '#4dabf7', // blue
+  idle: '#69db7c', // green
+  off: '#868e96', // gray
+};
+
+/**
+ * Get color for HVAC action (categorical coloring)
+ * Also considers hvac_mode since HA reports hvac_action as 'idle' when mode is 'off'
+ */
+export function getHvacColor(
+  hvacAction: string | null,
+  hvacMode: string | null,
+  hvacConfig?: HvacColorConfig,
+  opacity?: number
+): string {
+  const config = hvacConfig ?? {};
+
+  // If hvac_mode is 'off', use off color regardless of hvac_action
+  // HA reports hvac_action as 'idle' even when thermostat is off
+  if (hvacMode === 'off') {
+    const color = config.off ?? DEFAULT_HVAC_COLORS.off;
+    if (opacity !== undefined) {
+      const rgb = parseColor(color);
+      if (rgb) {
+        return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})`;
+      }
+    }
+    return color;
+  }
+
+  let color: string;
+  switch (hvacAction) {
+    case 'heating': {
+      color = config.heating ?? DEFAULT_HVAC_COLORS.heating;
+      break;
+    }
+    case 'cooling': {
+      color = config.cooling ?? DEFAULT_HVAC_COLORS.cooling;
+      break;
+    }
+    case 'idle': {
+      color = config.idle ?? DEFAULT_HVAC_COLORS.idle;
+      break;
+    }
+    case 'off':
+    case null: {
+      // HA often reports null hvac_action when thermostat is off
+      color = config.off ?? DEFAULT_HVAC_COLORS.off;
+      break;
+    }
+    default: {
+      color = DEFAULT_HVAC_COLORS.idle;
+    }
+  }
+
+  if (opacity !== undefined) {
+    const rgb = parseColor(color);
+    if (rgb) {
+      return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})`;
+    }
+  }
+
+  return color;
+}
+
+/**
+ * Apply opacity to a color string
+ */
+export function applyOpacity(color: string, opacity: number): string {
+  const rgb = parseColor(color);
+  if (rgb) {
+    return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})`;
+  }
+  return color;
+}

@@ -1,13 +1,18 @@
 import { LitElement, html, nothing, type TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type { HomeAssistant, TreemapCardConfig, TreemapItem, TreemapRect } from './types';
-import { getNumber, getString } from './utils/predicates';
-import { isLightEntity, extractLightInfo } from './utils/lights';
+import { getNumber, getString, matchesPattern } from './utils/predicates';
+import { isLightEntity, extractLightInfo, getLightBackgroundColor } from './utils/lights';
 import { isClimateEntity, extractClimateInfo, getClimateValue } from './utils/climate';
-import { hsToRgb, parseColor, getContrastColors, interpolateColor } from './utils/colors';
+import {
+  getContrastColors,
+  getGradientColor,
+  applyOpacity,
+  type GradientColorOptions,
+} from './utils/colors';
 import { renderSparklineWithData } from './utils/sparkline';
 import { getHistoryData, type HistoryPeriod } from './utils/history';
-import { squarify } from './squarify';
+import { squarify } from './utils/squarify';
 import { styles } from './styles';
 
 declare const __VERSION__: string;
@@ -18,18 +23,6 @@ console.info(
   'color: white; background: #3498db; font-weight: bold;',
   'color: #3498db; background: white; font-weight: bold;'
 );
-
-/**
- * Match entity ID against pattern with wildcard support
- * Supports * as wildcard (e.g., "sensor.battery_*", "light.*_brightness")
- */
-function matchesPattern(entityId: string, pattern: string): boolean {
-  if (!pattern.includes('*')) {
-    return entityId === pattern;
-  }
-  const regex = new RegExp('^' + pattern.replaceAll('*', '.*') + '$');
-  return regex.test(entityId);
-}
 
 @customElement('treemap-card')
 export class TreemapCard extends LitElement {
@@ -317,149 +310,20 @@ export class TreemapCard extends LitElement {
       .filter(item => item.label && !Number.isNaN(item.value));
   }
 
-  private _getColorHigh(): string {
-    return this._config?.color?.high || '#16a34a';
-  }
-
-  private _getColorLow(): string {
-    return this._config?.color?.low || '#b91c1c';
-  }
-
-  private _getColorMid(): string | undefined {
-    return this._config?.color?.mid;
-  }
-
-  private _getOpacity(): number | undefined {
-    return this._config?.color?.opacity;
+  private _getGradientColorOptions(): GradientColorOptions {
+    return {
+      colorHigh: this._config?.color?.high || '#16a34a',
+      colorLow: this._config?.color?.low || '#b91c1c',
+      colorMid: this._config?.color?.mid,
+      scaleMin: this._config?.color?.scale?.min,
+      scaleMax: this._config?.color?.scale?.max,
+      neutral: this._config?.color?.scale?.neutral,
+      opacity: this._config?.color?.opacity,
+    };
   }
 
   private _getColor(value: number, min: number, max: number): string {
-    const neutral = this._config?.color?.scale?.neutral;
-    const minValue = this._config?.color?.scale?.min ?? min;
-    const maxValue = this._config?.color?.scale?.max ?? max;
-    const opacity = this._getOpacity();
-    const midColor = this._getColorMid();
-
-    // Clamp value to min/max range
-    const clampedValue = Math.max(minValue, Math.min(maxValue, value));
-
-    // Calculate the midpoint (neutral if set, otherwise center of range)
-    const midPoint = neutral ?? (minValue + maxValue) / 2;
-
-    // If mid color is defined, use three-color gradient: low -> mid -> high
-    if (midColor) {
-      if (clampedValue <= midPoint) {
-        // Below midpoint: interpolate low -> mid
-        if (minValue >= midPoint) {
-          return interpolateColor(midColor, midColor, 1, opacity);
-        }
-        const factor = (clampedValue - minValue) / (midPoint - minValue);
-        return interpolateColor(this._getColorLow(), midColor, factor, opacity);
-      } else {
-        // Above midpoint: interpolate mid -> high
-        if (maxValue <= midPoint) {
-          return interpolateColor(midColor, midColor, 1, opacity);
-        }
-        const factor = (clampedValue - midPoint) / (maxValue - midPoint);
-        return interpolateColor(midColor, this._getColorHigh(), factor, opacity);
-      }
-    }
-
-    // No mid color - use two-color gradient
-    // If neutral is set, use it as the center point for blending
-    if (neutral !== undefined) {
-      if (clampedValue <= neutral) {
-        // Below neutral: interpolate from low to 50% blend
-        if (minValue >= neutral)
-          return interpolateColor(this._getColorLow(), this._getColorHigh(), 0.5, opacity);
-        const factor = (clampedValue - minValue) / (neutral - minValue);
-        return interpolateColor(this._getColorLow(), this._getColorHigh(), factor * 0.5, opacity);
-      } else {
-        // Above neutral: interpolate from 50% blend to high
-        if (maxValue <= neutral)
-          return interpolateColor(this._getColorLow(), this._getColorHigh(), 0.5, opacity);
-        const factor = (clampedValue - neutral) / (maxValue - neutral);
-        return interpolateColor(
-          this._getColorLow(),
-          this._getColorHigh(),
-          0.5 + factor * 0.5,
-          opacity
-        );
-      }
-    }
-
-    // Default: simple linear gradient from low to high
-    if (maxValue === minValue) {
-      return interpolateColor(this._getColorHigh(), this._getColorHigh(), 1, opacity);
-    }
-    const factor = (clampedValue - minValue) / (maxValue - minValue);
-    return interpolateColor(this._getColorLow(), this._getColorHigh(), factor, opacity);
-  }
-
-  /**
-   * Get color for HVAC action (categorical coloring)
-   * Also considers hvac_mode since HA reports hvac_action as 'idle' when mode is 'off'
-   */
-  private _getHvacColor(hvacAction: string | null, hvacMode: string | null): string | null {
-    const hvacConfig = this._config?.color?.hvac;
-    if (!hvacConfig) return null;
-
-    const opacity = this._getOpacity();
-
-    // Default HVAC colors
-    const defaults = {
-      heating: '#ff6b35', // orange
-      cooling: '#4dabf7', // blue
-      idle: '#69db7c', // green
-      off: '#868e96', // gray
-    };
-
-    // If hvac_mode is 'off', use off color regardless of hvac_action
-    // HA reports hvac_action as 'idle' even when thermostat is off
-    if (hvacMode === 'off') {
-      const color = hvacConfig.off ?? defaults.off;
-      if (opacity !== undefined) {
-        const rgb = parseColor(color);
-        if (rgb) {
-          return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})`;
-        }
-      }
-      return color;
-    }
-
-    let color: string | undefined;
-    switch (hvacAction) {
-      case 'heating': {
-        color = hvacConfig.heating ?? defaults.heating;
-        break;
-      }
-      case 'cooling': {
-        color = hvacConfig.cooling ?? defaults.cooling;
-        break;
-      }
-      case 'idle': {
-        color = hvacConfig.idle ?? defaults.idle;
-        break;
-      }
-      case 'off':
-      case null: {
-        // HA often reports null hvac_action when thermostat is off
-        color = hvacConfig.off ?? defaults.off;
-        break;
-      }
-      default: {
-        color = defaults.idle;
-      }
-    }
-
-    if (opacity !== undefined && color) {
-      const rgb = parseColor(color);
-      if (rgb) {
-        return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})`;
-      }
-    }
-
-    return color ?? null;
+    return getGradientColor(value, min, max, this._getGradientColorOptions());
   }
 
   private _getSizeClass(rect: TreemapRect): string {
@@ -470,53 +334,10 @@ export class TreemapCard extends LitElement {
     return '';
   }
 
-  // Default light colors (dark gray to yellow)
-  private _getLightColorOff(): string {
-    return this._config?.color?.low ?? '#333333';
-  }
-
-  private _getLightColorOn(): string {
-    return this._config?.color?.high ?? '#fbbf24'; // Amber/yellow
-  }
-
-  /**
-   * Get background color for a light entity
-   * - Color lights: use actual RGB/HS color with brightness as opacity
-   * - Dimmable lights: use yellow with brightness as opacity
-   * - Off lights: use dark gray
-   */
   private _getLightColor(rect: TreemapRect): string {
-    const { light } = rect;
-    if (!light) return this._getLightColorOff();
-
-    // Off light: dark color
-    if (!light.isOn) {
-      return this._getLightColorOff();
-    }
-
-    // Brightness as opacity (min 0.3 so it's always visible when on)
-    const opacity = 0.3 + (light.brightness / 100) * 0.7;
-
-    // Color light with RGB - use the actual light color
-    if (light.supportsColor && light.rgb) {
-      const [r, g, b] = light.rgb;
-      return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-    }
-
-    // Color light with HS - convert to RGB
-    if (light.supportsColor && light.hs) {
-      const [h, s] = light.hs;
-      const [r, g, b] = hsToRgb(h, s);
-      return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-    }
-
-    // Dimmable-only light: yellow with brightness as opacity
-    const onColor = this._getLightColorOn();
-    const hex = onColor.replace('#', '');
-    const r = Number.parseInt(hex.slice(0, 2), 16);
-    const g = Number.parseInt(hex.slice(2, 4), 16);
-    const b = Number.parseInt(hex.slice(4, 6), 16);
-    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    const offColor = this._config?.color?.low ?? '#333333';
+    const onColor = this._config?.color?.high ?? '#fbbf24'; // Amber/yellow
+    return getLightBackgroundColor(rect.light, offColor, onColor);
   }
 
   private _filterData(data: TreemapItem[]): TreemapItem[] {
@@ -708,46 +529,24 @@ export class TreemapCard extends LitElement {
   ): TemplateResult {
     // Determine color: climate off/unavailable > active HVAC > light entities > standard gradient
     let color: string;
+    const opacity = this._config?.color?.opacity;
 
     // Climate entities that are off or unavailable always get gray color
-    // This takes precedence over any color configuration
     if (
       rect.climate &&
       (rect.climate.hvacMode === 'off' || rect.climate.hvacMode === 'unavailable')
     ) {
-      const opacity = this._getOpacity();
       const offColor = this._config?.color?.hvac?.off ?? '#868e96';
-      if (opacity !== undefined) {
-        const rgb = parseColor(offColor);
-        if (rgb) {
-          color = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})`;
-        } else {
-          color = offColor;
-        }
-      } else {
-        color = offColor;
-      }
+      color = opacity !== undefined ? applyOpacity(offColor, opacity) : offColor;
     } else if (rect.climate && this._config?.color?.hvac) {
       // HVAC colors only override when ACTIVELY heating/cooling
-      // idle/off states fall back to gradient so you can see the temp offset
       const hvacConfig = this._config.color.hvac;
-      const opacity = this._getOpacity();
       if (rect.climate.hvacAction === 'heating' && hvacConfig.heating) {
-        const c = hvacConfig.heating;
-        if (opacity !== undefined) {
-          const rgb = parseColor(c);
-          color = rgb ? `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})` : c;
-        } else {
-          color = c;
-        }
+        color =
+          opacity !== undefined ? applyOpacity(hvacConfig.heating, opacity) : hvacConfig.heating;
       } else if (rect.climate.hvacAction === 'cooling' && hvacConfig.cooling) {
-        const c = hvacConfig.cooling;
-        if (opacity !== undefined) {
-          const rgb = parseColor(c);
-          color = rgb ? `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})` : c;
-        } else {
-          color = c;
-        }
+        color =
+          opacity !== undefined ? applyOpacity(hvacConfig.cooling, opacity) : hvacConfig.cooling;
       } else {
         // idle, off, or no active action - use gradient
         color = this._getColor(rect.colorValue, min, max);
