@@ -13,6 +13,7 @@ import {
 import { renderSparklineWithData } from './utils/sparkline';
 import { getHistoryData, type HistoryPeriod } from './utils/history';
 import { squarify } from './utils/squarify';
+import { prepareTreemapData } from './utils/data';
 import { styles } from './styles';
 
 declare const __VERSION__: string;
@@ -390,68 +391,18 @@ export class TreemapCard extends LitElement {
       `;
     }
 
-    // Calculate min/max for color scale (use colorValue)
-    const colorValues = data.map(({ colorValue }) => colorValue);
-    const min = Math.min(...colorValues);
-    const max = Math.max(...colorValues);
-
-    // Apply inverse sizing if configured (low values get bigger rectangles)
-    if (this._config?.size?.inverse) {
-      const maxSize = Math.max(...data.map(({ sizeValue }) => sizeValue));
-      const minSize = Math.min(...data.map(({ sizeValue }) => sizeValue));
-      for (const d of data) {
-        d.sizeValue = maxSize + minSize - d.sizeValue;
-      }
-      // Ensure minimum floor after inverse to prevent extreme ratios
-      // Without this, items with original max values become near-zero after inverse,
-      // and then get destroyed by sqrt compression in squarify
-      const invertedMax = Math.max(...data.map(({ sizeValue }) => sizeValue));
-      const minFloor = invertedMax * 0.1; // At least 10% of max
-      for (const d of data) {
-        if (d.sizeValue < minFloor) {
-          d.sizeValue = minFloor;
-        }
-      }
-    }
-
-    // Sort data by sizeValue
-    const orderAsc = this._config?.order === 'asc';
-    const sizeInverse = this._config?.size?.inverse === true;
-    // When size.inverse is true, sizeValues are inverted (small original values become large sizeValues)
-    // So for visual ordering (order: asc = small original values first), we need to flip the ascending flag
-    const isAsc = sizeInverse ? !orderAsc : orderAsc;
-    let sortedData = [...data].sort((a, b) =>
-      isAsc ? a.sizeValue - b.sizeValue : b.sizeValue - a.sizeValue
-    );
-
-    // Apply limit if configured
-    if (this._config?.limit !== undefined && this._config.limit > 0) {
-      sortedData = sortedData.slice(0, this._config.limit);
-    }
-
-    // Apply size.min and size.max to ensure all items are visible
-    // This must happen before squarify which filters out zero-sized items
-    const sizeMax = this._config?.size?.max;
-    const sizeMin = this._config?.size?.min;
-
-    // First apply max cap if configured
-    if (sizeMax !== undefined) {
-      for (const d of sortedData) {
-        if (d.sizeValue > sizeMax) {
-          d.sizeValue = sizeMax;
-        }
-      }
-    }
-
-    // Then apply min floor (default: 15% of max sizeValue)
-    // Higher default ensures items with 0 or small values remain visible
-    const currentMax = Math.max(...sortedData.map(({ sizeValue }) => sizeValue), 1);
-    const effectiveMin = sizeMin ?? currentMax * 0.15;
-    for (const d of sortedData) {
-      if (d.sizeValue < effectiveMin) {
-        d.sizeValue = effectiveMin;
-      }
-    }
+    // Prepare data: calculate stats, apply sizing options, sort (optimized single-pass)
+    const {
+      items: sortedData,
+      colorMin: min,
+      colorMax: max,
+    } = prepareTreemapData(data, {
+      inverse: this._config?.size?.inverse,
+      ascending: this._config?.order === 'asc',
+      limit: this._config?.limit,
+      sizeMin: this._config?.size?.min,
+      sizeMax: this._config?.size?.max,
+    });
 
     // Generate treemap layout using sizeValue
     // If size.equal mode, give all items equal weight for sizing
@@ -474,6 +425,9 @@ export class TreemapCard extends LitElement {
 
     // squarify uses 'value' field for sizing
     const layoutInput = sortedData.map(d => ({ ...d, value: d.sizeValue }));
+    const orderAsc = this._config?.order === 'asc';
+    const sizeInverse = this._config?.size?.inverse === true;
+    const isAsc = sizeInverse ? !orderAsc : orderAsc;
     const rects = squarify(layoutInput, 100, 100, {
       compressRange: true,
       equalSize,

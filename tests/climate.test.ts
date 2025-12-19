@@ -31,6 +31,7 @@ function mockHass(entities: HassEntity[]): HomeAssistant {
     callService: async () => {
       // Mock - no-op for tests
     },
+    callWS: async <T>() => ({}) as T,
   };
 }
 
