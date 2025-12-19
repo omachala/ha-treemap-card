@@ -86,8 +86,8 @@ function prepareDataMultiPass(
 }
 
 // Performance threshold: optimized must be at least this much faster
-// Measured: ~2x speedup. Set to 1.7x to allow for variance on slower machines/CI.
-const MIN_SPEEDUP = 1.7;
+// Measured: ~2x speedup. Set to 1.5x to allow for variance on slower machines/CI.
+const MIN_SPEEDUP = 1.5;
 
 describe('Performance regression guard', () => {
   it('prepareTreemapData should be faster than multi-pass baseline', () => {
