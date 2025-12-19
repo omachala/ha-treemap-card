@@ -15,40 +15,7 @@
   A custom Lovelace card that dynamically visualizes entities as a treemap. Rectangle sizes represent relative values while colors indicate status - perfect for comparing sensors, lights, thermostats, portfolios or any numeric data at a glance.
 </p>
 
-<table border="0" cellspacing="0" cellpadding="8">
-<tr>
-<td border="0">
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/humidity-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/humidity.png">
-  <img alt="Humidity sensors" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/humidity.png">
-</picture>
-</td>
-<td border="0">
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/climate-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/climate.png">
-  <img alt="Climate entities" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/climate.png">
-</picture>
-</td>
-</tr>
-<tr>
-<td border="0">
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/lights-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/lights.png">
-  <img alt="Light entities" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/lights.png">
-</picture>
-</td>
-<td border="0">
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/resources-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/resources.png">
-  <img alt="Resource usage" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/resources.png">
-</picture>
-</td>
-</tr>
-</table>
+<img src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/screenshot.png" width="800" alt="Treemap Card">
 
 ### Why Treemap Card?
 
@@ -422,15 +389,24 @@ card_style: |
 
 Each rectangle can display a mini chart showing historical data.
 
-<p align="center">
-  <br>
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/radiators-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/radiators.png">
-    <img alt="Radiator sensors with sparklines" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/radiators.png">
-  </picture>
-  <br><br>
-</p>
+<table border="0" cellspacing="0" cellpadding="8">
+<tr>
+<td border="0">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/humidity-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/humidity.png">
+  <img alt="Humidity sensors" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/humidity.png">
+</picture>
+</td>
+<td border="0">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/radiators-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/radiators.png">
+  <img alt="Radiator sensors with sparklines" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/radiators.png">
+</picture>
+</td>
+</tr>
+</table>
 
 **Entities mode:** Uses Home Assistant's long-term statistics (most numeric sensors).
 
