@@ -37,14 +37,9 @@ Or manually:
 2. Search for "Treemap Card"
 3. Install and restart Home Assistant
 
-> **Note:** If the card doesn't appear after installation, you may need to add the resource manually:
-> Go to **Settings → Dashboards → Resources → Add Resource** and add `/hacsfiles/ha-treemap-card/treemap-card.js` as a JavaScript module.
-
 ### Manual
 
-Download `treemap-card.js` from [releases](https://github.com/omachala/ha-treemap-card/releases) to `config/www/`, then add as resource: `/local/treemap-card.js`
-
----
+Download `treemap-card.js` from [releases](https://github.com/omachala/ha-treemap-card/releases) and follow the [official guide](https://developers.home-assistant.io/docs/frontend/custom-ui/registering-resources/).
 
 ## Data Modes
 
@@ -76,8 +71,6 @@ label:
 value:
   attribute: amount
 ```
-
----
 
 ## Entity Types
 
@@ -241,8 +234,6 @@ When `color.hvac` is configured:
 
 This lets you see temperature-based colors normally, but immediately spot which rooms are actively heating or cooling.
 
----
-
 ## Configuration Reference
 
 ### Data Source
@@ -384,8 +375,6 @@ card_style: |
 <tr><td><code>card_style</code></td><td>CSS for the entire card. Example: <code>background: transparent;</code></td></tr>
 </table>
 
----
-
 ## Sparkline
 
 Each rectangle can display a mini chart showing historical data.
@@ -473,8 +462,6 @@ sparkline:
 
 > **Note:** Sparklines only appear for entities that have long-term statistics in Home Assistant. Climate entities typically don't have statistics, but their associated temperature sensors do.
 
----
-
 ## Size & Order guide
 
 > **Tip:** You may often prefer `size.equal: true` for a clean, uniform grid layout.
@@ -505,8 +492,6 @@ Below are common sizing and ordering configurations to achieve different visual 
 >
 > - One device at 2500W dominates the layout, others at 50-200W are tiny
 > - `size.max: 500` - Caps the 2500W device to 500W for sizing, giving other devices more visible space
-
----
 
 ## Contribution & License
 
