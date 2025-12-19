@@ -17,6 +17,14 @@
 
 <img src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/screenshot.png" width="800" alt="Treemap Card">
 
+### Why Treemap Card?
+
+- **Built for scale** - Performance-tested and optimized. Safely display thousands of rectangles across multiple cards on a single dashboard
+- **Works with everything** - Native support for sensors, lights, and climate entities with smart defaults and computed attributes
+- **Endlessly configurable** - Control sizing, coloring, labels, icons, gradients, and more. Supports wildcards, filters, and custom CSS
+- **Historical trends** - Built-in sparklines show 24-hour history at a glance
+- **Production quality** - 90%+ test coverage, CI/CD pipeline, actively maintained
+
 ## Installation
 
 ### HACS (Recommended)
