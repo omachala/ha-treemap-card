@@ -21,12 +21,11 @@ export function isClimateEntity(entityId: string): boolean {
  * - Cool mode: Only positive values matter (room warmer than target). If current <= target, offset = 0
  * - Other modes (heat_cool, auto, off): Raw difference (current - target)
  */
-export function extractClimateInfo(entity: HassEntity): ClimateInfo {
-  const attributes = entity.attributes;
+export function extractClimateInfo({ attributes, state }: HassEntity): ClimateInfo {
   const currentTemperatureValue = getNumber(attributes['current_temperature']);
   const targetTemperatureValue = getNumber(attributes['temperature']);
   const hvacAction = getHvacAction(attributes['hvac_action']);
-  const hvacMode = entity.state;
+  const hvacMode = state;
 
   const currentTemperature = currentTemperatureValue ?? null;
   const targetTemperature = targetTemperatureValue ?? null;

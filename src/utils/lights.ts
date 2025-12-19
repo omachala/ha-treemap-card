@@ -15,9 +15,8 @@ export function isLightEntity(entityId: string): boolean {
 /**
  * Extract light color information from entity attributes
  */
-export function extractLightInfo(entity: HassEntity): LightColorInfo {
-  const attributes = entity.attributes;
-  const isOn = entity.state === 'on';
+export function extractLightInfo({ attributes, state }: HassEntity): LightColorInfo {
+  const isOn = state === 'on';
   const brightnessRaw = getNumber(attributes['brightness']);
   const brightness = isOn ? Math.round(((brightnessRaw ?? 255) / 255) * 100) : 0;
 

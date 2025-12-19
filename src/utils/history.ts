@@ -97,7 +97,7 @@ async function fetchStatistics(
       for (const [entityId, stats] of Object.entries(response)) {
         // Extract mean values from statistics
         const data = stats
-          .map(s => s.mean)
+          .map(({ mean }) => mean)
           .filter((v): v is number => v !== null && v !== undefined);
         result.set(entityId, data);
       }

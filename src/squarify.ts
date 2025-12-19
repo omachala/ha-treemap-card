@@ -274,8 +274,8 @@ export function squarify(
 
     // Normalize: shift all rects so the layout starts at (0,0)
     // This is needed because aspect ratio post-processing may leave gaps
-    const minX = Math.min(...result.map(r => r.x));
-    const minY = Math.min(...result.map(r => r.y));
+    const minX = Math.min(...result.map(rect => rect.x));
+    const minY = Math.min(...result.map(rect => rect.y));
     if (minX !== 0 || minY !== 0) {
       for (const rect of result) {
         rect.x -= minX;

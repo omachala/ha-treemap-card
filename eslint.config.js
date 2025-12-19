@@ -2,14 +2,12 @@
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import prettierConfig from 'eslint-config-prettier';
-import unicorn from 'eslint-plugin-unicorn';
 
 export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
   prettierConfig,
-  unicorn.configs.recommended,
   {
     languageOptions: {
       parserOptions: {
@@ -105,36 +103,8 @@ export default tseslint.config(
       complexity: 'off', // Render functions can be complex
 
       // ===== Code Style =====
-      'prefer-destructuring': 'off', // Not always clearer
+      // prefer-destructuring is off - too many dynamic property accesses in this codebase
       'object-shorthand': ['error', 'always'],
-
-      // ===== Unicorn Plugin =====
-      'unicorn/prevent-abbreviations': [
-        'error',
-        {
-          replacements: {
-            // temp = temperature, not temporary
-            temp: { temperature: true },
-            attr: { attribute: true },
-            attrs: { attributes: true },
-            num: { number: true },
-            val: { value: true },
-            msg: { message: true },
-            acc: { accumulator: true },
-          },
-        },
-      ],
-      'unicorn/no-null': 'off', // null has semantic meaning
-      'unicorn/prefer-global-this': 'off', // window is clearer for browser code
-      'unicorn/template-indent': 'off', // conflicts with Lit templates
-      'unicorn/no-negated-condition': 'off', // sometimes negation is clearer
-      'unicorn/prefer-ternary': 'off', // can hurt readability
-      'unicorn/no-array-for-each': 'off', // forEach is fine for side effects
-      'unicorn/no-array-reduce': 'off', // reduce is useful for aggregations
-      'unicorn/no-array-callback-reference': 'off', // direct method refs are fine
-      'unicorn/prefer-array-flat-map': 'off', // sometimes clearer with map+flat
-      'unicorn/switch-case-braces': 'off', // not always needed for single statements
-      'unicorn/no-array-sort': 'off', // toSorted() is ES2023, we target ES2022
 
       // Allow unbound methods for Lit event handlers
       '@typescript-eslint/unbound-method': 'off',
@@ -153,7 +123,6 @@ export default tseslint.config(
     files: ['**/*.test.ts'],
     rules: {
       '@typescript-eslint/no-non-null-assertion': 'off',
-      'unicorn/no-useless-undefined': 'off', // Tests need explicit undefined args
     },
   },
   {

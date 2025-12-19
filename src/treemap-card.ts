@@ -66,7 +66,7 @@ export class TreemapCard extends LitElement {
 
     // Get entity IDs from resolved data
     const data = this._resolveData();
-    const entityIds = data.map(d => d.entity_id).filter((id): id is string => !!id);
+    const entityIds = data.map(({ entity_id }) => entity_id).filter((id): id is string => !!id);
 
     if (entityIds.length === 0) return;
 
@@ -143,7 +143,7 @@ export class TreemapCard extends LitElement {
         // Special handling for light entities
         if (isLightEntity(entityId)) {
           const lightInfo = extractLightInfo(entity);
-          const brightness = lightInfo.brightness;
+          const { brightness } = lightInfo;
 
           // Size: off lights get 10%, on lights get 40-100% based on brightness
           // This ensures on lights are clearly separated from off lights
@@ -486,7 +486,7 @@ export class TreemapCard extends LitElement {
    * - Off lights: use dark gray
    */
   private _getLightColor(rect: TreemapRect): string {
-    const light = rect.light;
+    const { light } = rect;
     if (!light) return this._getLightColorOff();
 
     // Off light: dark color
@@ -570,21 +570,21 @@ export class TreemapCard extends LitElement {
     }
 
     // Calculate min/max for color scale (use colorValue)
-    const colorValues = data.map(d => d.colorValue);
+    const colorValues = data.map(({ colorValue }) => colorValue);
     const min = Math.min(...colorValues);
     const max = Math.max(...colorValues);
 
     // Apply inverse sizing if configured (low values get bigger rectangles)
     if (this._config?.size?.inverse) {
-      const maxSize = Math.max(...data.map(d => d.sizeValue));
-      const minSize = Math.min(...data.map(d => d.sizeValue));
+      const maxSize = Math.max(...data.map(({ sizeValue }) => sizeValue));
+      const minSize = Math.min(...data.map(({ sizeValue }) => sizeValue));
       for (const d of data) {
         d.sizeValue = maxSize + minSize - d.sizeValue;
       }
       // Ensure minimum floor after inverse to prevent extreme ratios
       // Without this, items with original max values become near-zero after inverse,
       // and then get destroyed by sqrt compression in squarify
-      const invertedMax = Math.max(...data.map(d => d.sizeValue));
+      const invertedMax = Math.max(...data.map(({ sizeValue }) => sizeValue));
       const minFloor = invertedMax * 0.1; // At least 10% of max
       for (const d of data) {
         if (d.sizeValue < minFloor) {
@@ -624,7 +624,7 @@ export class TreemapCard extends LitElement {
 
     // Then apply min floor (default: 15% of max sizeValue)
     // Higher default ensures items with 0 or small values remain visible
-    const currentMax = Math.max(...sortedData.map(d => d.sizeValue), 1);
+    const currentMax = Math.max(...sortedData.map(({ sizeValue }) => sizeValue), 1);
     const effectiveMin = sizeMin ?? currentMax * 0.15;
     for (const d of sortedData) {
       if (d.sizeValue < effectiveMin) {
@@ -679,8 +679,8 @@ export class TreemapCard extends LitElement {
     const gap = this._config.gap ?? 6;
 
     // Debug: check if rects fill 100%
-    const maxY = Math.max(...rects.map(r => r.y + r.height));
-    const maxX = Math.max(...rects.map(r => r.x + r.width));
+    const maxY = Math.max(...rects.map(rect => rect.y + rect.height));
+    const maxX = Math.max(...rects.map(rect => rect.x + rect.width));
     console.log(
       `[treemap] Rects maxX=${maxX.toFixed(1)}%, maxY=${maxY.toFixed(1)}%, height=${height}px, items=${data.length}`
     );
