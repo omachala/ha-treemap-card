@@ -19,7 +19,11 @@
 
 ### Why Treemap Card?
 
-Handles thousands of items without breaking a sweat. Works beautifully with sensors, lights, and thermostats - each with smart defaults. Sparklines show historical trends. Wildly configurable: colors, gradients, sizes, labels, icons, filters, wildcards, custom CSS. Tested and maintained.
+- Handles thousands of items without breaking a sweat
+- Works beautifully with sensors, lights, and thermostats
+- Sparklines show historical trends
+- Wildly configurable (colors, gradients, sizes, labels, icons, filters, wildcards, custom CSS)
+- Tested and maintained
 
 ## Installation
 
