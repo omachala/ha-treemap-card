@@ -95,11 +95,15 @@ exclude:
 
 For data where all values come from a single entity as JSON. Since Home Assistant doesn't allow JSON as sensor state values, structured data must be stored in attributes - a common pattern when feeding HA from external sources like Node-RED or custom integrations. This is ideal when you don't want (or can't) create individual sensors for each data item, especially for dynamic lists like stock portfolios, server metrics, or any array of objects.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/stocks-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/stocks.png">
-  <img alt="Stock portfolio treemap" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/stocks.png">
-</picture>
+<p align="center">
+  <br>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/stocks-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/stocks.png">
+    <img alt="Stock portfolio treemap" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/stocks.png">
+  </picture>
+  <br><br>
+</p>
 
 ```yaml
 type: custom:treemap-card
@@ -418,11 +422,15 @@ card_style: |
 
 Each rectangle can display a mini chart showing historical data.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/radiators-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/radiators.png">
-  <img alt="Radiator sensors with sparklines" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/radiators.png">
-</picture>
+<p align="center">
+  <br>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/radiators-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/radiators.png">
+    <img alt="Radiator sensors with sparklines" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/radiators.png">
+  </picture>
+  <br><br>
+</p>
 
 **Entities mode:** Uses Home Assistant's long-term statistics (most numeric sensors).
 
