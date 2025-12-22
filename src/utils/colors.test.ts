@@ -113,20 +113,20 @@ describe('getContrastColors', () => {
 
   it('returns light text for dark backgrounds', () => {
     const colors = getContrastColors('#000000');
-    expect(colors.label).toBe('white');
+    expect(colors.label).toBe('rgba(255, 255, 255, 0.95)');
     expect(colors.value).toBe('rgba(255, 255, 255, 0.85)');
   });
 
-  it('always returns white icon with opacity', () => {
+  it('returns dark icon on light backgrounds and light icon on dark backgrounds', () => {
     const lightBg = getContrastColors('#ffffff');
     const darkBg = getContrastColors('#000000');
-    expect(lightBg.icon).toBe('rgba(255, 255, 255, 0.85)');
+    expect(lightBg.icon).toBe('rgba(0, 0, 0, 0.7)');
     expect(darkBg.icon).toBe('rgba(255, 255, 255, 0.85)');
   });
 
   it('handles invalid color strings gracefully', () => {
     const colors = getContrastColors('invalid');
-    expect(colors.label).toBe('white');
+    expect(colors.label).toBe('rgba(255, 255, 255, 0.95)');
     expect(colors.value).toBe('rgba(255, 255, 255, 0.85)');
   });
 });

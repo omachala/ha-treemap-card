@@ -21,19 +21,18 @@ export function isClimateEntity(entityId: string): boolean {
  * - Cool mode: Only positive values matter (room warmer than target). If current <= target, offset = 0
  * - Other modes (heat_cool, auto, off): Raw difference (current - target)
  */
-export function extractClimateInfo(entity: HassEntity): ClimateInfo {
-  const attrs = entity.attributes;
-  const currentTemp = getNumber(attrs['current_temperature']);
-  const targetTemp = getNumber(attrs['temperature']);
-  const hvacAction = getHvacAction(attrs['hvac_action']);
-  const hvacMode = entity.state;
+export function extractClimateInfo({ attributes, state }: HassEntity): ClimateInfo {
+  const currentTemperatureValue = getNumber(attributes['current_temperature']);
+  const targetTemperatureValue = getNumber(attributes['temperature']);
+  const hvacAction = getHvacAction(attributes['hvac_action']);
+  const hvacMode = state;
 
-  const currentTemperature = currentTemp ?? null;
-  const targetTemperature = targetTemp ?? null;
+  const currentTemperature = currentTemperatureValue ?? null;
+  const targetTemperature = targetTemperatureValue ?? null;
 
   // Compute temp_difference and temp_offset
-  let tempDifference = 0;
-  let tempOffset = 0;
+  let temperatureDifference = 0;
+  let temperatureOffset = 0;
 
   if (currentTemperature !== null && targetTemperature !== null) {
     const rawOffset = currentTemperature - targetTemperature;
@@ -43,23 +42,23 @@ export function extractClimateInfo(entity: HassEntity): ClimateInfo {
     // In cool mode: negative offset means "mission accomplished" - treat as 0
     if (hvacMode === 'heat') {
       // Heating: only care if room is colder than target
-      tempOffset = rawOffset < 0 ? rawOffset : 0;
+      temperatureOffset = Math.min(rawOffset, 0);
     } else if (hvacMode === 'cool') {
       // Cooling: only care if room is warmer than target
-      tempOffset = rawOffset > 0 ? rawOffset : 0;
+      temperatureOffset = Math.max(rawOffset, 0);
     } else {
       // heat_cool, auto, off, or other: use raw offset
-      tempOffset = rawOffset;
+      temperatureOffset = rawOffset;
     }
 
-    tempDifference = Math.abs(tempOffset);
+    temperatureDifference = Math.abs(temperatureOffset);
   }
 
   return {
     currentTemperature,
     targetTemperature,
-    tempDifference,
-    tempOffset,
+    tempDifference: temperatureDifference,
+    tempOffset: temperatureOffset,
     hvacAction: hvacAction ?? null,
     hvacMode: hvacMode ?? null,
   };

@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Treemap Card - Dev Sandbox</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #1c1c1c;
+        color: #fff;
+        margin: 0;
+        padding: 20px;
+      }
+      h1 {
+        font-size: 18px;
+        margin: 0 0 20px 0;
+        color: #888;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+      .card-container {
+        background: #2a2a2a;
+        border-radius: 12px;
+        padding: 16px;
+      }
+      .card-container h2 {
+        font-size: 14px;
+        color: #666;
+        margin: 0 0 12px 0;
+        font-weight: normal;
+      }
+      treemap-card {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Treemap Card - Dev Sandbox</h1>
+
+    <div class="grid">
+      <div class="card-container">
+        <treemap-card id="card1"></treemap-card>
+      </div>
+
+      <div class="card-container">
+        <treemap-card id="card2"></treemap-card>
+      </div>
+
+      <div class="card-container">
+        <treemap-card id="card3"></treemap-card>
+      </div>
+
+      <div class="card-container">
+        <treemap-card id="card4"></treemap-card>
+      </div>
+
+      <div class="card-container">
+        <treemap-card id="card5"></treemap-card>
+      </div>
+
+      <div class="card-container">
+        <treemap-card id="card6"></treemap-card>
+      </div>
+    </div>
+
+    <!-- Iconify for MDI icons -->
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+
+    <script type="module">
+      // Mock ha-icon component using Iconify
+      class HaIcon extends HTMLElement {
+        static get observedAttributes() {
+          return ['icon'];
+        }
+
+        connectedCallback() {
+          this.render();
+        }
+
+        attributeChangedCallback() {
+          this.render();
+        }
+
+        render() {
+          const icon = this.getAttribute('icon') || '';
+          // Convert mdi:icon-name to mdi:icon-name format for iconify
+          const iconifyIcon = icon.replace('mdi:', 'mdi:');
+          this.innerHTML = `<iconify-icon icon="${iconifyIcon}"></iconify-icon>`;
+        }
+      }
+      customElements.define('ha-icon', HaIcon);
+
+      import '/src/treemap-card.ts';
+
+      // Mock Home Assistant object
+      const mockHass = {
+        states: {
+          'sensor.living_room_temp': {
+            entity_id: 'sensor.living_room_temp',
+            state: '22.5',
+            attributes: {
+              friendly_name: 'Living Room',
+              unit_of_measurement: '°C',
+              device_class: 'temperature',
+              icon: 'mdi:thermometer',
+            },
+          },
+          'sensor.bedroom_temp': {
+            entity_id: 'sensor.bedroom_temp',
+            state: '19.2',
+            attributes: {
+              friendly_name: 'Bedroom',
+              unit_of_measurement: '°C',
+              device_class: 'temperature',
+              icon: 'mdi:thermometer',
+            },
+          },
+          'sensor.kitchen_temp': {
+            entity_id: 'sensor.kitchen_temp',
+            state: '21.0',
+            attributes: {
+              friendly_name: 'Kitchen',
+              unit_of_measurement: '°C',
+              device_class: 'temperature',
+              icon: 'mdi:thermometer',
+            },
+          },
+          'sensor.bathroom_temp': {
+            entity_id: 'sensor.bathroom_temp',
+            state: '24.3',
+            attributes: {
+              friendly_name: 'Bathroom',
+              unit_of_measurement: '°C',
+              device_class: 'temperature',
+              icon: 'mdi:thermometer',
+            },
+          },
+          'sensor.office_temp': {
+            entity_id: 'sensor.office_temp',
+            state: '20.1',
+            attributes: {
+              friendly_name: 'Office',
+              unit_of_measurement: '°C',
+              device_class: 'temperature',
+              icon: 'mdi:thermometer',
+            },
+          },
+          'sensor.garage_temp': {
+            entity_id: 'sensor.garage_temp',
+            state: '15.5',
+            attributes: {
+              friendly_name: 'Garage',
+              unit_of_measurement: '°C',
+              device_class: 'temperature',
+              icon: 'mdi:thermometer',
+            },
+          },
+          'sensor.basement_temp': {
+            entity_id: 'sensor.basement_temp',
+            state: '14.2',
+            attributes: {
+              friendly_name: 'Basement',
+              unit_of_measurement: '°C',
+              device_class: 'temperature',
+              icon: 'mdi:thermometer',
+            },
+          },
+          'sensor.attic_temp': {
+            entity_id: 'sensor.attic_temp',
+            state: '28.1',
+            attributes: {
+              friendly_name: 'Attic',
+              unit_of_measurement: '°C',
+              device_class: 'temperature',
+              icon: 'mdi:thermometer',
+            },
+          },
+          'sensor.hallway_temp': {
+            entity_id: 'sensor.hallway_temp',
+            state: '20.8',
+            attributes: {
+              friendly_name: 'Hallway',
+              unit_of_measurement: '°C',
+              device_class: 'temperature',
+              icon: 'mdi:thermometer',
+            },
+          },
+          'sensor.nursery_temp': {
+            entity_id: 'sensor.nursery_temp',
+            state: '21.5',
+            attributes: {
+              friendly_name: 'Nursery',
+              unit_of_measurement: '°C',
+              device_class: 'temperature',
+              icon: 'mdi:thermometer',
+            },
+          },
+          'sensor.guest_room_temp': {
+            entity_id: 'sensor.guest_room_temp',
+            state: '19.0',
+            attributes: {
+              friendly_name: 'Guest Room',
+              unit_of_measurement: '°C',
+              device_class: 'temperature',
+              icon: 'mdi:thermometer',
+            },
+          },
+          'climate.living_room': {
+            entity_id: 'climate.living_room',
+            state: 'heat',
+            attributes: {
+              friendly_name: 'Living Room',
+              current_temperature: 20,
+              temperature: 22,
+              hvac_action: 'heating',
+              hvac_modes: ['off', 'heat', 'cool'],
+            },
+          },
+          'climate.bedroom': {
+            entity_id: 'climate.bedroom',
+            state: 'heat',
+            attributes: {
+              friendly_name: 'Bedroom',
+              current_temperature: 21,
+              temperature: 21,
+              hvac_action: 'idle',
+              hvac_modes: ['off', 'heat', 'cool'],
+            },
+          },
+          'climate.office': {
+            entity_id: 'climate.office',
+            state: 'heat',
+            attributes: {
+              friendly_name: 'Office',
+              current_temperature: 18,
+              temperature: 21,
+              hvac_action: 'heating',
+              hvac_modes: ['off', 'heat', 'cool'],
+            },
+          },
+          'climate.kitchen': {
+            entity_id: 'climate.kitchen',
+            state: 'heat',
+            attributes: {
+              friendly_name: 'Kitchen',
+              current_temperature: 20.5,
+              temperature: 20,
+              hvac_action: 'idle',
+              hvac_modes: ['off', 'heat', 'cool'],
+            },
+          },
+          'climate.bathroom': {
+            entity_id: 'climate.bathroom',
+            state: 'heat',
+            attributes: {
+              friendly_name: 'Bathroom',
+              current_temperature: 22,
+              temperature: 24,
+              hvac_action: 'heating',
+              hvac_modes: ['off', 'heat', 'cool'],
+            },
+          },
+          'climate.garage': {
+            entity_id: 'climate.garage',
+            state: 'off',
+            attributes: {
+              friendly_name: 'Garage',
+              current_temperature: 12,
+              temperature: 15,
+              hvac_action: 'off',
+              hvac_modes: ['off', 'heat', 'cool'],
+            },
+          },
+          'climate.guest_room': {
+            entity_id: 'climate.guest_room',
+            state: 'cool',
+            attributes: {
+              friendly_name: 'Guest Room',
+              current_temperature: 26,
+              temperature: 23,
+              hvac_action: 'cooling',
+              hvac_modes: ['off', 'heat', 'cool'],
+            },
+          },
+          // Temperature sensors for climate fallback (used when climate has no stats)
+          'sensor.living_room_temperature': {
+            entity_id: 'sensor.living_room_temperature',
+            state: '20.5',
+            attributes: { friendly_name: 'Living Room Temp', unit_of_measurement: '°C' },
+          },
+          'sensor.bedroom_temperature': {
+            entity_id: 'sensor.bedroom_temperature',
+            state: '21.2',
+            attributes: { friendly_name: 'Bedroom Temp', unit_of_measurement: '°C' },
+          },
+          'sensor.office_temperature': {
+            entity_id: 'sensor.office_temperature',
+            state: '18.8',
+            attributes: { friendly_name: 'Office Temp', unit_of_measurement: '°C' },
+          },
+          'sensor.kitchen_temperature': {
+            entity_id: 'sensor.kitchen_temperature',
+            state: '20.5',
+            attributes: { friendly_name: 'Kitchen Temp', unit_of_measurement: '°C' },
+          },
+          'sensor.bathroom_temperature': {
+            entity_id: 'sensor.bathroom_temperature',
+            state: '22.3',
+            attributes: { friendly_name: 'Bathroom Temp', unit_of_measurement: '°C' },
+          },
+          'sensor.garage_temperature': {
+            entity_id: 'sensor.garage_temperature',
+            state: '12.5',
+            attributes: { friendly_name: 'Garage Temp', unit_of_measurement: '°C' },
+          },
+          'sensor.guest_room_temperature': {
+            entity_id: 'sensor.guest_room_temperature',
+            state: '25.8',
+            attributes: { friendly_name: 'Guest Room Temp', unit_of_measurement: '°C' },
+          },
+          'light.kitchen': {
+            entity_id: 'light.kitchen',
+            state: 'on',
+            attributes: {
+              friendly_name: 'Kitchen',
+              brightness: 255,
+              icon: 'mdi:ceiling-light',
+            },
+          },
+          'light.bedroom': {
+            entity_id: 'light.bedroom',
+            state: 'on',
+            attributes: {
+              friendly_name: 'Bedroom',
+              brightness: 110,
+              icon: 'mdi:ceiling-light',
+            },
+          },
+          'light.dining': {
+            entity_id: 'light.dining',
+            state: 'on',
+            attributes: {
+              friendly_name: 'Dining',
+              brightness: 69,
+              icon: 'mdi:ceiling-light',
+            },
+          },
+          'light.living_room': {
+            entity_id: 'light.living_room',
+            state: 'off',
+            attributes: {
+              friendly_name: 'Living Room',
+              brightness: 0,
+              icon: 'mdi:ceiling-light',
+            },
+          },
+          'light.office': {
+            entity_id: 'light.office',
+            state: 'off',
+            attributes: {
+              friendly_name: 'Office',
+              brightness: 0,
+              icon: 'mdi:ceiling-light',
+            },
+          },
+          'light.bathroom': {
+            entity_id: 'light.bathroom',
+            state: 'on',
+            attributes: {
+              friendly_name: 'Bathroom',
+              brightness: 200,
+              icon: 'mdi:ceiling-light',
+            },
+          },
+          'light.hallway': {
+            entity_id: 'light.hallway',
+            state: 'on',
+            attributes: {
+              friendly_name: 'Hallway',
+              brightness: 50,
+              icon: 'mdi:ceiling-light',
+            },
+          },
+          'light.garage': {
+            entity_id: 'light.garage',
+            state: 'off',
+            attributes: {
+              friendly_name: 'Garage',
+              brightness: 0,
+              icon: 'mdi:ceiling-light',
+            },
+          },
+          'sensor.portfolio': {
+            entity_id: 'sensor.portfolio',
+            state: 'ok',
+            attributes: {
+              friendly_name: 'Portfolio',
+              holdings: [
+                {
+                  ticker: 'AAPL',
+                  value: 5000,
+                  todayPct: -2.5,
+                  icon: 'mdi:apple',
+                  history: [175, 178, 172, 180, 176, 174, 171],
+                },
+                {
+                  ticker: 'MSFT',
+                  value: 3000,
+                  todayPct: 1.2,
+                  icon: 'mdi:microsoft',
+                  history: [410, 415, 412, 418, 420, 422, 425],
+                },
+                {
+                  ticker: 'GOOGL',
+                  value: 2500,
+                  todayPct: 0.8,
+                  icon: 'mdi:google',
+                  history: [140, 138, 142, 145, 143, 141, 142],
+                },
+                {
+                  ticker: 'NVDA',
+                  value: 4000,
+                  todayPct: -5.1,
+                  icon: 'mdi:chip',
+                  history: [480, 495, 510, 490, 470, 460, 455],
+                },
+                {
+                  ticker: 'TSLA',
+                  value: 1500,
+                  todayPct: 3.2,
+                  icon: 'mdi:car-electric',
+                  history: [240, 235, 242, 250, 255, 260, 265],
+                },
+                {
+                  ticker: 'META',
+                  value: 2800,
+                  todayPct: -1.8,
+                  icon: 'mdi:facebook',
+                  history: [505, 510, 515, 508, 500, 495, 490],
+                },
+                {
+                  ticker: 'AMZN',
+                  value: 3500,
+                  todayPct: 0.5,
+                  icon: 'mdi:shopping',
+                  history: [185, 183, 187, 190, 188, 186, 187],
+                },
+                {
+                  ticker: 'AMD',
+                  value: 1200,
+                  todayPct: -3.2,
+                  icon: 'mdi:memory',
+                  history: [165, 170, 168, 162, 158, 155, 152],
+                },
+                {
+                  ticker: 'NFLX',
+                  value: 900,
+                  todayPct: 2.1,
+                  icon: 'mdi:netflix',
+                  history: [620, 615, 625, 630, 640, 645, 650],
+                },
+                {
+                  ticker: 'CRM',
+                  value: 1100,
+                  todayPct: -0.3,
+                  icon: 'mdi:cloud',
+                  history: [280, 282, 278, 275, 277, 279, 278],
+                },
+                {
+                  ticker: 'ORCL',
+                  value: 800,
+                  todayPct: 1.5,
+                  icon: 'mdi:database',
+                  history: [125, 122, 128, 130, 132, 135, 138],
+                },
+                {
+                  ticker: 'INTC',
+                  value: 600,
+                  todayPct: -4.2,
+                  icon: 'mdi:chip',
+                  history: [45, 48, 46, 44, 42, 40, 38],
+                },
+              ],
+            },
+          },
+        },
+        // Mock callWS for sparkline history data
+        callWS: async params => {
+          if (params.type === 'recorder/statistics_during_period') {
+            // Generate mock historical data for each entity
+            const result = {};
+            for (const entityId of params.statistic_ids || []) {
+              const baseValue = parseFloat(mockHass.states[entityId]?.state) || 20;
+              result[entityId] = Array.from({ length: 24 }, (_, i) => ({
+                mean: baseValue + Math.sin(i / 3) * 2 + (Math.random() - 0.5),
+              }));
+            }
+            return result;
+          }
+          if (params.type === 'history/history_during_period') {
+            // Generate mock HVAC history for climate entities
+            const result = {};
+            const now = Date.now();
+            const startMs = new Date(params.start_time).getTime();
+            const periodMs = now - startMs;
+
+            for (const entityId of params.entity_ids || []) {
+              if (entityId.startsWith('climate.')) {
+                const climate = mockHass.states[entityId];
+                const currentAction = climate?.attributes?.hvac_action || 'idle';
+                // Generate realistic HVAC action history
+                const history = [];
+                let time = startMs;
+                const actions = ['heating', 'idle', 'cooling', 'idle', 'heating', 'idle'];
+                let actionIndex = 0;
+
+                while (time < now) {
+                  const duration = 30 * 60 * 1000 + Math.random() * 60 * 60 * 1000; // 30-90 min segments
+                  const action = actions[actionIndex % actions.length];
+                  history.push({
+                    lu: time / 1000, // last_updated in seconds
+                    s: climate?.state || 'heat',
+                    a: { hvac_action: action },
+                  });
+                  time += duration;
+                  actionIndex++;
+                }
+                // End with current action
+                history.push({
+                  lu: (now - 10 * 60 * 1000) / 1000,
+                  s: climate?.state || 'heat',
+                  a: { hvac_action: currentAction },
+                });
+                result[entityId] = history;
+              }
+            }
+            return result;
+          }
+          return {};
+        },
+      };
+
+      // Wait for custom element to be defined
+      customElements.whenDefined('treemap-card').then(() => {
+        // Card 1: Temperature sensors
+        // Options: header, exclude, label.replace, label.suffix, value.suffix, height, gap, sparkline.period
+        const card1 = document.getElementById('card1');
+        card1.setConfig({
+          type: 'custom:treemap-card',
+          header: {
+            title: 'Temperatures',
+            style: 'font-size: 16px; color: #aaa;',
+          },
+          entities: ['sensor.*_temp'],
+          exclude: ['sensor.attic_temp', 'sensor.basement_temp'],
+          label: {
+            replace: '_temp$//',
+            suffix: ' Room',
+          },
+          value: { suffix: '°C' },
+          height: 250,
+          gap: 4,
+          sparkline: { period: '7d' },
+        });
+        card1.hass = mockHass;
+
+        // Card 2: Climate with HVAC action bars
+        // Options: sparkline.hvac (shows heating/cooling bars at bottom of sparkline)
+        const card2 = document.getElementById('card2');
+        card2.setConfig({
+          type: 'custom:treemap-card',
+          header: { title: 'Climate + HVAC Bars' },
+          entities: ['climate.*'],
+          value: { attribute: 'current_temperature', suffix: '°C' },
+          size: { equal: true },
+          color: {
+            attribute: 'hvac_action',
+            hvac: {
+              heating: '#ff6b35',
+              cooling: '#4dabf7',
+              idle: '#69db7c',
+              off: '#868e96',
+            },
+          },
+          sparkline: {
+            hvac: {
+              show: true,
+              height: 20, // Bar height as % of sparkline
+              heatingColor: '#ff6b35',
+              coolingColor: '#4dabf7',
+            },
+          },
+        });
+        card2.hass = mockHass;
+
+        // Card 3: Sparklines demo
+        // Options: sparkline.mode, sparkline.line.style, sparkline.fill.style, color.opacity
+        const card3 = document.getElementById('card3');
+        card3.setConfig({
+          type: 'custom:treemap-card',
+          header: { title: 'With Sparklines' },
+          entities: ['sensor.*_temp'],
+          limit: 6,
+          color: {
+            low: '#4dabf7',
+            mid: '#69db7c',
+            high: '#ff6b35',
+            opacity: 0.9,
+          },
+          sparkline: { mode: 'light' },
+        });
+        card3.hass = mockHass;
+
+        // Card 4: Stocks (JSON data mode)
+        // Options: entity, data_attribute, label.attribute, label.prefix, value.attribute, size.attribute, color.attribute, icon.attribute, filter.below, sparkline.attribute
+        const card4 = document.getElementById('card4');
+        card4.setConfig({
+          type: 'custom:treemap-card',
+          header: { title: 'Portfolio' },
+          entity: 'sensor.portfolio',
+          data_attribute: 'holdings',
+          label: { attribute: 'ticker', prefix: '$' },
+          value: { attribute: 'todayPct', suffix: '%' },
+          size: { attribute: 'value' },
+          color: { attribute: 'todayPct' },
+          icon: { attribute: 'icon' },
+          filter: { below: 5 },
+          sparkline: { attribute: 'history' },
+        });
+        card4.hass = mockHass;
+
+        // Card 5: Lights
+        // Options: title (HA default), icon.icon, label.style, value.style, card_style
+        const card5 = document.getElementById('card5');
+        card5.setConfig({
+          type: 'custom:treemap-card',
+          title: 'Lights',
+          entities: ['light.*'],
+          icon: { icon: 'mdi:lightbulb' },
+          label: { style: 'text-transform: uppercase; font-size: 12px;' },
+          value: { style: 'font-size: 16px; font-weight: bold;' },
+          card_style: 'border: 1px solid #333;',
+          sparkline: { show: false },
+        });
+        card5.hass = mockHass;
+
+        // Card 6: Radiators (temp_offset)
+        // Options: size.attribute, size.inverse, size.min, size.max, filter.above, value.show, sparkline.line.show, sparkline.fill.show
+        const card6 = document.getElementById('card6');
+        card6.setConfig({
+          type: 'custom:treemap-card',
+          header: { title: 'Radiators', show: true },
+          entities: ['climate.*'],
+          value: { show: false },
+          size: {
+            attribute: 'temp_difference',
+            inverse: true,
+            min: 0.5,
+            max: 5,
+          },
+          filter: { above: -10 },
+          color: {
+            attribute: 'temp_offset',
+            low: '#4dabf7',
+            mid: '#69db7c',
+            high: '#ff6b35',
+            scale: { neutral: 0, min: -3, max: 3 },
+          },
+          sparkline: {
+            line: { show: false },
+            fill: { show: true },
+          },
+        });
+        card6.hass = mockHass;
+      });
+    </script>
+  </body>
+</html>

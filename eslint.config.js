@@ -103,7 +103,7 @@ export default tseslint.config(
       complexity: 'off', // Render functions can be complex
 
       // ===== Code Style =====
-      'prefer-destructuring': 'off', // Not always clearer
+      // prefer-destructuring is off - too many dynamic property accesses in this codebase
       'object-shorthand': ['error', 'always'],
 
       // Allow unbound methods for Lit event handlers

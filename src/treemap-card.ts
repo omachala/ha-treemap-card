@@ -1,33 +1,29 @@
-import { LitElement, html, nothing, type TemplateResult } from 'lit';
+import { LitElement, html, nothing, type TemplateResult, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type { HomeAssistant, TreemapCardConfig, TreemapItem, TreemapRect } from './types';
-import { getNumber, getString } from './utils/predicates';
-import { isLightEntity, extractLightInfo } from './utils/lights';
+import { getNumber, getString, matchesPattern } from './utils/predicates';
+import { isLightEntity, extractLightInfo, getLightBackgroundColor } from './utils/lights';
 import { isClimateEntity, extractClimateInfo, getClimateValue } from './utils/climate';
-import { hsToRgb, parseColor, getContrastColors, interpolateColor } from './utils/colors';
-import { squarify } from './squarify';
+import {
+  getContrastColors,
+  getGradientColor,
+  applyOpacity,
+  type GradientColorOptions,
+} from './utils/colors';
+import { renderSparklineWithData } from './utils/sparkline';
+import { getHistoryData, type HistoryPeriod, type SparklineData } from './utils/history';
+import { squarify } from './utils/squarify';
+import { prepareTreemapData } from './utils/data';
 import { styles } from './styles';
 
 declare const __VERSION__: string;
 const CARD_VERSION = __VERSION__;
 
 console.info(
-  `%c TREEMAP-CARD %c v${CARD_VERSION} `,
+  `%c TREEMAP-CARD %c v${CARD_VERSION}`,
   'color: white; background: #3498db; font-weight: bold;',
   'color: #3498db; background: white; font-weight: bold;'
 );
-
-/**
- * Match entity ID against pattern with wildcard support
- * Supports * as wildcard (e.g., "sensor.battery_*", "light.*_brightness")
- */
-function matchesPattern(entityId: string, pattern: string): boolean {
-  if (!pattern.includes('*')) {
-    return entityId === pattern;
-  }
-  const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
-  return regex.test(entityId);
-}
 
 @customElement('treemap-card')
 export class TreemapCard extends LitElement {
@@ -35,6 +31,89 @@ export class TreemapCard extends LitElement {
 
   @property({ attribute: false }) public hass?: HomeAssistant;
   @state() private _config?: TreemapCardConfig;
+  @state() private _sparklineData = new Map<string, SparklineData>();
+  private _fetchingSparklines = false;
+  private _lastRelevantStates: string | undefined;
+  private _cachedData: TreemapItem[] | undefined;
+  private _cachedDataHash: string | undefined;
+  private _sparklineDebounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+  /**
+   * Optimize re-renders: only update when relevant entity states change
+   */
+  protected override shouldUpdate(changedProps: PropertyValues): boolean {
+    // Always update if config or sparkline data changed
+    if (changedProps.has('_config') || changedProps.has('_sparklineData')) {
+      return true;
+    }
+
+    // For hass changes, check if relevant entities changed
+    if (changedProps.has('hass') && this.hass && this._config) {
+      const relevantStates = this._getRelevantStatesHash();
+      if (relevantStates !== this._lastRelevantStates) {
+        this._lastRelevantStates = relevantStates;
+        return true;
+      }
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Get a hash of relevant entity states for change detection
+   */
+  private _getRelevantStatesHash(): string {
+    if (!this.hass) return '';
+
+    const entityIds = this._getConfiguredEntityIds();
+    const states: string[] = [];
+
+    for (const id of entityIds) {
+      const entity = this.hass.states[id];
+      if (entity) {
+        // Include state and key attributes that affect rendering
+        states.push(`${id}:${entity.state}:${entity.last_updated}`);
+      }
+    }
+
+    return states.join('|');
+  }
+
+  /**
+   * Get entity IDs from config (supports wildcards)
+   */
+  private _getConfiguredEntityIds(): string[] {
+    if (!this.hass || !this._config) return [];
+
+    // For JSON mode, just the single entity
+    if (this._config.entity) {
+      return [this._config.entity];
+    }
+
+    // For entities mode, expand wildcards
+    if (this._config.entities) {
+      const allEntityIds = Object.keys(this.hass.states);
+      const result: string[] = [];
+
+      for (const pattern of this._config.entities) {
+        if (pattern.includes('*')) {
+          // Wildcard pattern - match against all entities
+          for (const id of allEntityIds) {
+            if (matchesPattern(id, pattern)) {
+              result.push(id);
+            }
+          }
+        } else {
+          result.push(pattern);
+        }
+      }
+
+      return result;
+    }
+
+    return [];
+  }
 
   public setConfig(config: TreemapCardConfig): void {
     if (!config.entities && !config.entity) {
@@ -50,29 +129,121 @@ export class TreemapCard extends LitElement {
     return 4;
   }
 
+  protected override updated(): void {
+    // Debounce sparkline fetching to reduce API calls
+    if (this._sparklineDebounceTimer) {
+      clearTimeout(this._sparklineDebounceTimer);
+    }
+    this._sparklineDebounceTimer = setTimeout(() => {
+      void this._fetchSparklineData();
+    }, 100);
+  }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    if (this._sparklineDebounceTimer) {
+      clearTimeout(this._sparklineDebounceTimer);
+    }
+  }
+
+  private async _fetchSparklineData(): Promise<void> {
+    if (!this.hass || this._fetchingSparklines) return;
+
+    // Check if sparklines are disabled
+    if (this._config?.sparkline?.show === false) return;
+
+    // Get entity IDs from resolved data
+    const data = this._resolveData();
+    const entityIds = data.map(({ entity_id }) => entity_id).filter((id): id is string => !!id);
+
+    if (entityIds.length === 0) return;
+
+    this._fetchingSparklines = true;
+
+    try {
+      // Get period from config (default: 24h)
+      const period: HistoryPeriod = this._config?.sparkline?.period || '24h';
+
+      // Fetch history data (uses cache internally)
+      const historyData = await getHistoryData(this.hass, entityIds, period);
+
+      // Only update state if data actually changed (avoid triggering re-renders)
+      if (historyData.size > 0 && !this._sparklineDataEquals(historyData)) {
+        this._sparklineData = historyData;
+      }
+    } finally {
+      this._fetchingSparklines = false;
+    }
+  }
+
+  /**
+   * Compare sparkline data maps to avoid unnecessary re-renders.
+   */
+  private _sparklineDataEquals(newData: Map<string, SparklineData>): boolean {
+    if (this._sparklineData.size !== newData.size) return false;
+
+    for (const [key, newValue] of newData) {
+      const oldValue = this._sparklineData.get(key);
+      if (!oldValue) return false;
+
+      // Compare temperature arrays
+      if (oldValue.temperature.length !== newValue.temperature.length) return false;
+
+      // Compare hvacActions arrays
+      const oldHvac = oldValue.hvacActions?.length ?? 0;
+      const newHvac = newValue.hvacActions?.length ?? 0;
+      if (oldHvac !== newHvac) return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Get period hours from config for HVAC quantization.
+   */
+  private _getPeriodHours(): number {
+    const period = this._config?.sparkline?.period || '24h';
+    const periodMap: Record<string, number> = {
+      '12h': 12,
+      '24h': 24,
+      '7d': 7 * 24,
+      '30d': 30 * 24,
+    };
+    return periodMap[period] ?? 24;
+  }
+
   private _resolveData(): TreemapItem[] {
     if (!this.hass || !this._config) return [];
 
+    // Check cache - use states hash for cache key
+    const currentHash = this._lastRelevantStates;
+    if (this._cachedData && this._cachedDataHash === currentHash) {
+      return this._cachedData;
+    }
+
     // Mode 1 & 2: entities list (with wildcard support)
+    let data: TreemapItem[];
     if (this._config.entities) {
-      return this._resolveEntities(this._config.entities);
+      data = this._resolveEntities(this._config.entities);
+    } else if (this._config.entity) {
+      // Mode 3: single entity with JSON array
+      data = this._resolveJsonEntity(this._config.entity);
+    } else {
+      data = [];
     }
 
-    // Mode 3: single entity with JSON array
-    if (this._config.entity) {
-      return this._resolveJsonEntity(this._config.entity);
-    }
+    // Cache the result
+    this._cachedData = data;
+    this._cachedDataHash = currentHash;
 
-    return [];
+    return data;
   }
 
   private _isExcluded(entityId: string): boolean {
     const excludePatterns = this._config?.exclude;
     if (!excludePatterns || excludePatterns.length === 0) return false;
     for (const pattern of excludePatterns) {
-      const matches = matchesPattern(entityId, pattern);
-      if (matches) {
-        console.log(`[treemap] Excluding: ${entityId} (matched: ${pattern})`);
+      if (matchesPattern(entityId, pattern)) {
         return true;
       }
     }
@@ -94,18 +265,18 @@ export class TreemapCard extends LitElement {
         const entity = this.hass.states[entityId];
         if (!entity) continue;
 
-        const labelAttr = this._config?.label?.attribute || 'friendly_name';
+        const labelAttribute = this._config?.label?.attribute || 'friendly_name';
         const label =
-          labelAttr === 'entity_id'
+          labelAttribute === 'entity_id'
             ? entityId
-            : String(entity.attributes[labelAttr] ?? entityId.split('.').pop());
+            : String(entity.attributes[labelAttribute] ?? entityId.split('.').pop());
 
         const icon = getString(entity.attributes['icon']);
 
         // Special handling for light entities
         if (isLightEntity(entityId)) {
           const lightInfo = extractLightInfo(entity);
-          const brightness = lightInfo.brightness;
+          const { brightness } = lightInfo;
 
           // Size: off lights get 10%, on lights get 40-100% based on brightness
           // This ensures on lights are clearly separated from off lights
@@ -135,53 +306,65 @@ export class TreemapCard extends LitElement {
           const climateInfo = extractClimateInfo(entity);
 
           // Determine what to display/size/color based on config
-          const valueAttr = this._config?.value?.attribute || 'current_temperature';
-          const sizeAttr = this._config?.size?.attribute || valueAttr;
-          const colorAttr = this._config?.color?.attribute || valueAttr;
+          const valueAttribute = this._config?.value?.attribute || 'current_temperature';
+          const sizeAttribute = this._config?.size?.attribute || valueAttribute;
+          const colorAttribute = this._config?.color?.attribute || valueAttribute;
 
           // Get values (supports computed attributes like temp_difference, temp_offset)
-          let displayValue = getClimateValue(climateInfo, valueAttr);
-          let sizeValue = getClimateValue(climateInfo, sizeAttr);
-          let colorValue = getClimateValue(climateInfo, colorAttr);
+          let displayValue = getClimateValue(climateInfo, valueAttribute);
+          let sizeValue = getClimateValue(climateInfo, sizeAttribute);
+          let colorValue = getClimateValue(climateInfo, colorAttribute);
 
           // Fall back to entity attributes if not a computed value
           if (displayValue === null) {
-            displayValue = getNumber(entity.attributes[valueAttr]) ?? 0;
+            displayValue = getNumber(entity.attributes[valueAttribute]) ?? 0;
           }
           if (sizeValue === null) {
-            sizeValue = getNumber(entity.attributes[sizeAttr]) ?? 0;
+            sizeValue = getNumber(entity.attributes[sizeAttribute]) ?? 0;
           }
           if (colorValue === null) {
-            colorValue = getNumber(entity.attributes[colorAttr]) ?? 0;
+            colorValue = getNumber(entity.attributes[colorAttribute]) ?? 0;
           }
 
           // For numeric operations, convert to numbers
-          const numDisplayValue = typeof displayValue === 'number' ? displayValue : 0;
+          const numberDisplayValue = typeof displayValue === 'number' ? displayValue : 0;
           // Ensure sizeValue has a minimum so items are always visible
-          const numSizeValue =
+          const numberSizeValue =
             typeof sizeValue === 'number' ? Math.max(0.1, Math.abs(sizeValue)) : 0.1;
-          const numColorValue = typeof colorValue === 'number' ? colorValue : 0;
+          const numberColorValue = typeof colorValue === 'number' ? colorValue : 0;
 
           // Determine icon: use entity's custom icon if set, otherwise base on hvac_action
           let climateIcon: string;
           if (icon) {
             // Entity has a custom icon set - use it
             climateIcon = icon;
-          } else if (climateInfo.hvacAction === 'heating') {
-            climateIcon = 'mdi:fire';
-          } else if (climateInfo.hvacAction === 'cooling') {
-            climateIcon = 'mdi:snowflake';
-          } else if (climateInfo.hvacAction === 'off') {
-            climateIcon = 'mdi:thermostat-off';
-          } else {
-            climateIcon = 'mdi:thermostat';
-          }
+          } else
+            switch (climateInfo.hvacAction) {
+              case 'heating': {
+                climateIcon = 'mdi:fire';
+
+                break;
+              }
+              case 'cooling': {
+                climateIcon = 'mdi:snowflake';
+
+                break;
+              }
+              case 'off': {
+                climateIcon = 'mdi:thermostat-off';
+
+                break;
+              }
+              default: {
+                climateIcon = 'mdi:thermostat';
+              }
+            }
 
           items.push({
             label,
-            value: numDisplayValue,
-            sizeValue: numSizeValue,
-            colorValue: numColorValue,
+            value: numberDisplayValue,
+            sizeValue: numberSizeValue,
+            colorValue: numberColorValue,
             entity_id: entityId,
             icon: climateIcon,
             unit: getString(entity.attributes['unit_of_measurement']),
@@ -191,15 +374,15 @@ export class TreemapCard extends LitElement {
         }
 
         // Standard entity handling
-        const valueAttr = this._config?.value?.attribute || 'state';
+        const valueAttribute = this._config?.value?.attribute || 'state';
         let value: number;
-        if (valueAttr === 'state') {
-          value = parseFloat(entity.state);
+        if (valueAttribute === 'state') {
+          value = Number.parseFloat(entity.state);
         } else {
-          value = parseFloat(String(entity.attributes[valueAttr] ?? 0));
+          value = Number.parseFloat(String(entity.attributes[valueAttribute] ?? 0));
         }
 
-        if (isNaN(value)) continue;
+        if (Number.isNaN(value)) continue;
 
         const unit = getString(entity.attributes['unit_of_measurement']);
 
@@ -225,171 +408,62 @@ export class TreemapCard extends LitElement {
     if (!entity) return [];
 
     // Get data attribute name from config, default to 'items'
-    const dataAttr = this._config?.data_attribute || 'items';
-    const data = entity.attributes[dataAttr];
+    const dataAttribute = this._config?.data_attribute || 'items';
+    const data = entity.attributes[dataAttribute];
 
     if (!Array.isArray(data)) return [];
 
-    // Get field mappings from config
-    const labelParam = this._config?.label?.param || 'label';
-    const valueParam = this._config?.value?.param || 'value';
-    const sizeParam = this._config?.size?.param || valueParam;
-    const colorParam = this._config?.color?.param || valueParam;
-    const iconParam = this._config?.icon?.param || 'icon';
+    // Get field mappings from config (attribute is primary, param is deprecated alias)
+    const labelAttribute = this._config?.label?.attribute ?? this._config?.label?.param ?? 'label';
+    const valueAttribute = this._config?.value?.attribute ?? this._config?.value?.param ?? 'value';
+    const sizeAttribute =
+      this._config?.size?.attribute ?? this._config?.size?.param ?? valueAttribute;
+    const colorAttribute =
+      this._config?.color?.attribute ?? this._config?.color?.param ?? valueAttribute;
+    const iconAttribute = this._config?.icon?.attribute ?? this._config?.icon?.param ?? 'icon';
+    const sparklineAttribute = this._config?.sparkline?.attribute;
 
     return data
       .filter((item): item is Record<string, unknown> => {
         return typeof item === 'object' && item !== null;
       })
-      .map(item => ({
-        label: String(item[labelParam] ?? item['label'] ?? ''),
-        value: Number(item[valueParam] ?? 0),
-        sizeValue: Math.abs(Number(item[sizeParam] ?? item[valueParam] ?? 0)),
-        colorValue: Number(item[colorParam] ?? item[valueParam] ?? 0),
-        icon: getString(item[iconParam]),
-        entity_id: getString(item['entity_id']),
-      }))
-      .filter(item => item.label && !isNaN(item.value));
+      .map(item => {
+        // Extract sparkline data if configured
+        let sparklineData: number[] | undefined;
+        if (sparklineAttribute) {
+          const rawData = item[sparklineAttribute];
+          if (Array.isArray(rawData)) {
+            sparklineData = rawData.filter((v): v is number => typeof v === 'number');
+          }
+        }
+
+        return {
+          label: String(item[labelAttribute] ?? item['label'] ?? ''),
+          value: Number(item[valueAttribute] ?? 0),
+          sizeValue: Math.abs(Number(item[sizeAttribute] ?? item[valueAttribute] ?? 0)),
+          colorValue: Number(item[colorAttribute] ?? item[valueAttribute] ?? 0),
+          icon: getString(item[iconAttribute]),
+          entity_id: getString(item['entity_id']),
+          sparklineData,
+        };
+      })
+      .filter(item => item.label && !Number.isNaN(item.value));
   }
 
-  private _getColorHigh(): string {
-    return this._config?.color?.high || '#16a34a';
-  }
-
-  private _getColorLow(): string {
-    return this._config?.color?.low || '#b91c1c';
-  }
-
-  private _getColorMid(): string | undefined {
-    return this._config?.color?.mid;
-  }
-
-  private _getOpacity(): number | undefined {
-    return this._config?.color?.opacity;
+  private _getGradientColorOptions(): GradientColorOptions {
+    return {
+      colorHigh: this._config?.color?.high || '#16a34a',
+      colorLow: this._config?.color?.low || '#b91c1c',
+      colorMid: this._config?.color?.mid,
+      scaleMin: this._config?.color?.scale?.min,
+      scaleMax: this._config?.color?.scale?.max,
+      neutral: this._config?.color?.scale?.neutral,
+      opacity: this._config?.color?.opacity,
+    };
   }
 
   private _getColor(value: number, min: number, max: number): string {
-    const neutral = this._config?.color?.scale?.neutral;
-    const minValue = this._config?.color?.scale?.min ?? min;
-    const maxValue = this._config?.color?.scale?.max ?? max;
-    const opacity = this._getOpacity();
-    const midColor = this._getColorMid();
-
-    // Clamp value to min/max range
-    const clampedValue = Math.max(minValue, Math.min(maxValue, value));
-
-    // Calculate the midpoint (neutral if set, otherwise center of range)
-    const midPoint = neutral ?? (minValue + maxValue) / 2;
-
-    // If mid color is defined, use three-color gradient: low -> mid -> high
-    if (midColor) {
-      if (clampedValue <= midPoint) {
-        // Below midpoint: interpolate low -> mid
-        if (minValue >= midPoint) {
-          return interpolateColor(midColor, midColor, 1, opacity);
-        }
-        const factor = (clampedValue - minValue) / (midPoint - minValue);
-        return interpolateColor(this._getColorLow(), midColor, factor, opacity);
-      } else {
-        // Above midpoint: interpolate mid -> high
-        if (maxValue <= midPoint) {
-          return interpolateColor(midColor, midColor, 1, opacity);
-        }
-        const factor = (clampedValue - midPoint) / (maxValue - midPoint);
-        return interpolateColor(midColor, this._getColorHigh(), factor, opacity);
-      }
-    }
-
-    // No mid color - use two-color gradient
-    // If neutral is set, use it as the center point for blending
-    if (neutral !== undefined) {
-      if (clampedValue <= neutral) {
-        // Below neutral: interpolate from low to 50% blend
-        if (minValue >= neutral)
-          return interpolateColor(this._getColorLow(), this._getColorHigh(), 0.5, opacity);
-        const factor = (clampedValue - minValue) / (neutral - minValue);
-        return interpolateColor(this._getColorLow(), this._getColorHigh(), factor * 0.5, opacity);
-      } else {
-        // Above neutral: interpolate from 50% blend to high
-        if (maxValue <= neutral)
-          return interpolateColor(this._getColorLow(), this._getColorHigh(), 0.5, opacity);
-        const factor = (clampedValue - neutral) / (maxValue - neutral);
-        return interpolateColor(
-          this._getColorLow(),
-          this._getColorHigh(),
-          0.5 + factor * 0.5,
-          opacity
-        );
-      }
-    }
-
-    // Default: simple linear gradient from low to high
-    if (maxValue === minValue) {
-      return interpolateColor(this._getColorHigh(), this._getColorHigh(), 1, opacity);
-    }
-    const factor = (clampedValue - minValue) / (maxValue - minValue);
-    return interpolateColor(this._getColorLow(), this._getColorHigh(), factor, opacity);
-  }
-
-  /**
-   * Get color for HVAC action (categorical coloring)
-   * Also considers hvac_mode since HA reports hvac_action as 'idle' when mode is 'off'
-   */
-  private _getHvacColor(hvacAction: string | null, hvacMode: string | null): string | null {
-    const hvacConfig = this._config?.color?.hvac;
-    if (!hvacConfig) return null;
-
-    const opacity = this._getOpacity();
-
-    // Default HVAC colors
-    const defaults = {
-      heating: '#ff6b35', // orange
-      cooling: '#4dabf7', // blue
-      idle: '#69db7c', // green
-      off: '#868e96', // gray
-    };
-
-    // If hvac_mode is 'off', use off color regardless of hvac_action
-    // HA reports hvac_action as 'idle' even when thermostat is off
-    if (hvacMode === 'off') {
-      const color = hvacConfig.off ?? defaults.off;
-      if (opacity !== undefined) {
-        const rgb = parseColor(color);
-        if (rgb) {
-          return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})`;
-        }
-      }
-      return color;
-    }
-
-    let color: string | undefined;
-    switch (hvacAction) {
-      case 'heating':
-        color = hvacConfig.heating ?? defaults.heating;
-        break;
-      case 'cooling':
-        color = hvacConfig.cooling ?? defaults.cooling;
-        break;
-      case 'idle':
-        color = hvacConfig.idle ?? defaults.idle;
-        break;
-      case 'off':
-      case null:
-        // HA often reports null hvac_action when thermostat is off
-        color = hvacConfig.off ?? defaults.off;
-        break;
-      default:
-        color = defaults.idle;
-    }
-
-    if (opacity !== undefined && color) {
-      const rgb = parseColor(color);
-      if (rgb) {
-        return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})`;
-      }
-    }
-
-    return color ?? null;
+    return getGradientColor(value, min, max, this._getGradientColorOptions());
   }
 
   private _getSizeClass(rect: TreemapRect): string {
@@ -400,53 +474,10 @@ export class TreemapCard extends LitElement {
     return '';
   }
 
-  // Default light colors (dark gray to yellow)
-  private _getLightColorOff(): string {
-    return this._config?.color?.low ?? '#333333';
-  }
-
-  private _getLightColorOn(): string {
-    return this._config?.color?.high ?? '#fbbf24'; // Amber/yellow
-  }
-
-  /**
-   * Get background color for a light entity
-   * - Color lights: use actual RGB/HS color with brightness as opacity
-   * - Dimmable lights: use yellow with brightness as opacity
-   * - Off lights: use dark gray
-   */
   private _getLightColor(rect: TreemapRect): string {
-    const light = rect.light;
-    if (!light) return this._getLightColorOff();
-
-    // Off light: dark color
-    if (!light.isOn) {
-      return this._getLightColorOff();
-    }
-
-    // Brightness as opacity (min 0.3 so it's always visible when on)
-    const opacity = 0.3 + (light.brightness / 100) * 0.7;
-
-    // Color light with RGB - use the actual light color
-    if (light.supportsColor && light.rgb) {
-      const [r, g, b] = light.rgb;
-      return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-    }
-
-    // Color light with HS - convert to RGB
-    if (light.supportsColor && light.hs) {
-      const [h, s] = light.hs;
-      const [r, g, b] = hsToRgb(h, s);
-      return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-    }
-
-    // Dimmable-only light: yellow with brightness as opacity
-    const onColor = this._getLightColorOn();
-    const hex = onColor.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    const offColor = this._config?.color?.low ?? '#333333';
+    const onColor = this._config?.color?.high ?? '#fbbf24'; // Amber/yellow
+    return getLightBackgroundColor(rect.light, offColor, onColor);
   }
 
   private _filterData(data: TreemapItem[]): TreemapItem[] {
@@ -474,9 +505,6 @@ export class TreemapCard extends LitElement {
     const rawData = this._resolveData();
     const data = this._filterData(rawData);
 
-    console.log(`[treemap] v${CARD_VERSION} Config:`, this._config);
-    console.log(`[treemap] Raw data: ${rawData.length}, Filtered: ${data.length}`, data);
-
     // Header: use custom header if header.title is set, otherwise use HA's default title
     const useCustomHeader = !!this._config.header?.title;
     const customHeaderTitle = this._config.header?.title;
@@ -499,67 +527,18 @@ export class TreemapCard extends LitElement {
       `;
     }
 
-    // Calculate min/max for color scale (use colorValue)
-    const colorValues = data.map(d => d.colorValue);
-    const min = Math.min(...colorValues);
-    const max = Math.max(...colorValues);
-
-    // Apply inverse sizing if configured (low values get bigger rectangles)
-    if (this._config?.size?.inverse) {
-      const maxSize = Math.max(...data.map(d => d.sizeValue));
-      const minSize = Math.min(...data.map(d => d.sizeValue));
-      data.forEach(d => {
-        d.sizeValue = maxSize + minSize - d.sizeValue;
-      });
-      // Ensure minimum floor after inverse to prevent extreme ratios
-      // Without this, items with original max values become near-zero after inverse,
-      // and then get destroyed by sqrt compression in squarify
-      const invertedMax = Math.max(...data.map(d => d.sizeValue));
-      const minFloor = invertedMax * 0.1; // At least 10% of max
-      data.forEach(d => {
-        if (d.sizeValue < minFloor) {
-          d.sizeValue = minFloor;
-        }
-      });
-    }
-
-    // Sort data by sizeValue
-    const orderAsc = this._config?.order === 'asc';
-    const sizeInverse = this._config?.size?.inverse === true;
-    // When size.inverse is true, sizeValues are inverted (small original values become large sizeValues)
-    // So for visual ordering (order: asc = small original values first), we need to flip the ascending flag
-    const isAsc = sizeInverse ? !orderAsc : orderAsc;
-    let sortedData = [...data].sort((a, b) =>
-      isAsc ? a.sizeValue - b.sizeValue : b.sizeValue - a.sizeValue
-    );
-
-    // Apply limit if configured
-    if (this._config?.limit !== undefined && this._config.limit > 0) {
-      sortedData = sortedData.slice(0, this._config.limit);
-    }
-
-    // Apply size.min and size.max to ensure all items are visible
-    // This must happen before squarify which filters out zero-sized items
-    const sizeMax = this._config?.size?.max;
-    const sizeMin = this._config?.size?.min;
-
-    // First apply max cap if configured
-    if (sizeMax !== undefined) {
-      for (const d of sortedData) {
-        if (d.sizeValue > sizeMax) {
-          d.sizeValue = sizeMax;
-        }
-      }
-    }
-
-    // Then apply min floor (default: 5% of max sizeValue)
-    const currentMax = Math.max(...sortedData.map(d => d.sizeValue), 1);
-    const effectiveMin = sizeMin ?? currentMax * 0.05;
-    for (const d of sortedData) {
-      if (d.sizeValue < effectiveMin) {
-        d.sizeValue = effectiveMin;
-      }
-    }
+    // Prepare data: calculate stats, apply sizing options, sort (optimized single-pass)
+    const {
+      items: sortedData,
+      colorMin: min,
+      colorMax: max,
+    } = prepareTreemapData(data, {
+      inverse: this._config?.size?.inverse,
+      ascending: this._config?.order === 'asc',
+      limit: this._config?.limit,
+      sizeMin: this._config?.size?.min,
+      sizeMax: this._config?.size?.max,
+    });
 
     // Generate treemap layout using sizeValue
     // If size.equal mode, give all items equal weight for sizing
@@ -582,6 +561,9 @@ export class TreemapCard extends LitElement {
 
     // squarify uses 'value' field for sizing
     const layoutInput = sortedData.map(d => ({ ...d, value: d.sizeValue }));
+    const orderAsc = this._config?.order === 'asc';
+    const sizeInverse = this._config?.size?.inverse === true;
+    const isAsc = sizeInverse ? !orderAsc : orderAsc;
     const rects = squarify(layoutInput, 100, 100, {
       compressRange: true,
       equalSize,
@@ -602,17 +584,10 @@ export class TreemapCard extends LitElement {
     // Dynamic height based on number of rows (not items)
     // Count unique Y positions to estimate rows
     const uniqueYPositions = new Set(rects.map(r => Math.round(r.y)));
-    const numRows = Math.max(1, uniqueYPositions.size);
-    const baseHeight = Math.max(150, numRows * 100); // 100px per row, min 150px
+    const numberRows = Math.max(1, uniqueYPositions.size);
+    const baseHeight = Math.max(150, numberRows * 100); // 100px per row, min 150px
     const height = this._config.height ?? baseHeight;
     const gap = this._config.gap ?? 6;
-
-    // Debug: check if rects fill 100%
-    const maxY = Math.max(...rects.map(r => r.y + r.height));
-    const maxX = Math.max(...rects.map(r => r.x + r.width));
-    console.log(
-      `[treemap] Rects maxX=${maxX.toFixed(1)}%, maxY=${maxY.toFixed(1)}%, height=${height}px, items=${data.length}`
-    );
 
     return html`
       <ha-card header="${haTitle || nothing}" style="${cardStyle}">
@@ -637,46 +612,24 @@ export class TreemapCard extends LitElement {
   ): TemplateResult {
     // Determine color: climate off/unavailable > active HVAC > light entities > standard gradient
     let color: string;
+    const opacity = this._config?.color?.opacity;
 
     // Climate entities that are off or unavailable always get gray color
-    // This takes precedence over any color configuration
     if (
       rect.climate &&
       (rect.climate.hvacMode === 'off' || rect.climate.hvacMode === 'unavailable')
     ) {
-      const opacity = this._getOpacity();
       const offColor = this._config?.color?.hvac?.off ?? '#868e96';
-      if (opacity !== undefined) {
-        const rgb = parseColor(offColor);
-        if (rgb) {
-          color = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})`;
-        } else {
-          color = offColor;
-        }
-      } else {
-        color = offColor;
-      }
+      color = opacity !== undefined ? applyOpacity(offColor, opacity) : offColor;
     } else if (rect.climate && this._config?.color?.hvac) {
       // HVAC colors only override when ACTIVELY heating/cooling
-      // idle/off states fall back to gradient so you can see the temp offset
       const hvacConfig = this._config.color.hvac;
-      const opacity = this._getOpacity();
       if (rect.climate.hvacAction === 'heating' && hvacConfig.heating) {
-        const c = hvacConfig.heating;
-        if (opacity !== undefined) {
-          const rgb = parseColor(c);
-          color = rgb ? `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})` : c;
-        } else {
-          color = c;
-        }
+        color =
+          opacity !== undefined ? applyOpacity(hvacConfig.heating, opacity) : hvacConfig.heating;
       } else if (rect.climate.hvacAction === 'cooling' && hvacConfig.cooling) {
-        const c = hvacConfig.cooling;
-        if (opacity !== undefined) {
-          const rgb = parseColor(c);
-          color = rgb ? `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})` : c;
-        } else {
-          color = c;
-        }
+        color =
+          opacity !== undefined ? applyOpacity(hvacConfig.cooling, opacity) : hvacConfig.cooling;
       } else {
         // idle, off, or no active action - use gradient
         color = this._getColor(rect.colorValue, min, max);
@@ -722,8 +675,8 @@ export class TreemapCard extends LitElement {
     const formattedLabel = `${labelPrefix}${displayLabel}${labelSuffix}`;
 
     // Add + sign for positive temp_offset values (negative already has -, zero has no sign)
-    const isTempOffset = this._config?.value?.attribute === 'temp_offset';
-    const signPrefix = isTempOffset && rect.value > 0 ? '+' : '';
+    const isTemperatureOffset = this._config?.value?.attribute === 'temp_offset';
+    const signPrefix = isTemperatureOffset && rect.value > 0 ? '+' : '';
 
     // If prefix or suffix is defined, use only those. Otherwise, auto-append unit from entity.
     const hasCustomFormat = valuePrefix !== undefined || valueSuffix !== undefined;
@@ -773,6 +726,21 @@ export class TreemapCard extends LitElement {
           : nothing}
         ${showValue
           ? html`<span class="treemap-value" style="${autoValueStyle}">${formattedValue}</span>`
+          : nothing}
+        ${this._config?.sparkline?.show !== false
+          ? html`<div class="treemap-sparkline">
+              ${renderSparklineWithData(
+                rect.sparklineData ??
+                  (rect.entity_id ? this._sparklineData.get(rect.entity_id) : undefined),
+                {
+                  mode: this._config?.sparkline?.mode || 'dark',
+                  line: this._config?.sparkline?.line,
+                  fill: this._config?.sparkline?.fill,
+                  hvac: this._config?.sparkline?.hvac,
+                  periodHours: this._getPeriodHours(),
+                }
+              )}
+            </div>`
           : nothing}
       </div>
     `;
