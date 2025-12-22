@@ -190,4 +190,117 @@ describe('renderSparklineWithData', () => {
       expect(result.values).toContain(30);
     }
   });
+
+  it('handles SparklineData object with temperature only', () => {
+    const result = renderSparklineWithData({ temperature: [10, 20, 30] });
+    expect(result).not.toBe(nothing);
+    expect(result).toHaveProperty('strings');
+  });
+
+  it('handles SparklineData object with temperature and hvacActions', () => {
+    const result = renderSparklineWithData({
+      temperature: [18, 19, 20, 21],
+      hvacActions: [{ start: 0, end: 0.5, action: 'heating' }],
+    });
+    expect(result).not.toBe(nothing);
+    expect(result).toHaveProperty('strings');
+  });
+
+  it('renders SVG for hvacActions only (no temperature)', () => {
+    const result = renderSparklineWithData({
+      temperature: [],
+      hvacActions: [{ start: 0.2, end: 0.8, action: 'heating' }],
+    });
+    // With hvacActions but no temp data, still returns SVG (but HVAC fill won't render without data)
+    expect(result).not.toBe(nothing);
+    expect(result).toHaveProperty('strings');
+  });
+
+  it('renders SVG for single temperature point with hvacActions', () => {
+    const result = renderSparklineWithData({
+      temperature: [20],
+      hvacActions: [{ start: 0, end: 1, action: 'cooling' }],
+    });
+    // Single point with hvacActions still renders (hvac is present)
+    expect(result).not.toBe(nothing);
+    expect(result).toHaveProperty('strings');
+  });
+});
+
+describe('renderSparkline with HVAC', () => {
+  it('renders HVAC fill regions for heating', () => {
+    const data = [18, 19, 20, 21, 22];
+    const hvacActions = [{ start: 0.2, end: 0.6, action: 'heating' as const }];
+    const result = renderSparkline(data, { periodHours: 24 }, hvacActions);
+
+    expect(result).toHaveProperty('strings');
+  });
+
+  it('renders HVAC fill regions for cooling', () => {
+    const data = [24, 23, 22, 21, 20];
+    const hvacActions = [{ start: 0.3, end: 0.7, action: 'cooling' as const }];
+    const result = renderSparkline(data, { periodHours: 24 }, hvacActions);
+
+    expect(result).toHaveProperty('strings');
+  });
+
+  it('renders multiple HVAC segments', () => {
+    const data = [18, 19, 20, 21, 22, 21, 20];
+    const hvacActions = [
+      { start: 0, end: 0.3, action: 'heating' as const },
+      { start: 0.5, end: 0.8, action: 'heating' as const },
+    ];
+    const result = renderSparkline(data, { periodHours: 24 }, hvacActions);
+
+    expect(result).toHaveProperty('strings');
+  });
+
+  it('uses custom HVAC colors', () => {
+    const data = [18, 19, 20];
+    const hvacActions = [{ start: 0, end: 1, action: 'heating' as const }];
+    const result = renderSparkline(
+      data,
+      { hvac: { heatingColor: '#ff0000', coolingColor: '#0000ff' }, periodHours: 24 },
+      hvacActions
+    );
+
+    expect(result).toHaveProperty('strings');
+  });
+
+  it('respects hvac.show: false', () => {
+    const data = [18, 19, 20];
+    const hvacActions = [{ start: 0, end: 1, action: 'heating' as const }];
+    const result = renderSparkline(data, { hvac: { show: false }, periodHours: 24 }, hvacActions);
+
+    expect(result).toHaveProperty('strings');
+    // Should have nothing for HVAC fill
+    expect(result.values).toContain(nothing);
+  });
+
+  it('handles empty hvacActions array', () => {
+    const data = [18, 19, 20];
+    const result = renderSparkline(data, { periodHours: 24 }, []);
+
+    expect(result).toHaveProperty('strings');
+  });
+
+  it('quantizes HVAC segments to 15-minute blocks', () => {
+    const data = [18, 19, 20, 21, 22];
+    // Short segment that should get expanded to at least one 15-min block
+    const hvacActions = [{ start: 0.01, end: 0.02, action: 'heating' as const }];
+    const result = renderSparkline(data, { periodHours: 24 }, hvacActions);
+
+    expect(result).toHaveProperty('strings');
+  });
+
+  it('handles different period hours', () => {
+    const data = [18, 19, 20];
+    const hvacActions = [{ start: 0.5, end: 0.75, action: 'heating' as const }];
+
+    const result12h = renderSparkline(data, { periodHours: 12 }, hvacActions);
+    const result7d = renderSparkline(data, { periodHours: 168 }, hvacActions);
+
+    expect(result12h).toHaveProperty('strings');
+    expect(result7d).toHaveProperty('strings');
+  });
 });

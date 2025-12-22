@@ -147,117 +147,107 @@ async function fetchClimateSparklineData(
     }
   }
 
-  // Try fallback: look for associated temperature sensors
-  if (needFallback.length > 0) {
-    const fallbackMap = findTemperatureSensors(hass, needFallback);
-    const sensorIds = [...fallbackMap.values()].filter((v): v is string => !!v);
+  // Fetch climate history (for HVAC action AND temperature from attributes)
+  const climateHistory = await fetchClimateHistory(hass, climateEntityIds, startTime, config);
 
-    if (sensorIds.length > 0) {
-      const sensorStats = await fetchStatistics(hass, sensorIds, period);
-
-      for (const [climateId, sensorId] of fallbackMap) {
-        if (sensorId) {
-          const stats = sensorStats.get(sensorId);
-          if (stats && stats.length > 0) {
-            result.set(climateId, { temperature: stats });
-          }
-        }
-      }
+  // Use temperature from climate history for entities without stats
+  for (const entityId of needFallback) {
+    const historyData = climateHistory.get(entityId);
+    if (historyData && historyData.temperature.length > 0) {
+      result.set(entityId, { temperature: historyData.temperature });
     }
   }
 
-  // Fetch HVAC action history for all climate entities
-  const hvacHistory = await fetchHvacActionHistory(hass, climateEntityIds, startTime, period);
-  for (const [entityId, segments] of hvacHistory) {
+  // Add HVAC action segments to all climate entities
+  for (const [entityId, historyData] of climateHistory) {
     const existing = result.get(entityId);
     if (existing) {
-      existing.hvacActions = segments;
+      existing.hvacActions = historyData.hvacActions;
     } else {
-      result.set(entityId, { temperature: [], hvacActions: segments });
+      result.set(entityId, { temperature: [], hvacActions: historyData.hvacActions });
     }
   }
 
   return result;
 }
 
-/**
- * Find associated temperature sensors for climate entities.
- * Tries common naming patterns.
- */
-function findTemperatureSensors(
-  hass: HomeAssistant,
-  climateEntityIds: string[]
-): Map<string, string | null> {
-  const result = new Map<string, string | null>();
-
-  for (const climateId of climateEntityIds) {
-    // Extract base name: climate.wiser_living_room -> wiser_living_room
-    const baseName = climateId.replace('climate.', '');
-
-    // Try common patterns
-    const patterns = [
-      `sensor.${baseName}_temperature`,
-      `sensor.${baseName}_current_temperature`,
-      `sensor.${baseName}temperature`,
-    ];
-
-    let found: string | null = null;
-    for (const pattern of patterns) {
-      if (hass.states[pattern]) {
-        found = pattern;
-        break;
-      }
-    }
-
-    result.set(climateId, found);
-  }
-
-  return result;
+interface ClimateHistoryData {
+  temperature: number[];
+  hvacActions: HvacActionSegment[];
 }
 
 /**
- * Fetch HVAC action history for climate entities.
+ * Fetch climate history (temperature + HVAC actions) from history API.
  */
-async function fetchHvacActionHistory(
+async function fetchClimateHistory(
   hass: HomeAssistant,
   climateEntityIds: string[],
   startTime: Date,
-  period: HistoryPeriod
-): Promise<Map<string, HvacActionSegment[]>> {
-  const result = new Map<string, HvacActionSegment[]>();
+  config: PeriodConfig
+): Promise<Map<string, ClimateHistoryData>> {
+  const result = new Map<string, ClimateHistoryData>();
 
   if (climateEntityIds.length === 0) {
     return result;
   }
 
   try {
-    // Use HA history API
+    // Use HA history API - need full response to get attributes
     const response = await hass.callWS<Record<string, HistoryState[]>>({
       type: 'history/history_during_period',
       start_time: startTime.toISOString(),
       entity_ids: climateEntityIds,
-      minimal_response: true,
-      significant_changes_only: true,
+      no_attributes: false,
+      significant_changes_only: false, // Get all changes for better temperature resolution
     });
 
     if (response) {
-      const config = PERIOD_CONFIG[period];
       const periodMs = config.hours * 60 * 60 * 1000;
       const now = Date.now();
 
       for (const entityId of climateEntityIds) {
         const history = response[entityId];
         if (history && history.length > 0) {
-          const segments = convertToHvacSegments(history, startTime.getTime(), now, periodMs);
-          result.set(entityId, segments);
+          // Extract temperature values and HVAC segments
+          const temperatures = extractTemperatures(history);
+          const hvacSegments = convertToHvacSegments(history, startTime.getTime(), now, periodMs);
+
+          result.set(entityId, {
+            temperature: temperatures,
+            hvacActions: hvacSegments,
+          });
         }
       }
     }
   } catch (error) {
-    console.warn('[treemap] Failed to fetch HVAC history:', error);
+    console.warn('[treemap] Failed to fetch climate history:', error);
   }
 
   return result;
+}
+
+/**
+ * Extract temperature values from history, sampled to reasonable resolution.
+ */
+function extractTemperatures(history: HistoryState[]): number[] {
+  const temperatures: number[] = [];
+
+  // Target ~50-100 points for a good sparkline
+  const targetPoints = 60;
+  const step = Math.max(1, Math.floor(history.length / targetPoints));
+
+  for (let i = 0; i < history.length; i += step) {
+    const state = history[i];
+    if (!state) continue;
+
+    const attrs = state.attributes || state.a;
+    const temp = attrs?.['current_temperature'];
+    if (typeof temp === 'number' && !isNaN(temp)) {
+      temperatures.push(temp);
+    }
+  }
+
+  return temperatures;
 }
 
 /**
@@ -277,13 +267,21 @@ function convertToHvacSegments(
 
     const nextState = history[index + 1];
 
-    // Get hvac_action from attributes
-    const rawAction = state.a?.['hvac_action'];
+    // Get hvac_action from attributes (handle both full and minimal response formats)
+    const attrs = state.attributes || state.a;
+    const rawAction = attrs?.['hvac_action'];
     if (!isHvacAction(rawAction) || rawAction === 'idle' || rawAction === 'off') continue;
     const action = rawAction;
 
-    const stateTime = new Date(state.lu * 1000).getTime();
-    const nextTime = nextState ? new Date(nextState.lu * 1000).getTime() : endMs;
+    // Get timestamp (handle both full and minimal response formats)
+    const stateTime = state.last_updated
+      ? new Date(state.last_updated).getTime()
+      : new Date((state.lu ?? 0) * 1000).getTime();
+    const nextTime = nextState
+      ? nextState.last_updated
+        ? new Date(nextState.last_updated).getTime()
+        : new Date((nextState.lu ?? 0) * 1000).getTime()
+      : endMs;
 
     // Convert to 0-1 position
     const start = Math.max(0, (stateTime - startMs) / periodMs);
@@ -354,7 +352,13 @@ interface StatisticsResult {
 }
 
 interface HistoryState {
-  lu: number; // last_updated timestamp (seconds)
-  s: string; // state
+  // Full response format (no_attributes: false)
+  last_changed?: string; // ISO timestamp
+  last_updated?: string; // ISO timestamp
+  state?: string;
+  attributes?: Record<string, unknown>;
+  // Minimal response format (minimal_response: true)
+  lu?: number; // last_updated timestamp (seconds)
+  s?: string; // state
   a?: Record<string, unknown>; // attributes
 }

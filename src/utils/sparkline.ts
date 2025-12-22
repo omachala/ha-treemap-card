@@ -15,7 +15,6 @@ export interface SparklineFillOptions {
 
 export interface SparklineHvacOptions {
   show?: boolean;
-  height?: number; // Height as percentage of total (default: 15)
   heatingColor?: string;
   coolingColor?: string;
 }
@@ -27,6 +26,7 @@ export interface SparklineOptions {
   line?: SparklineLineOptions;
   fill?: SparklineFillOptions;
   hvac?: SparklineHvacOptions;
+  periodHours?: number; // For HVAC quantization (default: 24)
 }
 
 /**
@@ -89,7 +89,8 @@ function getSparklineColors(mode: SparklineMode): {
 let gradientIdCounter = 0;
 
 /**
- * Get default HVAC bar colors based on mode.
+ * Get default HVAC fill colors based on mode.
+ * Uses the same colors as sparkline line/fill for heating, blue for cooling.
  */
 function getHvacColors(
   mode: SparklineMode,
@@ -98,73 +99,165 @@ function getHvacColors(
   // User-defined colors take precedence
   if (hvacOptions?.heatingColor || hvacOptions?.coolingColor) {
     return {
-      heating: hvacOptions.heatingColor || (mode === 'light' ? '#ff6b35' : '#ff8c42'),
+      heating:
+        hvacOptions.heatingColor ||
+        (mode === 'light' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.25)'),
       cooling: hvacOptions.coolingColor || (mode === 'light' ? '#4a90d9' : '#64b5f6'),
     };
   }
 
-  // Default colors based on mode
+  // Default: heating uses same color as sparkline fill but more opaque, cooling uses blue
   if (mode === 'light') {
     return {
-      heating: 'rgba(255, 107, 53, 0.5)', // Orange with transparency
-      cooling: 'rgba(74, 144, 217, 0.5)', // Blue with transparency
+      heating: 'rgba(255, 255, 255, 0.4)', // Same as sparkline fill (light mode)
+      cooling: 'rgba(74, 144, 217, 0.6)', // Blue for cooling
     };
   }
   return {
-    heating: 'rgba(255, 140, 66, 0.4)', // Lighter orange for dark backgrounds
-    cooling: 'rgba(100, 181, 246, 0.4)', // Lighter blue for dark backgrounds
+    heating: 'rgba(0, 0, 0, 0.35)', // Same as sparkline fill (dark mode), more visible
+    cooling: 'rgba(100, 181, 246, 0.5)', // Blue for cooling
   };
 }
 
 /**
- * Render HVAC action bars at the bottom of the sparkline.
+ * Quantize HVAC segments into 15-minute blocks.
+ * If ANY heating/cooling occurred in a 15-min block, mark that whole block as active.
  */
-function renderHvacBars(
+function quantizeHvacSegments(
   segments: HvacActionSegment[],
-  width: number,
-  height: number,
-  barHeight: number,
-  colors: { heating: string; cooling: string }
-): SVGTemplateResult {
-  const yPosition = height - barHeight;
+  periodHours: number
+): ('heating' | 'cooling' | null)[] {
+  const blocksPerHour = 4; // 15-minute blocks
+  const totalBlocks = periodHours * blocksPerHour;
+  const blocks: ('heating' | 'cooling' | null)[] = Array.from({ length: totalBlocks }, () => null);
 
+  for (const segment of segments) {
+    // Only process heating/cooling, ignore idle/off
+    if (segment.action !== 'heating' && segment.action !== 'cooling') continue;
+
+    // segment.start and segment.end are 0-1 normalized positions
+    const startBlock = Math.floor(segment.start * totalBlocks);
+    const endBlock = Math.ceil(segment.end * totalBlocks);
+
+    for (let i = startBlock; i < endBlock && i < totalBlocks; i++) {
+      if (i >= 0) {
+        // Heating takes precedence over cooling if both present
+        if (segment.action === 'heating' || blocks[i] !== 'heating') {
+          blocks[i] = segment.action;
+        }
+      }
+    }
+  }
+
+  return blocks;
+}
+
+interface HvacFillOptions {
+  segments: HvacActionSegment[];
+  data: number[];
+  width: number;
+  height: number;
+  colors: { heating: string; cooling: string };
+  periodHours: number;
+}
+
+/**
+ * Render HVAC-colored fill sections under the sparkline.
+ */
+function renderHvacFill(options: HvacFillOptions): SVGTemplateResult {
+  const { segments, data, width, height, colors, periodHours } = options;
+  if (data.length < 2) return svg``;
+
+  const blocks = quantizeHvacSegments(segments, periodHours);
+  const totalBlocks = blocks.length;
+
+  // Calculate min/max for y-scaling
+  const minValue = Math.min(...data);
+  const maxValue = Math.max(...data);
+  const range = maxValue - minValue || 1;
+  const verticalPadding = 1;
+
+  // Helper to get Y coordinate for a data point
+  const getY = (value: number) =>
+    height - verticalPadding - ((value - minValue) / range) * (height - verticalPadding * 2);
+
+  // Helper to get data value at a given x position (0-1)
+  const getValueAt = (xPos: number) => {
+    const dataIndex = xPos * (data.length - 1);
+    const lower = Math.floor(dataIndex);
+    const upper = Math.min(Math.ceil(dataIndex), data.length - 1);
+    const t = dataIndex - lower;
+    return (data[lower] ?? 0) * (1 - t) + (data[upper] ?? 0) * t;
+  };
+
+  // Group consecutive blocks with same action
+  const regions: { start: number; end: number; action: 'heating' | 'cooling' }[] = [];
+  let currentRegion: { start: number; end: number; action: 'heating' | 'cooling' } | null = null;
+
+  for (let i = 0; i < totalBlocks; i++) {
+    const action = blocks[i];
+    if (action) {
+      if (currentRegion !== null && currentRegion.action === action) {
+        currentRegion.end = (i + 1) / totalBlocks;
+      } else {
+        if (currentRegion) regions.push(currentRegion);
+        currentRegion = { start: i / totalBlocks, end: (i + 1) / totalBlocks, action };
+      }
+    } else if (currentRegion) {
+      regions.push(currentRegion);
+      currentRegion = null;
+    }
+  }
+  if (currentRegion) regions.push(currentRegion);
+
+  // Render each region as a polygon
   return svg`
-    ${segments.map(segment => {
-      const x = segment.start * width;
-      const w = (segment.end - segment.start) * width;
-      const color = segment.action === 'heating' ? colors.heating : colors.cooling;
+    ${regions.map(region => {
+      const color = region.action === 'heating' ? colors.heating : colors.cooling;
+      const steps = 10; // Points along the top edge for smooth curve
+      const stepSize = (region.end - region.start) / steps;
 
-      return svg`<rect
-        x="${x.toFixed(1)}"
-        y="${yPosition.toFixed(1)}"
-        width="${Math.max(0.5, w).toFixed(1)}"
-        height="${barHeight.toFixed(1)}"
-        fill="${color}"
-      />`;
+      // Build polygon points: bottom-left, along curve, bottom-right
+      let points = `${(region.start * width).toFixed(1)},${height}`;
+
+      // Top edge following the sparkline
+      for (let i = 0; i <= steps; i++) {
+        const xPos = region.start + i * stepSize;
+        const x = xPos * width;
+        const y = getY(getValueAt(xPos));
+        points += ` ${x.toFixed(1)},${y.toFixed(1)}`;
+      }
+
+      // Close at bottom-right
+      points += ` ${(region.end * width).toFixed(1)},${height}`;
+
+      return svg`<polygon points="${points}" fill="${color}" />`;
     })}
   `;
 }
 
 /**
- * Render a sparkline SVG with gradient fill, line, and optional HVAC bars.
+ * Render a sparkline SVG with gradient fill, line, and optional HVAC colored regions.
  */
 export function renderSparkline(
   data: number[],
   options: SparklineOptions = {},
   hvacActions?: HvacActionSegment[]
 ): SVGTemplateResult {
-  const { width = 100, height = 20, mode = 'dark', line, fill, hvac } = options;
+  const { width = 100, height = 20, mode = 'dark', line, fill, hvac, periodHours = 24 } = options;
 
-  // Calculate HVAC bar dimensions
+  // Only render line/fill if we have temperature data
+  const hasData = data.length > 1;
   const showHvac = hvac?.show !== false && hvacActions && hvacActions.length > 0;
-  const hvacBarHeight = showHvac ? (hvac?.height ?? 15) * (height / 100) : 0;
 
-  const { linePoints, fillPoints } = getSparklinePoints(data, options, hvacBarHeight);
+  const { linePoints, fillPoints } = hasData
+    ? getSparklinePoints(data, options, 0)
+    : { linePoints: '', fillPoints: '' };
   const colors = getSparklineColors(mode);
   const hvacColors = getHvacColors(mode, hvac);
 
-  const showFill = fill?.show !== false;
-  const showLine = line?.show !== false; // Line visible by default
+  const showFill = fill?.show !== false && hasData;
+  const showLine = line?.show !== false && hasData; // Line visible by default
 
   // Generate unique gradient ID for this sparkline
   const gradientId = `sparkline-gradient-${gradientIdCounter++}`;
@@ -190,9 +283,9 @@ export function renderSparkline(
       `
           : nothing
       }
-      ${showFill ? svg`<polygon points="${fillPoints}" style="${fillStyle}" />` : nothing}
+      ${showHvac && hasData ? renderHvacFill({ segments: hvacActions, data, width, height, colors: hvacColors, periodHours }) : nothing}
+      ${showFill && !hvacActions ? svg`<polygon points="${fillPoints}" style="${fillStyle}" />` : nothing}
       ${showLine ? svg`<polyline points="${linePoints}" style="fill: none; stroke-linecap: round; stroke-linejoin: round; ${lineStyle}" />` : nothing}
-      ${showHvac ? renderHvacBars(hvacActions, width, height, hvacBarHeight, hvacColors) : nothing}
     </svg>
   `;
 }
@@ -209,8 +302,16 @@ export function renderSparklineWithData(
   // Handle SparklineData object
   if (data && typeof data === 'object' && 'temperature' in data) {
     const sparklineData = data;
-    if (sparklineData.temperature && sparklineData.temperature.length > 1) {
-      return renderSparkline(sparklineData.temperature, options, sparklineData.hvacActions);
+    const hasTemperature = sparklineData.temperature && sparklineData.temperature.length > 1;
+    const hasHvacActions = sparklineData.hvacActions && sparklineData.hvacActions.length > 0;
+
+    // Render if we have temperature data OR hvac actions
+    if (hasTemperature || hasHvacActions) {
+      return renderSparkline(
+        hasTemperature ? sparklineData.temperature : [],
+        options,
+        sparklineData.hvacActions
+      );
     }
     return nothing;
   }

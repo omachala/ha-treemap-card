@@ -167,13 +167,49 @@ export class TreemapCard extends LitElement {
       // Fetch history data (uses cache internally)
       const historyData = await getHistoryData(this.hass, entityIds, period);
 
-      // Only update state if we got new data
-      if (historyData.size > 0 && historyData.size !== this._sparklineData.size) {
+      // Only update state if data actually changed (avoid triggering re-renders)
+      if (historyData.size > 0 && !this._sparklineDataEquals(historyData)) {
         this._sparklineData = historyData;
       }
     } finally {
       this._fetchingSparklines = false;
     }
+  }
+
+  /**
+   * Compare sparkline data maps to avoid unnecessary re-renders.
+   */
+  private _sparklineDataEquals(newData: Map<string, SparklineData>): boolean {
+    if (this._sparklineData.size !== newData.size) return false;
+
+    for (const [key, newValue] of newData) {
+      const oldValue = this._sparklineData.get(key);
+      if (!oldValue) return false;
+
+      // Compare temperature arrays
+      if (oldValue.temperature.length !== newValue.temperature.length) return false;
+
+      // Compare hvacActions arrays
+      const oldHvac = oldValue.hvacActions?.length ?? 0;
+      const newHvac = newValue.hvacActions?.length ?? 0;
+      if (oldHvac !== newHvac) return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Get period hours from config for HVAC quantization.
+   */
+  private _getPeriodHours(): number {
+    const period = this._config?.sparkline?.period || '24h';
+    const periodMap: Record<string, number> = {
+      '12h': 12,
+      '24h': 24,
+      '7d': 7 * 24,
+      '30d': 30 * 24,
+    };
+    return periodMap[period] ?? 24;
   }
 
   private _resolveData(): TreemapItem[] {
@@ -207,9 +243,7 @@ export class TreemapCard extends LitElement {
     const excludePatterns = this._config?.exclude;
     if (!excludePatterns || excludePatterns.length === 0) return false;
     for (const pattern of excludePatterns) {
-      const matches = matchesPattern(entityId, pattern);
-      if (matches) {
-        console.log(`[treemap] Excluding: ${entityId} (matched: ${pattern})`);
+      if (matchesPattern(entityId, pattern)) {
         return true;
       }
     }
@@ -471,9 +505,6 @@ export class TreemapCard extends LitElement {
     const rawData = this._resolveData();
     const data = this._filterData(rawData);
 
-    console.log(`[treemap] v${CARD_VERSION} Config:`, this._config);
-    console.log(`[treemap] Raw data: ${rawData.length}, Filtered: ${data.length}`, data);
-
     // Header: use custom header if header.title is set, otherwise use HA's default title
     const useCustomHeader = !!this._config.header?.title;
     const customHeaderTitle = this._config.header?.title;
@@ -557,13 +588,6 @@ export class TreemapCard extends LitElement {
     const baseHeight = Math.max(150, numberRows * 100); // 100px per row, min 150px
     const height = this._config.height ?? baseHeight;
     const gap = this._config.gap ?? 6;
-
-    // Debug: check if rects fill 100%
-    const maxY = Math.max(...rects.map(rect => rect.y + rect.height));
-    const maxX = Math.max(...rects.map(rect => rect.x + rect.width));
-    console.log(
-      `[treemap] Rects maxX=${maxX.toFixed(1)}%, maxY=${maxY.toFixed(1)}%, height=${height}px, items=${data.length}`
-    );
 
     return html`
       <ha-card header="${haTitle || nothing}" style="${cardStyle}">
@@ -713,6 +737,7 @@ export class TreemapCard extends LitElement {
                   line: this._config?.sparkline?.line,
                   fill: this._config?.sparkline?.fill,
                   hvac: this._config?.sparkline?.hvac,
+                  periodHours: this._getPeriodHours(),
                 }
               )}
             </div>`

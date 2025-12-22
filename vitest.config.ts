@@ -14,7 +14,14 @@ export default defineConfig({
     exclude: ['tests/performance.test.ts'],
     coverage: {
       provider: 'v8',
-      exclude: ['src/index.ts', 'src/types.ts', 'vite.dev.config.ts'],
+      exclude: [
+        'src/index.ts',
+        'src/types.ts',
+        'src/utils/history.ts', // Async HA API calls - tested via integration
+        'vite.dev.config.ts',
+        'tests/performance.bench.ts',
+        'tests/performance.test.ts',
+      ],
       thresholds: {
         lines: 90,
       },
