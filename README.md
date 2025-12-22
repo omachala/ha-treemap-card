@@ -536,8 +536,30 @@ Below are common sizing and ordering configurations to achieve different visual 
 > - One device at 2500W dominates the layout, others at 50-200W are tiny
 > - `size.max: 500` - Caps the 2500W device to 500W for sizing, giving other devices more visible space
 
-## Contribution & License
+## Resources
 
-- Contributions welcome - issues, PRs, or just feedback.
-- MIT licensed.
-- No "buy me a coffee" here - I make my own ☕. But a ⭐ would be nice!
+<a href="https://www.youtube.com/watch?v=1ERc6cNRFZQ">
+  <img src="https://img.youtube.com/vi/1ERc6cNRFZQ/mqdefault.jpg" alt="Video" width="160" align="left" style="margin-right: 12px;">
+</a>
+
+**[2 New HACS Energy Cards You NEED in Home Assistant](https://www.youtube.com/watch?v=1ERc6cNRFZQ)**<br>
+by BeardedTinker<br>
+<a href="https://www.youtube.com/watch?v=1ERc6cNRFZQ"><img src="https://img.shields.io/badge/YouTube-FF0000?style=flat&logo=youtube&logoColor=white" alt="YouTube"></a>
+
+<br clear="left">
+
+---
+
+## Contributing
+
+Contributions and feedback are warmly welcomed! Feel free to open an issue or submit a pull request.
+
+## License
+
+MIT
+
+---
+
+<p align="center">
+Made with :heart: in London - yes, those humidity readings in the screenshot are real.
+</p>
