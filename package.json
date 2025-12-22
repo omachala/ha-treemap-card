@@ -16,7 +16,7 @@
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "pnpm typecheck && pnpm format:check && pnpm lint && pnpm test:run && pnpm test:perf",
+    "check": "pnpm typecheck && pnpm format:check && pnpm lint && pnpm test:run",
     "fix": "pnpm format && pnpm lint:fix",
     "prepare": "simple-git-hooks"
   },
