@@ -18,6 +18,22 @@ export default defineConfig({
       '/src': resolve(__dirname, 'src'),
     },
   },
+  build: {
+    lib: {
+      entry: resolve(__dirname, 'src/treemap-card.ts'),
+      name: 'TreemapCard',
+      fileName: () => 'treemap-card.js',
+      formats: ['es'],
+    },
+    outDir: resolve(__dirname, 'dist'),
+    rollupOptions: {
+      output: {
+        entryFileNames: 'treemap-card.js',
+      },
+    },
+    sourcemap: true,
+    minify: false,
+  },
   define: {
     'process.env.NODE_ENV': JSON.stringify('development'),
     __VERSION__: JSON.stringify(pkg.version),

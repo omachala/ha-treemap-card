@@ -58,7 +58,7 @@ jobs:
 
       - name: Build
         if: steps.check.outputs.exists == 'false'
-        run: pnpm build
+        run: pnpm build:prod
 
       - name: Extract changelog for version
         if: steps.check.outputs.exists == 'false'
