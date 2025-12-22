@@ -77,7 +77,10 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.version.outputs.VERSION }}
-          body: ${{ steps.changelog.outputs.NOTES }}
+          body: |
+            ${{ steps.changelog.outputs.NOTES }}
+
+            [![GitHub Downloads](https://img.shields.io/github/downloads/omachala/ha-treemap-card/v${{ steps.version.outputs.VERSION }}/total?style=for-the-badge)](https://github.com/omachala/ha-treemap-card/releases/tag/v${{ steps.version.outputs.VERSION }})
           files: dist/treemap-card.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
