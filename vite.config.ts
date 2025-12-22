@@ -17,8 +17,9 @@ export default defineConfig({
         entryFileNames: 'treemap-card.js',
       },
     },
-    sourcemap: true,
-    minify: false,
+    sourcemap: false,
+    minify: 'esbuild',
+    target: 'es2020',
   },
   define: {
     'process.env.NODE_ENV': JSON.stringify('production'),
