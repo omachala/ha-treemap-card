@@ -8,6 +8,7 @@ Sparklines are here! Each rectangle now shows a mini chart of historical data.
 - Configurable time periods: `12h`, `24h` (default), `7d`, or `30d`
 - Works with entity sensors (uses HA long-term statistics) and JSON mode (uses data array from attribute)
 - Fully customizable line and fill styles via CSS
+- **Climate entities**: Shows temperature history with HVAC action bars (heating/cooling periods displayed at the bottom)
 
 Major performance overhaul - the card is now industry-grade:
 
