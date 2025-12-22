@@ -127,3 +127,15 @@ export function getHsColor(value: unknown): [number, number] | undefined {
   }
   return undefined;
 }
+
+/**
+ * Match entity ID against pattern with wildcard support
+ * Supports * as wildcard (e.g., "sensor.battery_*", "light.*_brightness")
+ */
+export function matchesPattern(entityId: string, pattern: string): boolean {
+  if (!pattern.includes('*')) {
+    return entityId === pattern;
+  }
+  const regex = new RegExp('^' + pattern.replaceAll('*', '.*') + '$');
+  return regex.test(entityId);
+}

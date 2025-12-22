@@ -25,7 +25,7 @@ describe('isNumber', () => {
   });
 
   it('returns false for NaN', () => {
-    expect(isNumber(NaN)).toBe(false);
+    expect(isNumber(Number.NaN)).toBe(false);
   });
 
   it('returns false for non-numbers', () => {
@@ -76,7 +76,7 @@ describe('isOptionalNumber', () => {
   });
 
   it('returns false for NaN', () => {
-    expect(isOptionalNumber(NaN)).toBe(false);
+    expect(isOptionalNumber(Number.NaN)).toBe(false);
   });
 
   it('returns false for other types', () => {
@@ -175,7 +175,7 @@ describe('getNumber', () => {
 
   it('returns undefined for invalid values', () => {
     expect(getNumber('42')).toBeUndefined();
-    expect(getNumber(NaN)).toBeUndefined();
+    expect(getNumber(Number.NaN)).toBeUndefined();
     expect(getNumber(null)).toBeUndefined();
   });
 });

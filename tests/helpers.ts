@@ -45,6 +45,7 @@ export function mockHass(entities: HassEntity[]): HomeAssistant {
   return {
     states,
     callService: async () => {},
+    callWS: async <T>() => ({}) as T,
   };
 }
 

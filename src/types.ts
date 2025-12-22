@@ -12,6 +12,7 @@ export interface HassEntity {
 export interface HomeAssistant {
   states: Record<string, HassEntity>;
   callService: (domain: string, service: string, data?: Record<string, unknown>) => Promise<void>;
+  callWS: <T>(message: Record<string, unknown>) => Promise<T>;
 }
 
 /**
@@ -50,8 +51,8 @@ export interface TreemapCardConfig {
   // Label configuration
   label?: {
     show?: boolean; // Show label (default: true)
-    param?: string; // Field name from data (default: 'label') - JSON mode
-    attribute?: string; // Entity attribute for label (default: 'friendly_name') - entities mode
+    attribute?: string; // Field/attribute for label (default: 'friendly_name' for entities, 'label' for JSON)
+    param?: string; // Deprecated alias for 'attribute'
     replace?: string; // Regex replacement pattern "pattern/replacement"
     prefix?: string; // Prefix to add before label
     suffix?: string; // Suffix to add after label
@@ -60,15 +61,16 @@ export interface TreemapCardConfig {
   // Icon configuration
   icon?: {
     show?: boolean; // Show icon (default: true)
-    param?: string; // Field name from data (default: 'icon')
+    attribute?: string; // Field/attribute containing icon (default: 'icon')
+    param?: string; // Deprecated alias for 'attribute'
     icon?: string; // Static icon for all items (e.g., 'mdi:home-thermometer-outline')
     style?: string; // Custom CSS for icon
   };
   // Value configuration (displayed value)
   value?: {
     show?: boolean; // Show value (default: true)
-    param?: string; // Field name from data (default: 'value') - JSON mode
-    attribute?: string; // Entity attribute for value (default: 'state') - entities mode
+    attribute?: string; // Field/attribute for value (default: 'state' for entities, 'value' for JSON)
+    param?: string; // Deprecated alias for 'attribute'
     prefix?: string; // Prefix to add before value
     suffix?: string; // Suffix to add after value (e.g., ' %')
     style?: string; // Custom CSS for value
@@ -76,8 +78,8 @@ export interface TreemapCardConfig {
   // Size configuration (determines rectangle size)
   size?: {
     equal?: boolean; // Equal size rectangles (default: false)
-    param?: string; // Field name from data for sizing (default: same as value.param)
-    attribute?: string; // Entity attribute for sizing (entities mode) - supports computed values like temp_difference
+    attribute?: string; // Field/attribute for sizing (default: same as value.attribute)
+    param?: string; // Deprecated alias for 'attribute'
     inverse?: boolean; // Inverse sizing - low values get bigger rectangles (default: false)
     min?: number; // Minimum size value floor (default: 5% of max, ensures 0-value items visible)
     max?: number; // Maximum size value cap (useful for limiting outliers)
@@ -88,8 +90,8 @@ export interface TreemapCardConfig {
     mid?: string; // Color for middle/neutral values (optional, e.g., #00b6ed blue)
     high?: string; // Color for high values (default: #16a34a green)
     opacity?: number; // Opacity 0-1 (e.g., 0.5 for 50% transparent)
-    param?: string; // Field name for color calculation (default: same as value.param)
-    attribute?: string; // Entity attribute for color calculation (entities mode)
+    attribute?: string; // Field/attribute for color calculation (default: same as value.attribute)
+    param?: string; // Deprecated alias for 'attribute'
     scale?: {
       neutral?: number; // Value where color is neutral/center (e.g., 0)
       min?: number; // Value at which color is fully low (e.g., -8 for full red)
@@ -105,6 +107,27 @@ export interface TreemapCardConfig {
   };
   // Custom CSS for the entire card
   card_style?: string;
+  // Sparkline configuration
+  sparkline?: {
+    show?: boolean; // Show sparklines (default: true)
+    attribute?: string; // Field/attribute containing sparkline data array (JSON mode)
+    period?: '12h' | '24h' | '7d' | '30d'; // Time period for entity history (default: '24h')
+    mode?: 'light' | 'dark'; // Color mode (default: 'dark')
+    line?: {
+      show?: boolean; // Show line (default: true)
+      style?: string; // Custom CSS for line (stroke, stroke-width, etc.)
+    };
+    fill?: {
+      show?: boolean; // Show fill (default: true)
+      style?: string; // Custom CSS for fill (fill color, opacity, etc.)
+    };
+    hvac?: {
+      show?: boolean; // Show HVAC action bars for climate entities (default: true)
+      height?: number; // Bar height as percentage of sparkline height (default: 15)
+      heatingColor?: string; // Custom heating bar color
+      coolingColor?: string; // Custom cooling bar color
+    };
+  };
 }
 
 /**
@@ -143,6 +166,7 @@ export interface TreemapItem {
   unit?: string; // Unit of measurement (e.g., °C, %, kWh)
   light?: LightColorInfo; // Light-specific color info (only for light.* entities)
   climate?: ClimateInfo; // Climate-specific info (only for climate.* entities)
+  sparklineData?: number[]; // Inline sparkline data (JSON mode)
 }
 
 /**
@@ -158,6 +182,7 @@ export interface TreemapRect {
   unit?: string; // Unit of measurement (e.g., °C, %, kWh)
   light?: LightColorInfo; // Light-specific color info (only for light.* entities)
   climate?: ClimateInfo; // Climate-specific info (only for climate.* entities)
+  sparklineData?: number[]; // Inline sparkline data (JSON mode)
   x: number;
   y: number;
   width: number;

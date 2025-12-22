@@ -73,13 +73,16 @@ describe('User Interactions', () => {
     });
 
     it('does not dispatch event for items without entity_id', async () => {
-      const hass = mockHass([]);
+      // JSON mode: data comes from entity's 'items' attribute
+      const hass = mockHass([
+        mockEntity('sensor.json_source', 'ok', {
+          items: [{ label: 'No Entity', value: 50 }],
+        }),
+      ]);
 
-      // JSON mode with entity but data array items don't have entity_id
       card.setConfig({
         type: 'custom:treemap-card',
         entity: 'sensor.json_source',
-        data: [{ label: 'No Entity', value: 50 }],
       });
       card.hass = hass;
       await card.updateComplete;

@@ -17,6 +17,14 @@
 
 <img src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/screenshot.png" width="800" alt="Treemap Card">
 
+### Why Treemap Card?
+
+- Handles thousands of items without breaking a sweat
+- Works beautifully with sensors, lights, and thermostats
+- Sparklines show historical trends
+- Wildly configurable (colors, gradients, sizes, labels, icons, filters, wildcards, custom CSS)
+- Tested and maintained
+
 ## Installation
 
 ### HACS (Recommended)
@@ -29,14 +37,9 @@ Or manually:
 2. Search for "Treemap Card"
 3. Install and restart Home Assistant
 
-> **Note:** If the card doesn't appear after installation, you may need to add the resource manually:
-> Go to **Settings → Dashboards → Resources → Add Resource** and add `/hacsfiles/ha-treemap-card/treemap-card.js` as a JavaScript module.
-
 ### Manual
 
-Download `treemap-card.js` from [releases](https://github.com/omachala/ha-treemap-card/releases) to `config/www/`, then add as resource: `/local/treemap-card.js`
-
----
+Download `treemap-card.js` from [releases](https://github.com/omachala/ha-treemap-card/releases) and follow the [official guide](https://developers.home-assistant.io/docs/frontend/custom-ui/registering-resources/).
 
 ## Data Modes
 
@@ -59,17 +62,25 @@ exclude:
 
 For data where all values come from a single entity as JSON. Since Home Assistant doesn't allow JSON as sensor state values, structured data must be stored in attributes - a common pattern when feeding HA from external sources like Node-RED or custom integrations. This is ideal when you don't want (or can't) create individual sensors for each data item, especially for dynamic lists like stock portfolios, server metrics, or any array of objects.
 
+<p align="center">
+  <br>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/stocks-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/stocks.png">
+    <img alt="Stock portfolio treemap" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/stocks.png">
+  </picture>
+  <br><br>
+</p>
+
 ```yaml
 type: custom:treemap-card
 entity: sensor.my_data
 data_attribute: items
 label:
-  param: name
+  attribute: name
 value:
-  param: amount
+  attribute: amount
 ```
-
----
 
 ## Entity Types
 
@@ -233,7 +244,19 @@ When `color.hvac` is configured:
 
 This lets you see temperature-based colors normally, but immediately spot which rooms are actively heating or cooling.
 
----
+**Climate sparklines:**
+
+Climate entities show temperature history with HVAC activity highlighted. The filled sections indicate when heating (or cooling) was active, making it easy to see how often each room needed climate control.
+
+<p align="center">
+  <br>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/climate-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/climate.png">
+    <img alt="Climate sparklines showing temperature and HVAC activity" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/climate.png">
+  </picture>
+  <br><br>
+</p>
 
 ## Configuration Reference
 
@@ -251,8 +274,7 @@ This lets you see temperature-based colors normally, but immediately spot which 
 | Option            | Default         | Description                                                                                               |
 | ----------------- | --------------- | --------------------------------------------------------------------------------------------------------- |
 | `label.show`      | `true`          | Show/hide labels.                                                                                         |
-| `label.param`     | `label`         | Field name for label (JSON mode).                                                                         |
-| `label.attribute` | `friendly_name` | Entity attribute for label (Entities mode).                                                               |
+| `label.attribute` | `friendly_name` | Field/attribute for label. Default: `friendly_name` (entities) or `label` (JSON).                         |
 | `label.replace`   |                 | Regex to clean labels. Format: `pattern/replacement/flags`. Example: `^Wiser //` removes "Wiser " prefix. |
 | `label.prefix`    |                 | Text before label.                                                                                        |
 | `label.suffix`    |                 | Text after label.                                                                                         |
@@ -260,21 +282,19 @@ This lets you see temperature-based colors normally, but immediately spot which 
 
 ### Value
 
-| Option            | Default | Description                                                                                                                      |
-| ----------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `value.show`      | `true`  | Show/hide values.                                                                                                                |
-| `value.param`     | `value` | Field name for value (JSON mode).                                                                                                |
-| `value.attribute` | `state` | Entity attribute for value (Entities mode). For climate: `current_temperature`, `temperature`, `temp_offset`, `temp_difference`. |
-| `value.prefix`    |         | Text before value.                                                                                                               |
-| `value.suffix`    |         | Text after value. Example: `°C`, `%`.                                                                                            |
-| `value.style`     |         | CSS for values.                                                                                                                  |
+| Option            | Default | Description                                                                                                                                  |
+| ----------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `value.show`      | `true`  | Show/hide values.                                                                                                                            |
+| `value.attribute` | `state` | Field/attribute for value. Default: `state` (entities) or `value` (JSON). Climate: `current_temperature`, `temperature`, `temp_offset`, etc. |
+| `value.prefix`    |         | Text before value.                                                                                                                           |
+| `value.suffix`    |         | Text after value. Example: `°C`, `%`.                                                                                                        |
+| `value.style`     |         | CSS for values.                                                                                                                              |
 
 ### Size
 
 | Option           | Default                   | Description                                                                                                     |
 | ---------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `size.param`     | same as `value.param`     | Field for sizing (JSON mode).                                                                                   |
-| `size.attribute` | same as `value.attribute` | Entity attribute for sizing (Entities mode). For climate: `temp_difference` works well with `inverse: true`.    |
+| `size.attribute` | same as `value.attribute` | Field/attribute for sizing. For climate: `temp_difference` works well with `inverse: true`.                     |
 | `size.equal`     | `false`                   | All rectangles same size.                                                                                       |
 | `size.inverse`   | `false`                   | Low values get bigger rectangles.                                                                               |
 | `size.min`       | auto                      | Minimum size floor in entity units (e.g., `5` for 5W or 5°C). Ensures zero-value items visible. `0` hides them. |
@@ -282,30 +302,29 @@ This lets you see temperature-based colors normally, but immediately spot which 
 
 ### Color
 
-| Option                | Default                   | Description                                                                               |
-| --------------------- | ------------------------- | ----------------------------------------------------------------------------------------- |
-| `color.low`           | `#b91c1c` (red)           | Color for lowest values. Also used for off lights.                                        |
-| `color.mid`           |                           | Optional middle color. Creates three-color gradient: low → mid → high.                    |
-| `color.high`          | `#16a34a` (green)         | Color for highest values.                                                                 |
-| `color.opacity`       | `1`                       | Color opacity (0-1).                                                                      |
-| `color.param`         | same as `value.param`     | Field for coloring (JSON mode).                                                           |
-| `color.attribute`     | same as `value.attribute` | Entity attribute for coloring (Entities mode). For climate: `temp_offset`, `hvac_action`. |
-| `color.scale.neutral` |                           | Value where `mid` color appears. Example: `0` for profit/loss, `21` for temperature.      |
-| `color.scale.min`     | auto                      | Values at or below get full `low` color.                                                  |
-| `color.scale.max`     | auto                      | Values at or above get full `high` color.                                                 |
-| `color.hvac.heating`  | `#ff6b35`                 | Color when actively heating (climate only).                                               |
-| `color.hvac.cooling`  | `#4dabf7`                 | Color when actively cooling (climate only).                                               |
-| `color.hvac.idle`     |                           | Not used - idle falls back to gradient.                                                   |
-| `color.hvac.off`      | `#868e96`                 | Color for off/unavailable climate entities.                                               |
+| Option                | Default                   | Description                                                                          |
+| --------------------- | ------------------------- | ------------------------------------------------------------------------------------ |
+| `color.low`           | `#b91c1c` (red)           | Color for lowest values. Also used for off lights.                                   |
+| `color.mid`           |                           | Optional middle color. Creates three-color gradient: low → mid → high.               |
+| `color.high`          | `#16a34a` (green)         | Color for highest values.                                                            |
+| `color.opacity`       | `1`                       | Color opacity (0-1).                                                                 |
+| `color.attribute`     | same as `value.attribute` | Field/attribute for coloring. For climate: `temp_offset`, `hvac_action`.             |
+| `color.scale.neutral` |                           | Value where `mid` color appears. Example: `0` for profit/loss, `21` for temperature. |
+| `color.scale.min`     | auto                      | Values at or below get full `low` color.                                             |
+| `color.scale.max`     | auto                      | Values at or above get full `high` color.                                            |
+| `color.hvac.heating`  | `#ff6b35`                 | Color when actively heating (climate only).                                          |
+| `color.hvac.cooling`  | `#4dabf7`                 | Color when actively cooling (climate only).                                          |
+| `color.hvac.idle`     |                           | Not used - idle falls back to gradient.                                              |
+| `color.hvac.off`      | `#868e96`                 | Color for off/unavailable climate entities.                                          |
 
 ### Icon
 
-| Option       | Default | Description                                            |
-| ------------ | ------- | ------------------------------------------------------ |
-| `icon.show`  | `true`  | Show/hide icons.                                       |
-| `icon.icon`  |         | Static icon for all items. Example: `mdi:thermometer`. |
-| `icon.param` | `icon`  | Field containing icon (JSON mode).                     |
-| `icon.style` |         | CSS for icons.                                         |
+| Option           | Default | Description                                            |
+| ---------------- | ------- | ------------------------------------------------------ |
+| `icon.show`      | `true`  | Show/hide icons.                                       |
+| `icon.icon`      |         | Static icon for all items. Example: `mdi:thermometer`. |
+| `icon.attribute` | `icon`  | Field/attribute containing icon.                       |
+| `icon.style`     |         | CSS for icons.                                         |
 
 ### Order & Filter
 
@@ -380,7 +399,111 @@ card_style: |
 <tr><td><code>card_style</code></td><td>CSS for the entire card. Example: <code>background: transparent;</code></td></tr>
 </table>
 
----
+## Sparkline
+
+Each rectangle can display a mini chart showing historical data.
+
+<table border="0" cellspacing="0" cellpadding="8">
+<tr>
+<td border="0">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/humidity-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/humidity.png">
+  <img alt="Humidity sensors" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/humidity.png">
+</picture>
+</td>
+<td border="0">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/radiators-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/radiators.png">
+  <img alt="Radiator sensors with sparklines" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/images/radiators.png">
+</picture>
+</td>
+</tr>
+</table>
+
+**Entities mode:** Uses Home Assistant's long-term statistics (most numeric sensors).
+
+```yaml
+type: custom:treemap-card
+entities:
+  - sensor.temperature_*
+sparkline:
+  period: 24h
+```
+
+**JSON mode:** Uses data array from each item's attribute.
+
+```yaml
+type: custom:treemap-card
+entity: sensor.portfolio
+data_attribute: holdings
+sparkline:
+  attribute: history
+```
+
+### Sparkline Options
+
+| Option                 | Default | Description                                                       |
+| ---------------------- | ------- | ----------------------------------------------------------------- |
+| `sparkline.show`       | `true`  | Show/hide sparklines.                                             |
+| `sparkline.attribute`  |         | Field containing sparkline data array (JSON mode).                |
+| `sparkline.period`     | `24h`   | Time period for entity history: `12h`, `24h`, `7d`, or `30d`.     |
+| `sparkline.mode`       | `dark`  | Color mode: `dark` (dark line/fill) or `light` (light line/fill). |
+| `sparkline.line.show`  | `true`  | Show/hide the line.                                               |
+| `sparkline.line.style` |         | Custom CSS for line (SVG properties).                             |
+| `sparkline.fill.show`  | `true`  | Show/hide the filled area under the line.                         |
+| `sparkline.fill.style` |         | Custom CSS for fill (SVG properties).                             |
+
+### Period Details
+
+| Period | Time Range | Data Points | Best For             |
+| ------ | ---------- | ----------- | -------------------- |
+| `12h`  | 12 hours   | ~144        | Detailed recent view |
+| `24h`  | 24 hours   | ~24         | Daily overview       |
+| `7d`   | 7 days     | ~168        | Weekly trends        |
+| `30d`  | 30 days    | ~30         | Monthly trends       |
+
+### Custom Styling Examples
+
+**Red line, no fill:**
+
+```yaml
+sparkline:
+  fill:
+    show: false
+  line:
+    style: |
+      stroke: rgba(255, 0, 0, 0.5);
+      stroke-width: 2;
+```
+
+**Thick white line with light fill:**
+
+```yaml
+sparkline:
+  mode: light
+  line:
+    style: |
+      stroke: rgba(255, 255, 255, 0.8);
+      stroke-width: 3;
+  fill:
+    style: |
+      fill: rgba(255, 255, 255, 0.2);
+```
+
+**Fill only, no line:**
+
+```yaml
+sparkline:
+  line:
+    show: false
+  fill:
+    style: |
+      fill: rgba(0, 0, 0, 0.3);
+```
+
+> **Note:** Sparklines use Home Assistant's long-term statistics. Most numeric sensors and climate entities (temperature) have statistics enabled by default.
 
 ## Size & Order guide
 
@@ -412,8 +535,6 @@ Below are common sizing and ordering configurations to achieve different visual 
 >
 > - One device at 2500W dominates the layout, others at 50-200W are tiny
 > - `size.max: 500` - Caps the 2500W device to 500W for sizing, giving other devices more visible space
-
----
 
 ## Resources
 

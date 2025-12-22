@@ -1,4 +1,4 @@
-import type { TreemapItem, TreemapRect } from './types';
+import type { TreemapItem, TreemapRect } from '../types';
 
 /**
  * Squarified treemap algorithm
@@ -21,13 +21,13 @@ function worst(row: number[], width: number): number {
   if (row.length === 0) return Infinity;
 
   const sum = row.reduce((a, b) => a + b, 0);
-  const maxVal = Math.max(...row);
-  const minVal = Math.min(...row);
+  const maxValue = Math.max(...row);
+  const minValue = Math.min(...row);
 
   const w2 = width * width;
   const s2 = sum * sum;
 
-  return Math.max((w2 * maxVal) / s2, s2 / (w2 * minVal));
+  return Math.max((w2 * maxValue) / s2, s2 / (w2 * minValue));
 }
 
 /**
@@ -39,7 +39,7 @@ function layoutRow(
   container: Container,
   vertical: boolean
 ): { rects: TreemapRect[]; remaining: Container } {
-  const sum = row.reduce((acc, r) => acc + r.normalizedValue, 0);
+  const sum = row.reduce((accumulator, r) => accumulator + r.normalizedValue, 0);
 
   const rects: TreemapRect[] = [];
   let offset = 0;
@@ -58,6 +58,7 @@ function layoutRow(
         icon: r.item.icon,
         light: r.item.light,
         climate: r.item.climate,
+        sparklineData: r.item.sparklineData,
         x: container.x,
         y: container.y + offset,
         width: rowWidth,
@@ -89,6 +90,7 @@ function layoutRow(
         icon: r.item.icon,
         light: r.item.light,
         climate: r.item.climate,
+        sparklineData: r.item.sparklineData,
         x: container.x + offset,
         y: container.y,
         width,
@@ -144,7 +146,7 @@ function gridLayout(
     ascending ? a.value - b.value : b.value - a.value
   );
 
-  return sortedItems.map((item, i) => ({
+  return sortedItems.map((item, index) => ({
     label: item.label,
     value: item.value,
     sizeValue: item.sizeValue,
@@ -153,8 +155,9 @@ function gridLayout(
     icon: item.icon,
     light: item.light,
     climate: item.climate,
-    x: (i % cols) * cellWidth,
-    y: Math.floor(i / cols) * cellHeight,
+    sparklineData: item.sparklineData,
+    x: (index % cols) * cellWidth,
+    y: Math.floor(index / cols) * cellHeight,
     width: cellWidth,
     height: cellHeight,
   }));
@@ -198,10 +201,9 @@ export function squarify(
   // Filter and map with indices preserved
   // Note: size.min is applied before squarify, so all items should have sizeValue > 0
   const validItems: { item: TreemapItem; absValue: number; sizeValue: number }[] = [];
-  for (let i = 0; i < items.length; i++) {
-    const absValue = absValues[i];
-    const sizeValue = sizeValues[i];
-    const item = items[i];
+  for (const [index, item] of items.entries()) {
+    const absValue = absValues[index];
+    const sizeValue = sizeValues[index];
     if (absValue !== undefined && sizeValue !== undefined && sizeValue > 0 && item) {
       validItems.push({ item, absValue, sizeValue });
     }
@@ -257,26 +259,9 @@ export function squarify(
     if (container.width <= 0 || container.height <= 0) break;
   }
 
-  // Post-process: fix rectangles with extreme aspect ratios (> 4:1)
-  // This happens when a small item is left alone at the end
-  const maxAspectRatio = 4;
-  for (const rect of result) {
-    const aspectRatio = Math.max(rect.width / rect.height, rect.height / rect.width);
-    if (aspectRatio > maxAspectRatio) {
-      // Shrink the long dimension to achieve max aspect ratio
-      if (rect.width > rect.height) {
-        // Too wide - shrink width, keep centered
-        const newWidth = rect.height * maxAspectRatio;
-        rect.x = rect.x + (rect.width - newWidth) / 2;
-        rect.width = newWidth;
-      } else {
-        // Too tall - shrink height, keep centered
-        const newHeight = rect.width * maxAspectRatio;
-        rect.y = rect.y + (rect.height - newHeight) / 2;
-        rect.height = newHeight;
-      }
-    }
-  }
+  // Note: We intentionally do NOT post-process aspect ratios here
+  // Shrinking individual rectangles would break row consistency
+  // (items in the same row must have the same height/width)
 
   // For ascending order, flip the entire layout by mirroring coordinates
   // This puts smallest items top-left while keeping their original sizes
@@ -289,8 +274,8 @@ export function squarify(
 
     // Normalize: shift all rects so the layout starts at (0,0)
     // This is needed because aspect ratio post-processing may leave gaps
-    const minX = Math.min(...result.map(r => r.x));
-    const minY = Math.min(...result.map(r => r.y));
+    const minX = Math.min(...result.map(rect => rect.x));
+    const minY = Math.min(...result.map(rect => rect.y));
     if (minX !== 0 || minY !== 0) {
       for (const rect of result) {
         rect.x -= minX;
