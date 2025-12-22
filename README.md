@@ -489,7 +489,7 @@ sparkline:
       fill: rgba(0, 0, 0, 0.3);
 ```
 
-> **Note:** Sparklines only appear for entities that have long-term statistics in Home Assistant. Climate entities typically don't have statistics, but their associated temperature sensors do.
+> **Note:** Sparklines use Home Assistant's long-term statistics. Most numeric sensors and climate entities (temperature) have statistics enabled by default.
 
 ## Size & Order guide
 
