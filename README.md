@@ -249,11 +249,13 @@ This lets you see temperature-based colors normally, but immediately spot which 
 Climate entities show temperature history with HVAC activity highlighted. The filled sections indicate when heating (or cooling) was active, making it easy to see how often each room needed climate control.
 
 <p align="center">
+  <br>
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/climate-dark.png">
     <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/climate.png">
     <img alt="Climate sparklines showing temperature and HVAC activity" src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/climate.png">
   </picture>
+  <br><br>
 </p>
 
 ## Configuration Reference
