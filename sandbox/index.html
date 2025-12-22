@@ -289,6 +289,42 @@
               hvac_modes: ['off', 'heat', 'cool'],
             },
           },
+          // Temperature sensors for climate fallback (used when climate has no stats)
+          'sensor.living_room_temperature': {
+            entity_id: 'sensor.living_room_temperature',
+            state: '20.5',
+            attributes: { friendly_name: 'Living Room Temp', unit_of_measurement: '°C' },
+          },
+          'sensor.bedroom_temperature': {
+            entity_id: 'sensor.bedroom_temperature',
+            state: '21.2',
+            attributes: { friendly_name: 'Bedroom Temp', unit_of_measurement: '°C' },
+          },
+          'sensor.office_temperature': {
+            entity_id: 'sensor.office_temperature',
+            state: '18.8',
+            attributes: { friendly_name: 'Office Temp', unit_of_measurement: '°C' },
+          },
+          'sensor.kitchen_temperature': {
+            entity_id: 'sensor.kitchen_temperature',
+            state: '20.5',
+            attributes: { friendly_name: 'Kitchen Temp', unit_of_measurement: '°C' },
+          },
+          'sensor.bathroom_temperature': {
+            entity_id: 'sensor.bathroom_temperature',
+            state: '22.3',
+            attributes: { friendly_name: 'Bathroom Temp', unit_of_measurement: '°C' },
+          },
+          'sensor.garage_temperature': {
+            entity_id: 'sensor.garage_temperature',
+            state: '12.5',
+            attributes: { friendly_name: 'Garage Temp', unit_of_measurement: '°C' },
+          },
+          'sensor.guest_room_temperature': {
+            entity_id: 'sensor.guest_room_temperature',
+            state: '25.8',
+            attributes: { friendly_name: 'Guest Room Temp', unit_of_measurement: '°C' },
+          },
           'light.kitchen': {
             entity_id: 'light.kitchen',
             state: 'on',
@@ -468,6 +504,45 @@
             }
             return result;
           }
+          if (params.type === 'history/history_during_period') {
+            // Generate mock HVAC history for climate entities
+            const result = {};
+            const now = Date.now();
+            const startMs = new Date(params.start_time).getTime();
+            const periodMs = now - startMs;
+
+            for (const entityId of params.entity_ids || []) {
+              if (entityId.startsWith('climate.')) {
+                const climate = mockHass.states[entityId];
+                const currentAction = climate?.attributes?.hvac_action || 'idle';
+                // Generate realistic HVAC action history
+                const history = [];
+                let time = startMs;
+                const actions = ['heating', 'idle', 'cooling', 'idle', 'heating', 'idle'];
+                let actionIndex = 0;
+
+                while (time < now) {
+                  const duration = 30 * 60 * 1000 + Math.random() * 60 * 60 * 1000; // 30-90 min segments
+                  const action = actions[actionIndex % actions.length];
+                  history.push({
+                    lu: time / 1000, // last_updated in seconds
+                    s: climate?.state || 'heat',
+                    a: { hvac_action: action },
+                  });
+                  time += duration;
+                  actionIndex++;
+                }
+                // End with current action
+                history.push({
+                  lu: (now - 10 * 60 * 1000) / 1000,
+                  s: climate?.state || 'heat',
+                  a: { hvac_action: currentAction },
+                });
+                result[entityId] = history;
+              }
+            }
+            return result;
+          }
           return {};
         },
       };
@@ -496,16 +571,15 @@
         });
         card1.hass = mockHass;
 
-        // Card 2: Climate entities (HVAC colors)
-        // Options: color.hvac, size.equal, order, icon.show, label.show, icon.style
+        // Card 2: Climate with HVAC action bars
+        // Options: sparkline.hvac (shows heating/cooling bars at bottom of sparkline)
         const card2 = document.getElementById('card2');
         card2.setConfig({
           type: 'custom:treemap-card',
-          header: { title: 'HVAC Status' },
+          header: { title: 'Climate + HVAC Bars' },
           entities: ['climate.*'],
-          value: { attribute: 'temp_difference', suffix: '°C' },
+          value: { attribute: 'current_temperature', suffix: '°C' },
           size: { equal: true },
-          order: 'asc',
           color: {
             attribute: 'hvac_action',
             hvac: {
@@ -515,7 +589,14 @@
               off: '#868e96',
             },
           },
-          sparkline: { show: false },
+          sparkline: {
+            hvac: {
+              show: true,
+              height: 20, // Bar height as % of sparkline
+              heatingColor: '#ff6b35',
+              coolingColor: '#4dabf7',
+            },
+          },
         });
         card2.hass = mockHass;
 
