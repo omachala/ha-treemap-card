@@ -11,7 +11,7 @@ import {
   type GradientColorOptions,
 } from './utils/colors';
 import { renderSparklineWithData } from './utils/sparkline';
-import { getHistoryData, type HistoryPeriod } from './utils/history';
+import { getHistoryData, type HistoryPeriod, type SparklineData } from './utils/history';
 import { squarify } from './utils/squarify';
 import { prepareTreemapData } from './utils/data';
 import { styles } from './styles';
@@ -31,7 +31,7 @@ export class TreemapCard extends LitElement {
 
   @property({ attribute: false }) public hass?: HomeAssistant;
   @state() private _config?: TreemapCardConfig;
-  @state() private _sparklineData = new Map<string, number[]>();
+  @state() private _sparklineData = new Map<string, SparklineData>();
   private _fetchingSparklines = false;
   private _lastRelevantStates: string | undefined;
   private _cachedData: TreemapItem[] | undefined;
@@ -712,6 +712,7 @@ export class TreemapCard extends LitElement {
                   mode: this._config?.sparkline?.mode || 'dark',
                   line: this._config?.sparkline?.line,
                   fill: this._config?.sparkline?.fill,
+                  hvac: this._config?.sparkline?.hvac,
                 }
               )}
             </div>`

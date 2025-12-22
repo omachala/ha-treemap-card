@@ -121,6 +121,12 @@ export interface TreemapCardConfig {
       show?: boolean; // Show fill (default: true)
       style?: string; // Custom CSS for fill (fill color, opacity, etc.)
     };
+    hvac?: {
+      show?: boolean; // Show HVAC action bars for climate entities (default: true)
+      height?: number; // Bar height as percentage of sparkline height (default: 15)
+      heatingColor?: string; // Custom heating bar color
+      coolingColor?: string; // Custom cooling bar color
+    };
   };
 }
 
