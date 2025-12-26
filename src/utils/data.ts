@@ -49,15 +49,15 @@ export function prepareTreemapData(
   // Apply inverse sizing (low values get bigger rectangles)
   if (inverse) {
     const sizeSum = sizeMaxVal + sizeMinVal;
-    for (const d of data) {
-      d.sizeValue = sizeSum - d.sizeValue;
+    for (const item of data) {
+      item.sizeValue = sizeSum - item.sizeValue;
     }
     // Recalculate max after inversion for min floor calculation
     sizeMaxVal = sizeSum - sizeMinVal;
     const minFloor = sizeMaxVal * 0.1;
-    for (const d of data) {
-      if (d.sizeValue < minFloor) {
-        d.sizeValue = minFloor;
+    for (const item of data) {
+      if (item.sizeValue < minFloor) {
+        item.sizeValue = minFloor;
       }
     }
   }
@@ -74,20 +74,20 @@ export function prepareTreemapData(
 
   // Apply size constraints in single pass, also find currentMax
   let currentMax = 1;
-  for (const d of limitedData) {
-    if (sizeMax !== undefined && d.sizeValue > sizeMax) {
-      d.sizeValue = sizeMax;
+  for (const item of limitedData) {
+    if (sizeMax !== undefined && item.sizeValue > sizeMax) {
+      item.sizeValue = sizeMax;
     }
-    if (d.sizeValue > currentMax) {
-      currentMax = d.sizeValue;
+    if (item.sizeValue > currentMax) {
+      currentMax = item.sizeValue;
     }
   }
 
   // Apply min floor (default: 15% of max sizeValue)
   const effectiveMin = sizeMin ?? currentMax * 0.15;
-  for (const d of limitedData) {
-    if (d.sizeValue < effectiveMin) {
-      d.sizeValue = effectiveMin;
+  for (const item of limitedData) {
+    if (item.sizeValue < effectiveMin) {
+      item.sizeValue = effectiveMin;
     }
   }
 

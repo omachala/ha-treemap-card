@@ -544,23 +544,26 @@ export class TreemapCard extends LitElement {
     // If size.equal mode, give all items equal weight for sizing
     const equalSize = this._config?.size?.equal === true;
 
-    // Build a map of label -> original values for restoration after squarify
+    // Build a map of entity_id -> original values for restoration after squarify
     // squarify reorders items internally, so we can't rely on index matching
+    // We use entity_id as key (not label) because multiple entities can share the same friendly_name
     const originalValues = new Map<
       string,
       { value: number; colorValue: number; sizeValue: number; unit?: string }
     >();
-    for (const d of sortedData) {
-      originalValues.set(d.label, {
-        value: d.value,
-        colorValue: d.colorValue,
-        sizeValue: d.sizeValue,
-        unit: d.unit,
+    for (const item of sortedData) {
+      // Use entity_id as unique key, fall back to label for JSON mode (no entity_id)
+      const key = item.entity_id ?? item.label;
+      originalValues.set(key, {
+        value: item.value,
+        colorValue: item.colorValue,
+        sizeValue: item.sizeValue,
+        unit: item.unit,
       });
     }
 
     // squarify uses 'value' field for sizing
-    const layoutInput = sortedData.map(d => ({ ...d, value: d.sizeValue }));
+    const layoutInput = sortedData.map(item => ({ ...item, value: item.sizeValue }));
     const orderAsc = this._config?.order === 'asc';
     const sizeInverse = this._config?.size?.inverse === true;
     const isAsc = sizeInverse ? !orderAsc : orderAsc;
@@ -570,9 +573,10 @@ export class TreemapCard extends LitElement {
       ascending: isAsc,
     });
 
-    // Restore original display values by matching on label
+    // Restore original display values by matching on entity_id (or label for JSON mode)
     for (const rect of rects) {
-      const original = originalValues.get(rect.label);
+      const key = rect.entity_id ?? rect.label;
+      const original = originalValues.get(key);
       if (original) {
         rect.value = original.value;
         rect.colorValue = original.colorValue;
@@ -583,7 +587,7 @@ export class TreemapCard extends LitElement {
 
     // Dynamic height based on number of rows (not items)
     // Count unique Y positions to estimate rows
-    const uniqueYPositions = new Set(rects.map(r => Math.round(r.y)));
+    const uniqueYPositions = new Set(rects.map(rect => Math.round(rect.y)));
     const numberRows = Math.max(1, uniqueYPositions.size);
     const baseHeight = Math.max(150, numberRows * 100); // 100px per row, min 150px
     const height = this._config.height ?? baseHeight;

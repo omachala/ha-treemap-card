@@ -383,6 +383,37 @@ describe('Sensor Entities', () => {
     expect(smallArea).toBeCloseTo(zeroArea, 0);
   });
 
+  it('renders correct values for entities with duplicate friendly_names', async () => {
+    const hass = mockHass([
+      mockEntity('sensor.plant_1_moisture', '52', {
+        friendly_name: 'Antúrio',
+        unit_of_measurement: '%',
+      }),
+      mockEntity('sensor.plant_2_moisture', '78', {
+        friendly_name: 'Antúrio',
+        unit_of_measurement: '%',
+      }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: ['sensor.plant_*'],
+    });
+    card.hass = hass;
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+
+    // Both entities should be rendered
+    expect(items).toHaveLength(2);
+
+    // Both have the same label, so we need to check that BOTH values exist
+    // (not that one value appears twice)
+    const values = items.map(i => i.value).sort((a, b) => a - b);
+    expect(values[0]).toBeCloseTo(52, 0);
+    expect(values[1]).toBeCloseTo(78, 0);
+  });
+
   it('ignores size.min and size.max when size.equal is true', async () => {
     const hass = mockHass([
       mockEntity('sensor.large', '1000', { friendly_name: 'Large' }),

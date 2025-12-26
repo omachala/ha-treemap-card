@@ -234,7 +234,7 @@ describe('squarify', () => {
 
     expect(result).toHaveLength(4);
     // All items should be placed
-    expect(result.map(r => r.label).sort()).toEqual(['A', 'B', 'C', 'D']);
+    expect(result.map(rect => rect.label).sort()).toEqual(['A', 'B', 'C', 'D']);
   });
 
   it('corrects extremely wide rectangles', () => {
