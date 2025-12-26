@@ -1,5 +1,11 @@
 # ha-treemap-card
 
+## 0.8.1
+
+### Patch Changes
+
+- 50d247d: Fixed entities with the same name displaying incorrect values
+
 ## 0.8.0
 
 ### Minor Changes
