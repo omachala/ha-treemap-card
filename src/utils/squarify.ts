@@ -39,7 +39,7 @@ function layoutRow(
   container: Container,
   vertical: boolean
 ): { rects: TreemapRect[]; remaining: Container } {
-  const sum = row.reduce((accumulator, r) => accumulator + r.normalizedValue, 0);
+  const sum = row.reduce((accumulator, entry) => accumulator + entry.normalizedValue, 0);
 
   const rects: TreemapRect[] = [];
   let offset = 0;
@@ -47,18 +47,18 @@ function layoutRow(
   if (vertical) {
     const rowWidth = sum / container.height;
 
-    for (const r of row) {
-      const height = r.normalizedValue / rowWidth;
+    for (const entry of row) {
+      const height = entry.normalizedValue / rowWidth;
       rects.push({
-        label: r.item.label,
-        value: r.item.value,
-        sizeValue: r.item.sizeValue,
-        colorValue: r.item.colorValue,
-        entity_id: r.item.entity_id,
-        icon: r.item.icon,
-        light: r.item.light,
-        climate: r.item.climate,
-        sparklineData: r.item.sparklineData,
+        label: entry.item.label,
+        value: entry.item.value,
+        sizeValue: entry.item.sizeValue,
+        colorValue: entry.item.colorValue,
+        entity_id: entry.item.entity_id,
+        icon: entry.item.icon,
+        light: entry.item.light,
+        climate: entry.item.climate,
+        sparklineData: entry.item.sparklineData,
         x: container.x,
         y: container.y + offset,
         width: rowWidth,
@@ -79,18 +79,18 @@ function layoutRow(
   } else {
     const rowHeight = sum / container.width;
 
-    for (const r of row) {
-      const width = r.normalizedValue / rowHeight;
+    for (const entry of row) {
+      const width = entry.normalizedValue / rowHeight;
       rects.push({
-        label: r.item.label,
-        value: r.item.value,
-        sizeValue: r.item.sizeValue,
-        colorValue: r.item.colorValue,
-        entity_id: r.item.entity_id,
-        icon: r.item.icon,
-        light: r.item.light,
-        climate: r.item.climate,
-        sparklineData: r.item.sparklineData,
+        label: entry.item.label,
+        value: entry.item.value,
+        sizeValue: entry.item.sizeValue,
+        colorValue: entry.item.colorValue,
+        entity_id: entry.item.entity_id,
+        icon: entry.item.icon,
+        light: entry.item.light,
+        climate: entry.item.climate,
+        sparklineData: entry.item.sparklineData,
         x: container.x + offset,
         y: container.y,
         width,
@@ -194,7 +194,9 @@ export function squarify(
 
   // Compress range using sqrt so small values are still visible
   // sqrt(1) = 1, sqrt(100) = 10, so 1% becomes 10% of max instead of 1%
-  const sizeValues = compressRange ? absValues.map(v => Math.sqrt(v / maxAbs) * maxAbs) : absValues;
+  const sizeValues = compressRange
+    ? absValues.map(absValue => Math.sqrt(absValue / maxAbs) * maxAbs)
+    : absValues;
 
   const totalSizeValue = sizeValues.reduce((a, b) => a + b, 0);
 

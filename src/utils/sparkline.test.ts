@@ -26,7 +26,7 @@ describe('getSparklinePoints', () => {
 
     // All y values should be the same (middle of chart)
     const points = linePoints.split(' ');
-    const yValues = points.map(p => Number.parseFloat(p.split(',')[1] ?? '0'));
+    const yValues = points.map(point => Number.parseFloat(point.split(',')[1] ?? '0'));
     expect(new Set(yValues).size).toBe(1);
   });
 
@@ -50,7 +50,7 @@ describe('getSparklinePoints', () => {
     const { linePoints } = getSparklinePoints(data, { width: 100, height: 20 });
 
     const points = linePoints.split(' ');
-    const yValues = points.map(p => Number.parseFloat(p.split(',')[1] ?? '0'));
+    const yValues = points.map(point => Number.parseFloat(point.split(',')[1] ?? '0'));
 
     // Min y should be close to 1 (top padding), max close to 19 (bottom - padding)
     expect(Math.min(...yValues)).toBeCloseTo(1, 0);
@@ -65,7 +65,7 @@ describe('getSparklinePoints', () => {
     expect(points).toHaveLength(3);
 
     // Should normalize to height range
-    const yValues = points.map(p => Number.parseFloat(p.split(',')[1] ?? '0'));
+    const yValues = points.map(point => Number.parseFloat(point.split(',')[1] ?? '0'));
     expect(Math.min(...yValues)).toBeGreaterThanOrEqual(0);
     expect(Math.max(...yValues)).toBeLessThanOrEqual(20);
   });
@@ -77,7 +77,7 @@ describe('getSparklinePoints', () => {
     const points = linePoints.split(' ');
     expect(points).toHaveLength(11);
 
-    const xValues = points.map(p => Number.parseFloat(p.split(',')[0] ?? '0'));
+    const xValues = points.map(point => Number.parseFloat(point.split(',')[0] ?? '0'));
     // First x should be 0, last should be 100
     expect(xValues[0]).toBe(0);
     expect(xValues[10]).toBe(100);
@@ -121,7 +121,7 @@ describe('renderSparkline', () => {
 
     expect(result).toHaveProperty('strings');
     // Should have nothing values for hidden fill
-    const nothingCount = result.values.filter(v => v === nothing).length;
+    const nothingCount = result.values.filter(value => value === nothing).length;
     expect(nothingCount).toBeGreaterThanOrEqual(1);
   });
 
