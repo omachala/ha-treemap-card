@@ -13,6 +13,7 @@ export interface HomeAssistant {
   states: Record<string, HassEntity>;
   callService: (domain: string, service: string, data?: Record<string, unknown>) => Promise<void>;
   callWS: <T>(message: Record<string, unknown>) => Promise<T>;
+  language?: string; // User's language setting (e.g., 'en', 'de', 'fr')
 }
 
 /**

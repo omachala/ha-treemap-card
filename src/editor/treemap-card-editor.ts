@@ -11,6 +11,7 @@ import { set } from 'es-toolkit/compat';
 import type { HomeAssistant, TreemapCardConfig } from '../types';
 import type { LovelaceCardEditor } from './types';
 import { editorStyles } from './styles';
+import { localize } from '../localize';
 
 /**
  * Get value from HA component or native input
@@ -45,6 +46,13 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
 
   public setConfig(config: TreemapCardConfig): void {
     this._config = { ...config };
+  }
+
+  /**
+   * Shorthand for localize with current hass context
+   */
+  private _t(key: string): string {
+    return localize(this.hass, key);
   }
 
   private _fireConfigChanged(): void {
@@ -168,14 +176,14 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
 
   protected override render(): TemplateResult {
     if (!this._config) {
-      return html`<div class="editor">No configuration</div>`;
+      return html`<div class="editor">${this._t('editor.no_config')}</div>`;
     }
 
     // JSON mode (entity attribute) - show message to use YAML
     if (this._config.entity) {
       return html`
         <div class="editor">
-          <ha-alert alert-type="info"> JSON attribute mode is configured via YAML only. </ha-alert>
+          <ha-alert alert-type="info">${this._t('editor.yaml_only')}</ha-alert>
         </div>
       `;
     }
@@ -190,7 +198,7 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
       <div class="editor">
         <!-- Entities -->
         <div class="field" data-testid="entities-field">
-          <label class="field-label">Entity patterns (one per line)</label>
+          <label class="field-label">${this._t('editor.entities.label')}</label>
           <textarea
             class="textarea"
             .value=${entities}
@@ -198,12 +206,12 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
             placeholder="sensor.temperature_*&#10;climate.*&#10;light.living_*"
             rows="3"
           ></textarea>
-          <span class="field-helper">Supports wildcards: sensor.* matches all sensors</span>
+          <span class="field-helper">${this._t('editor.entities.helper')}</span>
         </div>
 
         <!-- Exclude -->
         <div class="field" data-testid="exclude-field">
-          <label class="field-label">Exclude patterns (optional)</label>
+          <label class="field-label">${this._t('editor.exclude.label')}</label>
           <textarea
             class="textarea"
             .value=${exclude}
@@ -216,34 +224,34 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
         <!-- Label section -->
         ${this._renderToggleSection(
           'label',
-          'Label',
+          this._t('editor.label.title'),
           label.show !== false,
           (e: Event) => this._handleBoolChange('label.show', e),
           html`
             <div class="field-row">
               <ha-textfield
-                label="Prefix"
+                label=${this._t('editor.label.prefix')}
                 .value=${label.prefix ?? ''}
                 @input=${(e: Event) => this._handleTextChange('label.prefix', e)}
               ></ha-textfield>
               <ha-textfield
-                label="Suffix"
+                label=${this._t('editor.label.suffix')}
                 .value=${label.suffix ?? ''}
                 @input=${(e: Event) => this._handleTextChange('label.suffix', e)}
               ></ha-textfield>
             </div>
             <div class="field-row">
               <ha-textfield
-                label="Find"
+                label=${this._t('editor.label.find')}
                 .value=${label.replace?.split('/')[0] ?? ''}
                 @input=${(e: Event) => this._handleReplaceChange('find', e)}
-                placeholder="Temperature"
+                placeholder=${this._t('editor.label.find_placeholder')}
               ></ha-textfield>
               <ha-textfield
-                label="Replace with"
+                label=${this._t('editor.label.replace')}
                 .value=${label.replace?.split('/')[1] ?? ''}
                 @input=${(e: Event) => this._handleReplaceChange('replace', e)}
-                placeholder="Temp"
+                placeholder=${this._t('editor.label.replace_placeholder')}
               ></ha-textfield>
             </div>
           `
@@ -252,21 +260,21 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
         <!-- Value section -->
         ${this._renderToggleSection(
           'value',
-          'Value',
+          this._t('editor.value.title'),
           value.show !== false,
           (e: Event) => this._handleBoolChange('value.show', e),
           html`
             <div class="field-row">
               <ha-textfield
-                label="Prefix"
+                label=${this._t('editor.value.prefix')}
                 .value=${value.prefix ?? ''}
                 @input=${(e: Event) => this._handleTextChange('value.prefix', e)}
               ></ha-textfield>
               <ha-textfield
-                label="Suffix"
+                label=${this._t('editor.value.suffix')}
                 .value=${value.suffix ?? ''}
                 @input=${(e: Event) => this._handleTextChange('value.suffix', e)}
-                placeholder="%"
+                placeholder=${this._t('editor.value.suffix_placeholder')}
               ></ha-textfield>
             </div>
           `
@@ -275,12 +283,12 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
         <!-- Icon section -->
         ${this._renderToggleSection(
           'icon',
-          'Icon',
+          this._t('editor.icon.title'),
           icon.show !== false,
           (e: Event) => this._handleBoolChange('icon.show', e),
           html`
             <ha-icon-picker
-              label="Override icon"
+              label=${this._t('editor.icon.override')}
               .hass=${this.hass}
               .value=${icon.icon ?? ''}
               @value-changed=${this._handleIconChange}
@@ -297,28 +305,28 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
             @change=${(e: Event) => this._handleBoolChange('sparkline.show', e)}
             @click=${(e: Event) => e.stopPropagation()}
           />
-          <span slot="header">Sparkline</span>
+          <span slot="header">${this._t('editor.sparkline.title')}</span>
           <div class="content">
             <div class="field-row">
               <ha-select
-                label="Period"
+                label=${this._t('editor.sparkline.period')}
                 .value=${this._config.sparkline?.period ?? '24h'}
                 @selected=${(e: Event) => this._handleTextChange('sparkline.period', e)}
                 @closed=${(e: Event) => e.stopPropagation()}
               >
-                <ha-list-item value="12h">12 hours</ha-list-item>
-                <ha-list-item value="24h">24 hours</ha-list-item>
-                <ha-list-item value="7d">7 days</ha-list-item>
-                <ha-list-item value="30d">30 days</ha-list-item>
+                <ha-list-item value="12h">${this._t('editor.sparkline.period_12h')}</ha-list-item>
+                <ha-list-item value="24h">${this._t('editor.sparkline.period_24h')}</ha-list-item>
+                <ha-list-item value="7d">${this._t('editor.sparkline.period_7d')}</ha-list-item>
+                <ha-list-item value="30d">${this._t('editor.sparkline.period_30d')}</ha-list-item>
               </ha-select>
               <ha-select
-                label="Mode"
+                label=${this._t('editor.sparkline.mode')}
                 .value=${this._config.sparkline?.mode ?? 'dark'}
                 @selected=${(e: Event) => this._handleTextChange('sparkline.mode', e)}
                 @closed=${(e: Event) => e.stopPropagation()}
               >
-                <ha-list-item value="dark">Dark</ha-list-item>
-                <ha-list-item value="light">Light</ha-list-item>
+                <ha-list-item value="dark">${this._t('editor.sparkline.mode_dark')}</ha-list-item>
+                <ha-list-item value="light">${this._t('editor.sparkline.mode_light')}</ha-list-item>
               </ha-select>
             </div>
             <label class="checkbox-field">
@@ -327,7 +335,7 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
                 .checked=${this._config.sparkline?.line?.show !== false}
                 @change=${(e: Event) => this._handleBoolChange('sparkline.line.show', e)}
               />
-              <span>Show line</span>
+              <span>${this._t('editor.sparkline.show_line')}</span>
             </label>
             <label class="checkbox-field">
               <input
@@ -335,7 +343,7 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
                 .checked=${this._config.sparkline?.fill?.show !== false}
                 @change=${(e: Event) => this._handleBoolChange('sparkline.fill.show', e)}
               />
-              <span>Show fill</span>
+              <span>${this._t('editor.sparkline.show_fill')}</span>
             </label>
             <label class="checkbox-field">
               <input
@@ -343,16 +351,16 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
                 .checked=${this._config.sparkline?.hvac?.show !== false}
                 @change=${(e: Event) => this._handleBoolChange('sparkline.hvac.show', e)}
               />
-              <span>Show HVAC bars (climate entities)</span>
+              <span>${this._t('editor.sparkline.show_hvac')}</span>
             </label>
           </div>
         </ha-expansion-panel>
 
         <!-- Colors section -->
         <ha-expansion-panel outlined data-testid="colors-section">
-          <span slot="header">Colors</span>
+          <span slot="header">${this._t('editor.colors.title')}</span>
           <div class="content">
-            <span class="field-label">Color gradient (low → mid → high)</span>
+            <span class="field-label">${this._t('editor.colors.gradient')}</span>
             <div class="color-scale-row">
               <label class="color-field">
                 <input
@@ -363,10 +371,10 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
               </label>
               <ha-textfield
                 type="number"
-                label="Low ≤"
+                label=${this._t('editor.colors.low')}
                 .value=${this._config.color?.scale?.min ?? ''}
                 @input=${(e: Event) => this._handleNumberChange('color.scale.min', e)}
-                placeholder="auto"
+                placeholder=${this._t('editor.colors.auto')}
               ></ha-textfield>
             </div>
             <div class="color-scale-row">
@@ -379,10 +387,10 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
               </label>
               <ha-textfield
                 type="number"
-                label="Mid ="
+                label=${this._t('editor.colors.mid')}
                 .value=${this._config.color?.scale?.neutral ?? ''}
                 @input=${(e: Event) => this._handleNumberChange('color.scale.neutral', e)}
-                placeholder="middle"
+                placeholder=${this._t('editor.colors.middle')}
               ></ha-textfield>
             </div>
             <div class="color-scale-row">
@@ -395,13 +403,13 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
               </label>
               <ha-textfield
                 type="number"
-                label="High ≥"
+                label=${this._t('editor.colors.high')}
                 .value=${this._config.color?.scale?.max ?? ''}
                 @input=${(e: Event) => this._handleNumberChange('color.scale.max', e)}
-                placeholder="auto"
+                placeholder=${this._t('editor.colors.auto')}
               ></ha-textfield>
             </div>
-            <span class="field-label">HVAC colors (climate entities)</span>
+            <span class="field-label">${this._t('editor.colors.hvac_colors')}</span>
             <div class="color-row">
               <label class="color-field">
                 <input
@@ -409,7 +417,7 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
                   .value=${this._config.color?.hvac?.heating ?? '#ff6b35'}
                   @input=${(e: Event) => this._handleTextChange('color.hvac.heating', e)}
                 />
-                <span>Heating</span>
+                <span>${this._t('editor.colors.heating')}</span>
               </label>
               <label class="color-field">
                 <input
@@ -417,7 +425,7 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
                   .value=${this._config.color?.hvac?.cooling ?? '#4dabf7'}
                   @input=${(e: Event) => this._handleTextChange('color.hvac.cooling', e)}
                 />
-                <span>Cooling</span>
+                <span>${this._t('editor.colors.cooling')}</span>
               </label>
               <label class="color-field">
                 <input
@@ -425,7 +433,7 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
                   .value=${this._config.color?.hvac?.off ?? '#868e96'}
                   @input=${(e: Event) => this._handleTextChange('color.hvac.off', e)}
                 />
-                <span>Off</span>
+                <span>${this._t('editor.colors.off')}</span>
               </label>
             </div>
           </div>
@@ -433,7 +441,7 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
 
         <!-- Size section -->
         <ha-expansion-panel outlined data-testid="size-section">
-          <span slot="header">Size</span>
+          <span slot="header">${this._t('editor.size.title')}</span>
           <div class="content">
             <label class="checkbox-field">
               <input
@@ -441,7 +449,7 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
                 .checked=${this._config.size?.equal ?? false}
                 @change=${(e: Event) => this._handleBoolChange('size.equal', e)}
               />
-              <span>Equal size rectangles</span>
+              <span>${this._t('editor.size.equal')}</span>
             </label>
             <label class="checkbox-field ${this._config.size?.equal ? 'disabled' : ''}">
               <input
@@ -450,24 +458,24 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
                 .disabled=${this._config.size?.equal ?? false}
                 @change=${(e: Event) => this._handleBoolChange('size.inverse', e)}
               />
-              <span>Inverse (low values = bigger)</span>
+              <span>${this._t('editor.size.inverse')}</span>
             </label>
             <div class="field-row">
               <ha-textfield
                 type="number"
-                label="Min"
+                label=${this._t('editor.size.min')}
                 .value=${this._config.size?.min ?? ''}
                 .disabled=${this._config.size?.equal ?? false}
                 @input=${(e: Event) => this._handleNumberChange('size.min', e)}
-                placeholder="auto"
+                placeholder=${this._t('editor.colors.auto')}
               ></ha-textfield>
               <ha-textfield
                 type="number"
-                label="Max"
+                label=${this._t('editor.size.max')}
                 .value=${this._config.size?.max ?? ''}
                 .disabled=${this._config.size?.equal ?? false}
                 @input=${(e: Event) => this._handleNumberChange('size.max', e)}
-                placeholder="auto"
+                placeholder=${this._t('editor.colors.auto')}
               ></ha-textfield>
             </div>
           </div>
@@ -475,19 +483,19 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
 
         <!-- Layout section -->
         <ha-expansion-panel outlined data-testid="layout-section">
-          <span slot="header">Layout</span>
+          <span slot="header">${this._t('editor.layout.title')}</span>
           <div class="content">
             <div class="field-row">
               <ha-textfield
                 type="number"
-                label="Height (px)"
+                label=${this._t('editor.layout.height')}
                 .value=${this._config.height ?? ''}
                 @input=${(e: Event) => this._handleNumberChange('height', e)}
-                placeholder="auto"
+                placeholder=${this._t('editor.colors.auto')}
               ></ha-textfield>
               <ha-textfield
                 type="number"
-                label="Gap (px)"
+                label=${this._t('editor.layout.gap')}
                 .value=${this._config.gap ?? ''}
                 @input=${(e: Event) => this._handleNumberChange('gap', e)}
                 placeholder="6"
@@ -498,33 +506,33 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
 
         <!-- Order & Filter (not in expandable) -->
         <div class="field" data-testid="order-filter-field">
-          <span class="field-label">Order & Filter</span>
+          <span class="field-label">${this._t('editor.order_filter.title')}</span>
           <ha-select
-            label="Order"
+            label=${this._t('editor.order_filter.order')}
             .value=${this._config.order ?? 'desc'}
             @selected=${(e: Event) => this._handleTextChange('order', e)}
             @closed=${(e: Event) => e.stopPropagation()}
           >
-            <ha-list-item value="desc">Descending (high first)</ha-list-item>
-            <ha-list-item value="asc">Ascending (low first)</ha-list-item>
+            <ha-list-item value="desc">${this._t('editor.order_filter.desc')}</ha-list-item>
+            <ha-list-item value="asc">${this._t('editor.order_filter.asc')}</ha-list-item>
           </ha-select>
           <ha-textfield
             type="number"
-            label="Limit"
+            label=${this._t('editor.order_filter.limit')}
             .value=${this._config.limit ?? ''}
             @input=${(e: Event) => this._handleNumberChange('limit', e)}
-            placeholder="all"
+            placeholder=${this._t('editor.order_filter.all')}
           ></ha-textfield>
           <div class="field-row">
             <ha-textfield
               type="number"
-              label="Filter above"
+              label=${this._t('editor.order_filter.above')}
               .value=${this._config.filter?.above ?? ''}
               @input=${(e: Event) => this._handleNumberChange('filter.above', e)}
             ></ha-textfield>
             <ha-textfield
               type="number"
-              label="Filter below"
+              label=${this._t('editor.order_filter.below')}
               .value=${this._config.filter?.below ?? ''}
               @input=${(e: Event) => this._handleNumberChange('filter.below', e)}
             ></ha-textfield>

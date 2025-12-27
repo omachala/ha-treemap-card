@@ -1,0 +1,83 @@
+{
+  "editor": {
+    "no_config": "No configuration",
+    "yaml_only": "JSON attribute mode is configured via YAML only.",
+    "entities": {
+      "label": "Entity patterns (one per line)",
+      "helper": "Supports wildcards: sensor.* matches all sensors",
+      "placeholder": "sensor.temperature_*\nclimate.*\nlight.living_*"
+    },
+    "exclude": {
+      "label": "Exclude patterns (optional)",
+      "placeholder": "sensor.*_battery\nsensor.*_unavailable"
+    },
+    "label": {
+      "title": "Label",
+      "prefix": "Prefix",
+      "suffix": "Suffix",
+      "find": "Find",
+      "replace": "Replace with",
+      "find_placeholder": "Temperature",
+      "replace_placeholder": "Temp"
+    },
+    "value": {
+      "title": "Value",
+      "prefix": "Prefix",
+      "suffix": "Suffix",
+      "suffix_placeholder": "%"
+    },
+    "icon": {
+      "title": "Icon",
+      "override": "Override icon"
+    },
+    "sparkline": {
+      "title": "Sparkline",
+      "period": "Period",
+      "period_12h": "12 hours",
+      "period_24h": "24 hours",
+      "period_7d": "7 days",
+      "period_30d": "30 days",
+      "mode": "Mode",
+      "mode_dark": "Dark",
+      "mode_light": "Light",
+      "show_line": "Show line",
+      "show_fill": "Show fill",
+      "show_hvac": "Show HVAC bars (climate entities)"
+    },
+    "colors": {
+      "title": "Colors",
+      "gradient": "Color gradient (low \u2192 mid \u2192 high)",
+      "low": "Low \u2264",
+      "mid": "Mid =",
+      "high": "High \u2265",
+      "auto": "auto",
+      "middle": "middle",
+      "hvac_colors": "HVAC colors (climate entities)",
+      "heating": "Heating",
+      "cooling": "Cooling",
+      "off": "Off"
+    },
+    "size": {
+      "title": "Size",
+      "equal": "Equal size rectangles",
+      "inverse": "Inverse (low values = bigger)",
+      "min": "Min",
+      "max": "Max"
+    },
+    "layout": {
+      "title": "Layout",
+      "height": "Height (px)",
+      "gap": "Gap (px)"
+    },
+    "order_filter": {
+      "title": "Order & Filter",
+      "order": "Order",
+      "desc": "Descending (high first)",
+      "asc": "Ascending (low first)",
+      "limit": "Limit",
+      "all": "all",
+      "above": "Filter above",
+      "below": "Filter below"
+    }
+  }
+}

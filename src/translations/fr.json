@@ -1,0 +1,83 @@
+{
+  "editor": {
+    "no_config": "Aucune configuration",
+    "yaml_only": "Le mode attribut JSON est configurable uniquement via YAML.",
+    "entities": {
+      "label": "Motifs d'entites (un par ligne)",
+      "helper": "Supporte les wildcards : sensor.* correspond a tous les capteurs",
+      "placeholder": "sensor.temperature_*\nclimate.*\nlight.living_*"
+    },
+    "exclude": {
+      "label": "Motifs a exclure (optionnel)",
+      "placeholder": "sensor.*_battery\nsensor.*_unavailable"
+    },
+    "label": {
+      "title": "Libelle",
+      "prefix": "Prefixe",
+      "suffix": "Suffixe",
+      "find": "Rechercher",
+      "replace": "Remplacer par",
+      "find_placeholder": "Temperature",
+      "replace_placeholder": "Temp"
+    },
+    "value": {
+      "title": "Valeur",
+      "prefix": "Prefixe",
+      "suffix": "Suffixe",
+      "suffix_placeholder": "%"
+    },
+    "icon": {
+      "title": "Icone",
+      "override": "Remplacer l'icone"
+    },
+    "sparkline": {
+      "title": "Sparkline",
+      "period": "Periode",
+      "period_12h": "12 heures",
+      "period_24h": "24 heures",
+      "period_7d": "7 jours",
+      "period_30d": "30 jours",
+      "mode": "Mode",
+      "mode_dark": "Sombre",
+      "mode_light": "Clair",
+      "show_line": "Afficher la ligne",
+      "show_fill": "Afficher le remplissage",
+      "show_hvac": "Afficher les barres HVAC (entites climatiques)"
+    },
+    "colors": {
+      "title": "Couleurs",
+      "gradient": "Degrade de couleur (bas -> milieu -> haut)",
+      "low": "Bas <=",
+      "mid": "Milieu =",
+      "high": "Haut >=",
+      "auto": "auto",
+      "middle": "milieu",
+      "hvac_colors": "Couleurs HVAC (entites climatiques)",
+      "heating": "Chauffage",
+      "cooling": "Climatisation",
+      "off": "Eteint"
+    },
+    "size": {
+      "title": "Taille",
+      "equal": "Rectangles de taille egale",
+      "inverse": "Inverse (valeurs basses = plus grand)",
+      "min": "Min",
+      "max": "Max"
+    },
+    "layout": {
+      "title": "Disposition",
+      "height": "Hauteur (px)",
+      "gap": "Espacement (px)"
+    },
+    "order_filter": {
+      "title": "Ordre & Filtre",
+      "order": "Ordre",
+      "desc": "Decroissant (haut en premier)",
+      "asc": "Croissant (bas en premier)",
+      "limit": "Limite",
+      "all": "tous",
+      "above": "Filtrer au-dessus",
+      "below": "Filtrer en-dessous"
+    }
+  }
+}
