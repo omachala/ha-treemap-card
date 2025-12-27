@@ -13,6 +13,7 @@ export interface HomeAssistant {
   states: Record<string, HassEntity>;
   callService: (domain: string, service: string, data?: Record<string, unknown>) => Promise<void>;
   callWS: <T>(message: Record<string, unknown>) => Promise<T>;
+  language?: string; // User's language setting (e.g., 'en', 'de', 'fr')
 }
 
 /**
@@ -123,9 +124,6 @@ export interface TreemapCardConfig {
     };
     hvac?: {
       show?: boolean; // Show HVAC action bars for climate entities (default: true)
-      height?: number; // Bar height as percentage of sparkline height (default: 15)
-      heatingColor?: string; // Custom heating bar color
-      coolingColor?: string; // Custom cooling bar color
     };
   };
 }

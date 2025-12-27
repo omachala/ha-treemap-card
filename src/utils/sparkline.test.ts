@@ -255,18 +255,6 @@ describe('renderSparkline with HVAC', () => {
     expect(result).toHaveProperty('strings');
   });
 
-  it('uses custom HVAC colors', () => {
-    const data = [18, 19, 20];
-    const hvacActions = [{ start: 0, end: 1, action: 'heating' as const }];
-    const result = renderSparkline(
-      data,
-      { hvac: { heatingColor: '#ff0000', coolingColor: '#0000ff' }, periodHours: 24 },
-      hvacActions
-    );
-
-    expect(result).toHaveProperty('strings');
-  });
-
   it('respects hvac.show: false', () => {
     const data = [18, 19, 20];
     const hvacActions = [{ start: 0, end: 1, action: 'heating' as const }];

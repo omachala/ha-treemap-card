@@ -1,0 +1,83 @@
+{
+  "editor": {
+    "no_config": "Keine Konfiguration",
+    "yaml_only": "JSON-Attributmodus wird nur uber YAML konfiguriert.",
+    "entities": {
+      "label": "Entitaetsmuster (eines pro Zeile)",
+      "helper": "Unterstuetzt Wildcards: sensor.* entspricht allen Sensoren",
+      "placeholder": "sensor.temperature_*\nclimate.*\nlight.living_*"
+    },
+    "exclude": {
+      "label": "Ausschlussmuster (optional)",
+      "placeholder": "sensor.*_battery\nsensor.*_unavailable"
+    },
+    "label": {
+      "title": "Bezeichnung",
+      "prefix": "Praefix",
+      "suffix": "Suffix",
+      "find": "Suchen",
+      "replace": "Ersetzen mit",
+      "find_placeholder": "Temperatur",
+      "replace_placeholder": "Temp"
+    },
+    "value": {
+      "title": "Wert",
+      "prefix": "Praefix",
+      "suffix": "Suffix",
+      "suffix_placeholder": "%"
+    },
+    "icon": {
+      "title": "Symbol",
+      "override": "Symbol ersetzen"
+    },
+    "sparkline": {
+      "title": "Sparkline",
+      "period": "Zeitraum",
+      "period_12h": "12 Stunden",
+      "period_24h": "24 Stunden",
+      "period_7d": "7 Tage",
+      "period_30d": "30 Tage",
+      "mode": "Modus",
+      "mode_dark": "Dunkel",
+      "mode_light": "Hell",
+      "show_line": "Linie anzeigen",
+      "show_fill": "Fuellung anzeigen",
+      "show_hvac": "HVAC-Balken anzeigen (Klimaentitaeten)"
+    },
+    "colors": {
+      "title": "Farben",
+      "gradient": "Farbverlauf (niedrig -> mittel -> hoch)",
+      "low": "Niedrig <=",
+      "mid": "Mittel =",
+      "high": "Hoch >=",
+      "auto": "auto",
+      "middle": "mitte",
+      "hvac_colors": "HVAC-Farben (Klimaentitaeten)",
+      "heating": "Heizen",
+      "cooling": "Kuehlen",
+      "off": "Aus"
+    },
+    "size": {
+      "title": "Groesse",
+      "equal": "Gleich grosse Rechtecke",
+      "inverse": "Invertiert (niedrige Werte = groesser)",
+      "min": "Min",
+      "max": "Max"
+    },
+    "layout": {
+      "title": "Layout",
+      "height": "Hoehe (px)",
+      "gap": "Abstand (px)"
+    },
+    "order_filter": {
+      "title": "Sortierung & Filter",
+      "order": "Sortierung",
+      "desc": "Absteigend (hoch zuerst)",
+      "asc": "Aufsteigend (niedrig zuerst)",
+      "limit": "Limit",
+      "all": "alle",
+      "above": "Filter oberhalb",
+      "below": "Filter unterhalb"
+    }
+  }
+}
