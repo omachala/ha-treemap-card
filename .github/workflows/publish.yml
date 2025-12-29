@@ -60,28 +60,11 @@ jobs:
         if: steps.check.outputs.exists == 'false'
         run: pnpm build:prod
 
-      - name: Extract changelog for version
-        if: steps.check.outputs.exists == 'false'
-        id: changelog
-        run: |
-          VERSION="${{ steps.version.outputs.VERSION }}"
-          # Extract content between this version header and the next version header
-          # Use awk with state machine to avoid matching the same header twice
-          NOTES=$(awk "/^## ${VERSION}\$/{found=1; next} found && /^## [0-9]/{exit} found" CHANGELOG.md | sed '/^$/d')
-          # Use delimiter to handle multiline
-          echo "NOTES<<EOF" >> $GITHUB_OUTPUT
-          echo "$NOTES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
       - name: Create GitHub Release
         if: steps.check.outputs.exists == 'false'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.version.outputs.VERSION }}
-          body: |
-            ${{ steps.changelog.outputs.NOTES }}
-
-            [![GitHub Downloads](https://img.shields.io/github/downloads/omachala/ha-treemap-card/v${{ steps.version.outputs.VERSION }}/total?style=for-the-badge)](https://github.com/omachala/ha-treemap-card/releases/tag/v${{ steps.version.outputs.VERSION }})
           files: dist/treemap-card.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
