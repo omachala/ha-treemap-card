@@ -505,8 +505,8 @@ describe('Sensor Entities', () => {
     });
   });
 
-  describe('value.format', () => {
-    it('formats whole numbers with "0"', async () => {
+  describe('value.precision and value.abbreviate', () => {
+    it('formats whole numbers with precision: 0', async () => {
       const hass = mockHass([
         mockEntity('sensor.power', '1234.567', {
           friendly_name: 'Power',
@@ -517,7 +517,7 @@ describe('Sensor Entities', () => {
       card.setConfig({
         type: 'custom:treemap-card',
         entities: ['sensor.power'],
-        value: { format: '0' },
+        value: { precision: 0 },
       });
       card.hass = hass;
       await card.updateComplete;
@@ -527,7 +527,7 @@ describe('Sensor Entities', () => {
       expect(valueEl?.textContent).toBe('1235 W');
     });
 
-    it('formats 2 decimal places with "0.00"', async () => {
+    it('formats 2 decimal places with precision: 2', async () => {
       const hass = mockHass([
         mockEntity('sensor.temp', '22.5', {
           friendly_name: 'Temp',
@@ -538,7 +538,7 @@ describe('Sensor Entities', () => {
       card.setConfig({
         type: 'custom:treemap-card',
         entities: ['sensor.temp'],
-        value: { format: '0.00' },
+        value: { precision: 2 },
       });
       card.hass = hass;
       await card.updateComplete;
@@ -548,7 +548,7 @@ describe('Sensor Entities', () => {
       expect(valueEl?.textContent).toBe('22.50 C');
     });
 
-    it('formats abbreviated thousands with "0.0a"', async () => {
+    it('formats abbreviated thousands with abbreviate: true', async () => {
       const hass = mockHass([
         mockEntity('sensor.power', '2345', {
           friendly_name: 'Power',
@@ -559,7 +559,7 @@ describe('Sensor Entities', () => {
       card.setConfig({
         type: 'custom:treemap-card',
         entities: ['sensor.power'],
-        value: { format: '0.0a' },
+        value: { precision: 1, abbreviate: true },
       });
       card.hass = hass;
       await card.updateComplete;
@@ -569,7 +569,7 @@ describe('Sensor Entities', () => {
       expect(valueEl?.textContent).toBe('2.3k W');
     });
 
-    it('formats abbreviated millions with "0.00a"', async () => {
+    it('formats abbreviated millions with precision: 2 and abbreviate: true', async () => {
       const hass = mockHass([
         mockEntity('sensor.energy', '1234567', {
           friendly_name: 'Energy',
@@ -580,7 +580,7 @@ describe('Sensor Entities', () => {
       card.setConfig({
         type: 'custom:treemap-card',
         entities: ['sensor.energy'],
-        value: { format: '0.00a' },
+        value: { precision: 2, abbreviate: true },
       });
       card.hass = hass;
       await card.updateComplete;
@@ -590,7 +590,7 @@ describe('Sensor Entities', () => {
       expect(valueEl?.textContent).toBe('1.23M Wh');
     });
 
-    it('defaults to "0.0" format', async () => {
+    it('defaults to precision 1 (no entity display_precision)', async () => {
       const hass = mockHass([
         mockEntity('sensor.temp', '22.567', {
           friendly_name: 'Temp',
@@ -608,6 +608,29 @@ describe('Sensor Entities', () => {
       const shadow = card.shadowRoot;
       const valueEl = shadow?.querySelector('.treemap-value');
       expect(valueEl?.textContent).toBe('22.6 C');
+    });
+
+    it('config precision overrides entity display_precision', async () => {
+      const hass = mockHass([
+        mockEntity(
+          'sensor.temp',
+          '22.567',
+          { friendly_name: 'Temp', unit_of_measurement: 'C' },
+          0 // Entity wants whole numbers
+        ),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.temp'],
+        value: { precision: 2 }, // Config overrides to 2 decimals
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const shadow = card.shadowRoot;
+      const valueEl = shadow?.querySelector('.treemap-value');
+      expect(valueEl?.textContent).toBe('22.57 C');
     });
   });
 });

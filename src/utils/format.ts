@@ -1,13 +1,11 @@
 /**
  * Number formatting utility
  *
- * Supports format strings:
- *   0      - whole number (1234)
- *   0.0    - 1 decimal place (1234.5)
- *   0.00   - 2 decimal places (1234.50)
- *   0a     - abbreviated whole (1k, 2M, 3B)
- *   0.0a   - abbreviated 1 decimal (1.2k, 3.5M)
- *   0.00a  - abbreviated 2 decimals (1.23k, 4.56M)
+ * Supports:
+ *   precision: 0    - whole number (1234)
+ *   precision: 1    - 1 decimal place (1234.5)
+ *   precision: 2    - 2 decimal places (1234.50)
+ *   abbreviate: true - abbreviated (1k, 2M, 3B, 4T)
  */
 
 const ABBREVIATIONS = [
@@ -18,23 +16,17 @@ const ABBREVIATIONS = [
 ];
 
 /**
- * Format a number using a format string
+ * Format a number with specified precision and optional abbreviation
  * @param value - The number to format
- * @param format - Format string (e.g., "0.0a")
+ * @param precision - Number of decimal places (default: 1)
+ * @param abbreviate - Whether to abbreviate large numbers (default: false)
  * @returns Formatted string
  */
-export function formatNumber(value: number, format: string): string {
-  const abbreviated = format.endsWith('a');
-  const formatWithoutA = abbreviated ? format.slice(0, -1) : format;
-
-  // Count decimal places (number of 0s after the dot)
-  const decimalMatch = /\.(\d+)$/.exec(formatWithoutA);
-  const decimals = decimalMatch?.[1]?.length ?? 0;
-
+export function formatNumber(value: number, precision = 1, abbreviate = false): string {
   let displayValue = value;
   let suffix = '';
 
-  if (abbreviated) {
+  if (abbreviate) {
     for (const abbr of ABBREVIATIONS) {
       if (Math.abs(value) >= abbr.threshold) {
         displayValue = value / abbr.threshold;
@@ -44,31 +36,22 @@ export function formatNumber(value: number, format: string): string {
     }
   }
 
-  return displayValue.toFixed(decimals) + suffix;
+  return displayValue.toFixed(precision) + suffix;
 }
 
 /**
- * Convert precision number to format string
- * @param precision - Number of decimal places (e.g., 0, 1, 2)
- * @returns Format string (e.g., "0", "0.0", "0.00")
+ * Resolve the precision to use for a value
+ * Priority: configPrecision > entityPrecision > default 1
  */
-export function precisionToFormat(precision: number): string {
-  return precision === 0 ? '0' : '0.' + '0'.repeat(precision);
-}
-
-/**
- * Resolve the format string to use for a value
- * Priority: configFormat > entityPrecision > default "0.0"
- */
-export function resolveFormat(
-  configFormat: string | undefined,
+export function resolvePrecision(
+  configPrecision: number | undefined,
   entityPrecision: number | undefined
-): string {
-  if (configFormat !== undefined) {
-    return configFormat;
+): number {
+  if (configPrecision !== undefined) {
+    return configPrecision;
   }
   if (entityPrecision !== undefined) {
-    return precisionToFormat(entityPrecision);
+    return entityPrecision;
   }
-  return '0.0';
+  return 1;
 }

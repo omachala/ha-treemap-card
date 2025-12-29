@@ -281,44 +281,46 @@ Climate entities show temperature history with HVAC activity highlighted. The fi
 
 ### Value
 
-| Option            | Default | Description                                                                                                                                  |
-| ----------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `value.show`      | `true`  | Show/hide values.                                                                                                                            |
-| `value.attribute` | `state` | Field/attribute for value. Default: `state` (entities) or `value` (JSON). Climate: `current_temperature`, `temperature`, `temp_offset`, etc. |
-| `value.format`    | `0.0`   | Number format string. See [Value Format](#value-format) section below.                                                                       |
-| `value.prefix`    |         | Text before value.                                                                                                                           |
-| `value.suffix`    |         | Text after value. Example: `°C`, `%`.                                                                                                        |
-| `value.style`     |         | CSS for values.                                                                                                                              |
+| Option             | Default | Description                                                                                                                                  |
+| ------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `value.show`       | `true`  | Show/hide values.                                                                                                                            |
+| `value.attribute`  | `state` | Field/attribute for value. Default: `state` (entities) or `value` (JSON). Climate: `current_temperature`, `temperature`, `temp_offset`, etc. |
+| `value.precision`  | `1`     | Number of decimal places. Default uses entity's `display_precision` from HA registry, or `1` if not set.                                     |
+| `value.abbreviate` | `false` | Abbreviate large numbers with suffixes: `k` (thousands), `M` (millions), `B` (billions), `T` (trillions).                                    |
+| `value.prefix`     |         | Text before value.                                                                                                                           |
+| `value.suffix`     |         | Text after value. Example: `°C`, `%`.                                                                                                        |
+| `value.style`      |         | CSS for values.                                                                                                                              |
 
-#### Value Format
+#### Value Formatting
 
-Control how numbers are displayed using format strings. The format uses `0` as a digit placeholder and `a` for abbreviated suffixes.
+Control how numbers are displayed using `precision` (decimal places) and `abbreviate` (large number suffixes).
 
-| Format  | Input   | Output    | Description               |
-| ------- | ------- | --------- | ------------------------- |
-| `0`     | 1234.5  | `1235`    | Whole number (rounded)    |
-| `0.0`   | 1234.56 | `1234.6`  | 1 decimal place (default) |
-| `0.00`  | 1234.5  | `1234.50` | 2 decimal places          |
-| `0a`    | 1234    | `1k`      | Abbreviated, whole number |
-| `0.0a`  | 2345    | `2.3k`    | Abbreviated, 1 decimal    |
-| `0.00a` | 1234567 | `1.23M`   | Abbreviated, 2 decimals   |
+| precision | abbreviate | Input   | Output    | Description             |
+| --------- | ---------- | ------- | --------- | ----------------------- |
+| `0`       | `false`    | 1234.5  | `1235`    | Whole number (rounded)  |
+| `1`       | `false`    | 1234.56 | `1234.6`  | 1 decimal place         |
+| `2`       | `false`    | 1234.5  | `1234.50` | 2 decimal places        |
+| `0`       | `true`     | 1234    | `1k`      | Abbreviated whole       |
+| `1`       | `true`     | 2345    | `2.3k`    | Abbreviated, 1 decimal  |
+| `2`       | `true`     | 1234567 | `1.23M`   | Abbreviated, 2 decimals |
 
-**Abbreviation suffixes:** `k` (thousands), `M` (millions), `B` (billions), `T` (trillions)
+**Precision priority:** `value.precision` config > entity's `display_precision` from HA registry > default `1`
 
 **Examples:**
 
 ```yaml
 # Show whole numbers (no decimals)
 value:
-  format: '0'
+  precision: 0
 
 # Show 2 decimal places
 value:
-  format: '0.00'
+  precision: 2
 
 # Large values abbreviated (2.3k, 1.5M)
 value:
-  format: '0.0a'
+  precision: 1
+  abbreviate: true
 ```
 
 ### Size
