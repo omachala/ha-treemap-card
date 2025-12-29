@@ -16,28 +16,14 @@ export function createCard(): TreemapCard {
   return card;
 }
 
-export interface MockEntityOptions {
-  attributes?: Record<string, unknown>;
-  display_precision?: number;
-}
-
 export function mockEntity(
   entityId: string,
   state: string,
-  attributesOrOptions: Record<string, unknown> | MockEntityOptions = {}
+  attributes: Record<string, unknown> = {},
+  displayPrecision?: number
 ): HassEntity & { _display_precision?: number } {
   const domain = entityId.split('.')[0];
   const defaultUnit = domain === 'sensor' ? 'C' : undefined;
-
-  // Support both old signature (attributes object) and new signature (options object)
-  const isOptionsObject =
-    'attributes' in attributesOrOptions || 'display_precision' in attributesOrOptions;
-  const attributes = isOptionsObject
-    ? (attributesOrOptions as MockEntityOptions).attributes || {}
-    : attributesOrOptions;
-  const displayPrecision = isOptionsObject
-    ? (attributesOrOptions as MockEntityOptions).display_precision
-    : undefined;
 
   const entity: HassEntity & { _display_precision?: number } = {
     entity_id: entityId,

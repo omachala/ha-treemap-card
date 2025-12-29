@@ -446,10 +446,12 @@ describe('Sensor Entities', () => {
   describe('display_precision', () => {
     it('respects entity display_precision from registry', async () => {
       const hass = mockHass([
-        mockEntity('sensor.power', '34.267', {
-          attributes: { friendly_name: 'Power', unit_of_measurement: 'W' },
-          display_precision: 0, // Entity configured for whole numbers in registry
-        }),
+        mockEntity(
+          'sensor.power',
+          '34.267',
+          { friendly_name: 'Power', unit_of_measurement: 'W' },
+          0 // Entity configured for whole numbers in registry
+        ),
       ]);
 
       card.setConfig({
@@ -467,10 +469,7 @@ describe('Sensor Entities', () => {
 
     it('respects entity display_precision of 2', async () => {
       const hass = mockHass([
-        mockEntity('sensor.temp', '22.567', {
-          attributes: { friendly_name: 'Temp', unit_of_measurement: 'C' },
-          display_precision: 2,
-        }),
+        mockEntity('sensor.temp', '22.567', { friendly_name: 'Temp', unit_of_measurement: 'C' }, 2),
       ]);
 
       card.setConfig({
