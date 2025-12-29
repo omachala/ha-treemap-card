@@ -498,6 +498,43 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
           </div>
         </ha-expansion-panel>
 
+        <!-- Data section (order, filter, limit) -->
+        <ha-expansion-panel outlined data-testid="data-section">
+          <span slot="header">${this._t('editor.data.title')}</span>
+          <div class="content">
+            <ha-select
+              label=${this._t('editor.data.order')}
+              .value=${this._config.order ?? 'desc'}
+              @selected=${(e: Event) => this._handleTextChange('order', e)}
+              @closed=${(e: Event) => e.stopPropagation()}
+            >
+              <ha-list-item value="desc">${this._t('editor.data.desc')}</ha-list-item>
+              <ha-list-item value="asc">${this._t('editor.data.asc')}</ha-list-item>
+            </ha-select>
+            <ha-textfield
+              type="number"
+              label=${this._t('editor.data.limit')}
+              .value=${this._config.limit ?? ''}
+              @input=${(e: Event) => this._handleNumberChange('limit', e)}
+              placeholder=${this._t('editor.data.all')}
+            ></ha-textfield>
+            <div class="field-row">
+              <ha-textfield
+                type="number"
+                label=${this._t('editor.data.above')}
+                .value=${this._config.filter?.above ?? ''}
+                @input=${(e: Event) => this._handleNumberChange('filter.above', e)}
+              ></ha-textfield>
+              <ha-textfield
+                type="number"
+                label=${this._t('editor.data.below')}
+                .value=${this._config.filter?.below ?? ''}
+                @input=${(e: Event) => this._handleNumberChange('filter.below', e)}
+              ></ha-textfield>
+            </div>
+          </div>
+        </ha-expansion-panel>
+
         <!-- Layout section -->
         <ha-expansion-panel outlined data-testid="layout-section">
           <span slot="header">${this._t('editor.layout.title')}</span>
@@ -520,41 +557,6 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
             </div>
           </div>
         </ha-expansion-panel>
-
-        <!-- Order & Filter (not in expandable) -->
-        <div class="field" data-testid="order-filter-field">
-          <span class="field-label">${this._t('editor.order_filter.title')}</span>
-          <ha-select
-            label=${this._t('editor.order_filter.order')}
-            .value=${this._config.order ?? 'desc'}
-            @selected=${(e: Event) => this._handleTextChange('order', e)}
-            @closed=${(e: Event) => e.stopPropagation()}
-          >
-            <ha-list-item value="desc">${this._t('editor.order_filter.desc')}</ha-list-item>
-            <ha-list-item value="asc">${this._t('editor.order_filter.asc')}</ha-list-item>
-          </ha-select>
-          <ha-textfield
-            type="number"
-            label=${this._t('editor.order_filter.limit')}
-            .value=${this._config.limit ?? ''}
-            @input=${(e: Event) => this._handleNumberChange('limit', e)}
-            placeholder=${this._t('editor.order_filter.all')}
-          ></ha-textfield>
-          <div class="field-row">
-            <ha-textfield
-              type="number"
-              label=${this._t('editor.order_filter.above')}
-              .value=${this._config.filter?.above ?? ''}
-              @input=${(e: Event) => this._handleNumberChange('filter.above', e)}
-            ></ha-textfield>
-            <ha-textfield
-              type="number"
-              label=${this._t('editor.order_filter.below')}
-              .value=${this._config.filter?.below ?? ''}
-              @input=${(e: Event) => this._handleNumberChange('filter.below', e)}
-            ></ha-textfield>
-          </div>
-        </div>
       </div>
     `;
   }

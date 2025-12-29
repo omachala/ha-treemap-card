@@ -71,8 +71,8 @@
       "height": "Hoehe (px)",
       "gap": "Abstand (px)"
     },
-    "order_filter": {
-      "title": "Sortierung & Filter",
+    "data": {
+      "title": "Daten",
       "order": "Sortierung",
       "desc": "Absteigend (hoch zuerst)",
       "asc": "Aufsteigend (niedrig zuerst)",

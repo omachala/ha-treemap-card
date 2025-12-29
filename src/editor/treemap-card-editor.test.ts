@@ -536,16 +536,16 @@ describe('TreemapCardEditor', () => {
     });
   });
 
-  describe('order & filter section', () => {
-    it('renders order & filter section', async () => {
+  describe('data section', () => {
+    it('renders data section', async () => {
       editor.setConfig({
         type: 'custom:treemap-card',
         entities: ['sensor.*'],
       });
       await editor.updateComplete;
 
-      const orderSection = getElement(editor, '[data-testid="order-filter-field"]');
-      expect(orderSection).toBeTruthy();
+      const dataSection = getElement(editor, '[data-testid="data-section"]');
+      expect(dataSection).toBeTruthy();
     });
 
     it('displays order dropdown with default value', async () => {
@@ -555,7 +555,7 @@ describe('TreemapCardEditor', () => {
       });
       await editor.updateComplete;
 
-      const select = getElement(editor, '[data-testid="order-filter-field"] ha-select');
+      const select = getElement(editor, '[data-testid="data-section"] ha-select');
       expect(select).toBeTruthy();
       if (select) {
         // eslint-disable-next-line no-restricted-syntax
@@ -573,7 +573,7 @@ describe('TreemapCardEditor', () => {
 
       const configChangedPromise = waitForConfigChange(editor);
 
-      const select = getElement(editor, '[data-testid="order-filter-field"] ha-select');
+      const select = getElement(editor, '[data-testid="data-section"] ha-select');
       if (select) {
         // eslint-disable-next-line no-restricted-syntax
         (select as unknown as { value: string }).value = 'asc';
@@ -594,7 +594,7 @@ describe('TreemapCardEditor', () => {
       const configChangedPromise = waitForConfigChange(editor);
 
       const inputs = editor.shadowRoot?.querySelectorAll(
-        '[data-testid="order-filter-field"] ha-textfield'
+        '[data-testid="data-section"] ha-textfield'
       );
       const limitInput = inputs?.[0];
       if (limitInput) {
@@ -617,7 +617,7 @@ describe('TreemapCardEditor', () => {
       const configChangedPromise = waitForConfigChange(editor);
 
       const inputs = editor.shadowRoot?.querySelectorAll(
-        '[data-testid="order-filter-field"] ha-textfield'
+        '[data-testid="data-section"] ha-textfield'
       );
       const aboveInput = inputs?.[1];
       if (aboveInput) {
