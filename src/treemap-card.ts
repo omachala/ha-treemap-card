@@ -14,6 +14,7 @@ import { renderSparklineWithData } from './utils/sparkline';
 import { getHistoryData, type HistoryPeriod, type SparklineData } from './utils/history';
 import { squarify } from './utils/squarify';
 import { prepareTreemapData } from './utils/data';
+import { formatNumber } from './utils/format';
 import { styles } from './styles';
 
 declare const __VERSION__: string;
@@ -682,11 +683,15 @@ export class TreemapCard extends LitElement {
     const isTemperatureOffset = this._config?.value?.attribute === 'temp_offset';
     const signPrefix = isTemperatureOffset && rect.value > 0 ? '+' : '';
 
+    // Format value using configured format (default: '0.0' for 1 decimal place)
+    const valueFormat = this._config?.value?.format ?? '0.0';
+    const formattedNumber = formatNumber(rect.value, valueFormat);
+
     // If prefix or suffix is defined, use only those. Otherwise, auto-append unit from entity.
     const hasCustomFormat = valuePrefix !== undefined || valueSuffix !== undefined;
     const formattedValue = hasCustomFormat
-      ? `${valuePrefix || ''}${signPrefix}${rect.value.toFixed(1)}${valueSuffix || ''}`
-      : `${signPrefix}${rect.value.toFixed(1)}${rect.unit ? ` ${rect.unit}` : ''}`;
+      ? `${valuePrefix || ''}${signPrefix}${formattedNumber}${valueSuffix || ''}`
+      : `${signPrefix}${formattedNumber}${rect.unit ? ` ${rect.unit}` : ''}`;
 
     // Calculate gap in percentage terms
     // Container is 100% wide, gap is in pixels, so we need to use calc()

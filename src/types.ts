@@ -80,6 +80,7 @@ export interface TreemapCardConfig {
     show?: boolean; // Show value (default: true)
     attribute?: string; // Field/attribute for value (default: 'state' for entities, 'value' for JSON)
     param?: string; // Deprecated alias for 'attribute'
+    format?: string; // Number format string (default: '0.0', see docs for options)
     prefix?: string; // Prefix to add before value
     suffix?: string; // Suffix to add after value (e.g., ' %')
     style?: string; // Custom CSS for value
