@@ -9,8 +9,17 @@ export interface HassEntity {
   last_updated: string;
 }
 
+/**
+ * Entity registry entry (display metadata from hass.entities)
+ */
+export interface EntityRegistryDisplayEntry {
+  entity_id: string;
+  display_precision?: number;
+}
+
 export interface HomeAssistant {
   states: Record<string, HassEntity>;
+  entities?: Record<string, EntityRegistryDisplayEntry>;
   callService: (domain: string, service: string, data?: Record<string, unknown>) => Promise<void>;
   callWS: <T>(message: Record<string, unknown>) => Promise<T>;
 }

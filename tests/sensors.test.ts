@@ -442,4 +442,67 @@ describe('Sensor Entities', () => {
       expect(area).toBeCloseTo(avgArea, 0);
     }
   });
+
+  describe('display_precision', () => {
+    it('respects entity display_precision from registry', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.power', '34.267', {
+          attributes: { friendly_name: 'Power', unit_of_measurement: 'W' },
+          display_precision: 0, // Entity configured for whole numbers in registry
+        }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.power'],
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const shadow = card.shadowRoot;
+      const valueEl = shadow?.querySelector('.treemap-value');
+      // Should respect entity's display_precision: 0 from hass.entities
+      expect(valueEl?.textContent).toBe('34 W');
+    });
+
+    it('respects entity display_precision of 2', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.temp', '22.567', {
+          attributes: { friendly_name: 'Temp', unit_of_measurement: 'C' },
+          display_precision: 2,
+        }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.temp'],
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const shadow = card.shadowRoot;
+      const valueEl = shadow?.querySelector('.treemap-value');
+      expect(valueEl?.textContent).toBe('22.57 C');
+    });
+
+    it('defaults to 1 decimal when no display_precision set', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.temp', '22.567', {
+          friendly_name: 'Temp',
+          unit_of_measurement: 'C',
+        }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.temp'],
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const shadow = card.shadowRoot;
+      const valueEl = shadow?.querySelector('.treemap-value');
+      expect(valueEl?.textContent).toBe('22.6 C');
+    });
+  });
 });
