@@ -14,7 +14,7 @@ import { renderSparklineWithData } from './utils/sparkline';
 import { getHistoryData, type HistoryPeriod, type SparklineData } from './utils/history';
 import { squarify } from './utils/squarify';
 import { prepareTreemapData } from './utils/data';
-import { formatNumber } from './utils/format';
+import { formatNumber, resolveFormat } from './utils/format';
 import { styles } from './styles';
 
 declare const __VERSION__: string;
@@ -683,8 +683,11 @@ export class TreemapCard extends LitElement {
     const isTemperatureOffset = this._config?.value?.attribute === 'temp_offset';
     const signPrefix = isTemperatureOffset && rect.value > 0 ? '+' : '';
 
-    // Format value using configured format (default: '0.0' for 1 decimal place)
-    const valueFormat = this._config?.value?.format ?? '0.0';
+    // Format value: config format > entity display_precision > default '0.0'
+    const entityPrecision = rect.entity_id
+      ? this.hass?.entities?.[rect.entity_id]?.display_precision
+      : undefined;
+    const valueFormat = resolveFormat(this._config?.value?.format, entityPrecision);
     const formattedNumber = formatNumber(rect.value, valueFormat);
 
     // If prefix or suffix is defined, use only those. Otherwise, auto-append unit from entity.

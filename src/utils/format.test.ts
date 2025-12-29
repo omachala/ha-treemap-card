@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatNumber } from './format';
+import { formatNumber, precisionToFormat, resolveFormat } from './format';
 
 describe('formatNumber', () => {
   describe('decimal places', () => {
@@ -79,5 +79,39 @@ describe('formatNumber', () => {
       expect(formatNumber(0.005, '0.00')).toBe('0.01');
       expect(formatNumber(0.123, '0.0')).toBe('0.1');
     });
+  });
+});
+
+describe('precisionToFormat', () => {
+  it('converts precision 0 to "0"', () => {
+    expect(precisionToFormat(0)).toBe('0');
+  });
+
+  it('converts precision 1 to "0.0"', () => {
+    expect(precisionToFormat(1)).toBe('0.0');
+  });
+
+  it('converts precision 2 to "0.00"', () => {
+    expect(precisionToFormat(2)).toBe('0.00');
+  });
+
+  it('converts precision 3 to "0.000"', () => {
+    expect(precisionToFormat(3)).toBe('0.000');
+  });
+});
+
+describe('resolveFormat', () => {
+  it('uses config format when provided', () => {
+    expect(resolveFormat('0.00', undefined)).toBe('0.00');
+    expect(resolveFormat('0.0a', 2)).toBe('0.0a'); // config wins over entity
+  });
+
+  it('uses entity precision when no config format', () => {
+    expect(resolveFormat(undefined, 0)).toBe('0');
+    expect(resolveFormat(undefined, 2)).toBe('0.00');
+  });
+
+  it('defaults to "0.0" when neither provided', () => {
+    expect(resolveFormat(undefined, undefined)).toBe('0.0');
   });
 });

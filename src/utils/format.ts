@@ -46,3 +46,29 @@ export function formatNumber(value: number, format: string): string {
 
   return displayValue.toFixed(decimals) + suffix;
 }
+
+/**
+ * Convert precision number to format string
+ * @param precision - Number of decimal places (e.g., 0, 1, 2)
+ * @returns Format string (e.g., "0", "0.0", "0.00")
+ */
+export function precisionToFormat(precision: number): string {
+  return precision === 0 ? '0' : '0.' + '0'.repeat(precision);
+}
+
+/**
+ * Resolve the format string to use for a value
+ * Priority: configFormat > entityPrecision > default "0.0"
+ */
+export function resolveFormat(
+  configFormat: string | undefined,
+  entityPrecision: number | undefined
+): string {
+  if (configFormat !== undefined) {
+    return configFormat;
+  }
+  if (entityPrecision !== undefined) {
+    return precisionToFormat(entityPrecision);
+  }
+  return '0.0';
+}
