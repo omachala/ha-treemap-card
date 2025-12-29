@@ -324,28 +324,26 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
           />
           <span slot="header">${this._t('editor.sparkline.title')}</span>
           <div class="content">
-            <div class="field-row">
-              <ha-select
-                label=${this._t('editor.sparkline.period')}
-                .value=${this._config.sparkline?.period ?? '24h'}
-                @selected=${(e: Event) => this._handleTextChange('sparkline.period', e)}
-                @closed=${(e: Event) => e.stopPropagation()}
-              >
-                <ha-list-item value="12h">${this._t('editor.sparkline.period_12h')}</ha-list-item>
-                <ha-list-item value="24h">${this._t('editor.sparkline.period_24h')}</ha-list-item>
-                <ha-list-item value="7d">${this._t('editor.sparkline.period_7d')}</ha-list-item>
-                <ha-list-item value="30d">${this._t('editor.sparkline.period_30d')}</ha-list-item>
-              </ha-select>
-              <ha-select
-                label=${this._t('editor.sparkline.mode')}
-                .value=${this._config.sparkline?.mode ?? 'dark'}
-                @selected=${(e: Event) => this._handleTextChange('sparkline.mode', e)}
-                @closed=${(e: Event) => e.stopPropagation()}
-              >
-                <ha-list-item value="dark">${this._t('editor.sparkline.mode_dark')}</ha-list-item>
-                <ha-list-item value="light">${this._t('editor.sparkline.mode_light')}</ha-list-item>
-              </ha-select>
-            </div>
+            <ha-select
+              label=${this._t('editor.sparkline.period')}
+              .value=${this._config.sparkline?.period ?? '24h'}
+              @selected=${(e: Event) => this._handleTextChange('sparkline.period', e)}
+              @closed=${(e: Event) => e.stopPropagation()}
+            >
+              <ha-list-item value="12h">${this._t('editor.sparkline.period_12h')}</ha-list-item>
+              <ha-list-item value="24h">${this._t('editor.sparkline.period_24h')}</ha-list-item>
+              <ha-list-item value="7d">${this._t('editor.sparkline.period_7d')}</ha-list-item>
+              <ha-list-item value="30d">${this._t('editor.sparkline.period_30d')}</ha-list-item>
+            </ha-select>
+            <ha-select
+              label=${this._t('editor.sparkline.mode')}
+              .value=${this._config.sparkline?.mode ?? 'dark'}
+              @selected=${(e: Event) => this._handleTextChange('sparkline.mode', e)}
+              @closed=${(e: Event) => e.stopPropagation()}
+            >
+              <ha-list-item value="dark">${this._t('editor.sparkline.mode_dark')}</ha-list-item>
+              <ha-list-item value="light">${this._t('editor.sparkline.mode_light')}</ha-list-item>
+            </ha-select>
             <label class="checkbox-field">
               <input
                 type="checkbox"

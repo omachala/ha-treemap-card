@@ -40,12 +40,21 @@ export class TreemapCard extends LitElement {
   }
 
   /**
-   * Return stub config for card picker
+   * Return stub config for card picker (finds temperature sensors for preview)
    */
-  public static getStubConfig(): Partial<TreemapCardConfig> {
+  public static getStubConfig(hass: HomeAssistant): Partial<TreemapCardConfig> {
+    // Find temperature sensors for a meaningful preview
+    const temperatureSensors = Object.keys(hass.states)
+      .filter(entityId => {
+        if (!entityId.startsWith('sensor.')) return false;
+        const entity = hass.states[entityId];
+        return entity?.attributes?.['device_class'] === 'temperature';
+      })
+      .slice(0, 3);
+
     return {
       type: 'custom:treemap-card',
-      entities: ['sensor.temperature_*'],
+      entities: temperatureSensors.length > 0 ? temperatureSensors : ['sensor.*'],
     };
   }
 

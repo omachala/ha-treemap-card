@@ -140,7 +140,8 @@ export const editorStyles = css`
     gap: 8px;
   }
 
-  .field-row ha-textfield {
+  .field-row ha-textfield,
+  .field-row ha-select {
     flex: 1;
   }
 
