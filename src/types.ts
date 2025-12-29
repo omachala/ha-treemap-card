@@ -9,8 +9,25 @@ export interface HassEntity {
   last_updated: string;
 }
 
+/**
+ * Entity registry entry (display metadata from hass.entities)
+ * Based on Home Assistant frontend types
+ */
+export interface EntityRegistryDisplayEntry {
+  entity_id: string;
+  name?: string;
+  device_id?: string;
+  area_id?: string;
+  hidden?: boolean;
+  entity_category?: 'config' | 'diagnostic';
+  translation_key?: string;
+  platform?: string;
+  display_precision?: number;
+}
+
 export interface HomeAssistant {
   states: Record<string, HassEntity>;
+  entities?: Record<string, EntityRegistryDisplayEntry>;
   callService: (domain: string, service: string, data?: Record<string, unknown>) => Promise<void>;
   callWS: <T>(message: Record<string, unknown>) => Promise<T>;
 }
@@ -71,6 +88,8 @@ export interface TreemapCardConfig {
     show?: boolean; // Show value (default: true)
     attribute?: string; // Field/attribute for value (default: 'state' for entities, 'value' for JSON)
     param?: string; // Deprecated alias for 'attribute'
+    precision?: number; // Decimal places (default: entity's display_precision or 1)
+    abbreviate?: boolean; // Abbreviate large numbers: k, M, B, T (default: false)
     prefix?: string; // Prefix to add before value
     suffix?: string; // Suffix to add after value (e.g., ' %')
     style?: string; // Custom CSS for value

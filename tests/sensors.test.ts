@@ -442,4 +442,195 @@ describe('Sensor Entities', () => {
       expect(area).toBeCloseTo(avgArea, 0);
     }
   });
+
+  describe('display_precision', () => {
+    it('respects entity display_precision from registry', async () => {
+      const hass = mockHass([
+        mockEntity(
+          'sensor.power',
+          '34.267',
+          { friendly_name: 'Power', unit_of_measurement: 'W' },
+          0 // Entity configured for whole numbers in registry
+        ),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.power'],
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const shadow = card.shadowRoot;
+      const valueEl = shadow?.querySelector('.treemap-value');
+      // Should respect entity's display_precision: 0 from hass.entities
+      expect(valueEl?.textContent).toBe('34 W');
+    });
+
+    it('respects entity display_precision of 2', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.temp', '22.567', { friendly_name: 'Temp', unit_of_measurement: 'C' }, 2),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.temp'],
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const shadow = card.shadowRoot;
+      const valueEl = shadow?.querySelector('.treemap-value');
+      expect(valueEl?.textContent).toBe('22.57 C');
+    });
+
+    it('defaults to 1 decimal when no display_precision set', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.temp', '22.567', {
+          friendly_name: 'Temp',
+          unit_of_measurement: 'C',
+        }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.temp'],
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const shadow = card.shadowRoot;
+      const valueEl = shadow?.querySelector('.treemap-value');
+      expect(valueEl?.textContent).toBe('22.6 C');
+    });
+  });
+
+  describe('value.precision and value.abbreviate', () => {
+    it('formats whole numbers with precision: 0', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.power', '1234.567', {
+          friendly_name: 'Power',
+          unit_of_measurement: 'W',
+        }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.power'],
+        value: { precision: 0 },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const shadow = card.shadowRoot;
+      const valueEl = shadow?.querySelector('.treemap-value');
+      expect(valueEl?.textContent).toBe('1235 W');
+    });
+
+    it('formats 2 decimal places with precision: 2', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.temp', '22.5', {
+          friendly_name: 'Temp',
+          unit_of_measurement: 'C',
+        }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.temp'],
+        value: { precision: 2 },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const shadow = card.shadowRoot;
+      const valueEl = shadow?.querySelector('.treemap-value');
+      expect(valueEl?.textContent).toBe('22.50 C');
+    });
+
+    it('formats abbreviated thousands with abbreviate: true', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.power', '2345', {
+          friendly_name: 'Power',
+          unit_of_measurement: 'W',
+        }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.power'],
+        value: { precision: 1, abbreviate: true },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const shadow = card.shadowRoot;
+      const valueEl = shadow?.querySelector('.treemap-value');
+      expect(valueEl?.textContent).toBe('2.3k W');
+    });
+
+    it('formats abbreviated millions with precision: 2 and abbreviate: true', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.energy', '1234567', {
+          friendly_name: 'Energy',
+          unit_of_measurement: 'Wh',
+        }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.energy'],
+        value: { precision: 2, abbreviate: true },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const shadow = card.shadowRoot;
+      const valueEl = shadow?.querySelector('.treemap-value');
+      expect(valueEl?.textContent).toBe('1.23M Wh');
+    });
+
+    it('defaults to precision 1 (no entity display_precision)', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.temp', '22.567', {
+          friendly_name: 'Temp',
+          unit_of_measurement: 'C',
+        }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.temp'],
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const shadow = card.shadowRoot;
+      const valueEl = shadow?.querySelector('.treemap-value');
+      expect(valueEl?.textContent).toBe('22.6 C');
+    });
+
+    it('config precision overrides entity display_precision', async () => {
+      const hass = mockHass([
+        mockEntity(
+          'sensor.temp',
+          '22.567',
+          { friendly_name: 'Temp', unit_of_measurement: 'C' },
+          0 // Entity wants whole numbers
+        ),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.temp'],
+        value: { precision: 2 }, // Config overrides to 2 decimals
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const shadow = card.shadowRoot;
+      const valueEl = shadow?.querySelector('.treemap-value');
+      expect(valueEl?.textContent).toBe('22.57 C');
+    });
+  });
 });
