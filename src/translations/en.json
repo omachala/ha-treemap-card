@@ -24,7 +24,9 @@
       "title": "Value",
       "prefix": "Prefix",
       "suffix": "Suffix",
-      "suffix_placeholder": "%"
+      "suffix_placeholder": "%",
+      "precision": "Decimal places",
+      "abbreviate": "Abbreviate large numbers (k, M, B)"
     },
     "icon": {
       "title": "Icon",

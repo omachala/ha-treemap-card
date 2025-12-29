@@ -277,6 +277,23 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
                 placeholder=${this._t('editor.value.suffix_placeholder')}
               ></ha-textfield>
             </div>
+            <div class="field-row">
+              <ha-textfield
+                type="number"
+                label=${this._t('editor.value.precision')}
+                .value=${value.precision ?? ''}
+                @input=${(e: Event) => this._handleNumberChange('value.precision', e)}
+                placeholder="1"
+              ></ha-textfield>
+            </div>
+            <label class="checkbox-field">
+              <input
+                type="checkbox"
+                .checked=${value.abbreviate ?? false}
+                @change=${(e: Event) => this._handleBoolChange('value.abbreviate', e)}
+              />
+              <span>${this._t('editor.value.abbreviate')}</span>
+            </label>
           `
         )}
 

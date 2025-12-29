@@ -24,7 +24,9 @@
       "title": "Wert",
       "prefix": "Praefix",
       "suffix": "Suffix",
-      "suffix_placeholder": "%"
+      "suffix_placeholder": "%",
+      "precision": "Dezimalstellen",
+      "abbreviate": "Grosse Zahlen abkuerzen (k, M, B)"
     },
     "icon": {
       "title": "Symbol",

@@ -24,7 +24,9 @@
       "title": "Valeur",
       "prefix": "Prefixe",
       "suffix": "Suffixe",
-      "suffix_placeholder": "%"
+      "suffix_placeholder": "%",
+      "precision": "Decimales",
+      "abbreviate": "Abreger les grands nombres (k, M, B)"
     },
     "icon": {
       "title": "Icone",
