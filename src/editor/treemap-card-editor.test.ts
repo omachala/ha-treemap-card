@@ -723,6 +723,27 @@ describe('TreemapCardEditor', () => {
       const newConfig = await configChangedPromise;
       expect(newConfig.filter?.above).toBe(50);
     });
+
+    it('updates filter.unavailable on checkbox change', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+
+      const checkbox = editor.shadowRoot?.querySelector(
+        '[data-testid="data-section"] .checkbox-field input[type="checkbox"]'
+      );
+      if (checkbox instanceof HTMLInputElement) {
+        checkbox.checked = true;
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.filter?.unavailable).toBe(true);
+    });
   });
 
   describe('colors section', () => {
@@ -792,6 +813,29 @@ describe('TreemapCardEditor', () => {
 
       const newConfig = await configChangedPromise;
       expect(newConfig.color?.scale?.neutral).toBe(50);
+    });
+
+    it('updates color.unavailable on input', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+
+      // color.unavailable is the 4th color input (after low, mid, high)
+      const colorInputs = editor.shadowRoot?.querySelectorAll(
+        '[data-testid="colors-section"] input[type="color"]'
+      );
+      const unavailableInput = colorInputs?.[3];
+      if (unavailableInput instanceof HTMLInputElement) {
+        unavailableInput.value = '#555555';
+        unavailableInput.dispatchEvent(new Event('input'));
+      }
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.color?.unavailable).toBe('#555555');
     });
   });
 
