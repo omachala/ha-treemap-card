@@ -507,9 +507,8 @@ describe('Sensor Entities', () => {
 
   /**
    * Tests for non-numeric entity filtering
-   * Issue #20: Confirms unavailable/unknown entities are correctly excluded
    *
-   * Home Assistant non-numeric states:
+   * Home Assistant states for unreachable/non-reporting entities:
    * - "unavailable" - entity cannot be reached (device offline, integration error)
    * - "unknown" - entity state is not known (just started, no data yet)
    * - "none" - null/missing value (less common, appears in some template sensors)
