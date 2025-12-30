@@ -1,7 +1,7 @@
 import { LitElement, html, nothing, type TemplateResult, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type { HomeAssistant, TreemapCardConfig, TreemapItem, TreemapRect } from './types';
-import { getNumber, getString, matchesPattern } from './utils/predicates';
+import { getNumber, getString, matchesPattern, isUnavailableState } from './utils/predicates';
 import { isLightEntity, extractLightInfo, getLightBackgroundColor } from './utils/lights';
 import { isClimateEntity, extractClimateInfo, getClimateValue } from './utils/climate';
 import {
@@ -383,13 +383,9 @@ export class TreemapCard extends LitElement {
           value = Number.parseFloat(String(entity.attributes[valueAttribute] ?? 0));
         }
 
-        // Check for non-numeric states (unavailable, unknown, none)
-        const stateLower = entity.state.toLowerCase();
-        const isUnavailable =
-          stateLower === 'unavailable' || stateLower === 'unknown' || stateLower === 'none';
-
         if (Number.isNaN(value)) {
           // Skip non-numeric entities unless include_unavailable is enabled
+          const isUnavailable = isUnavailableState(entity.state);
           if (!isUnavailable || !this._config?.filter?.include_unavailable) {
             continue;
           }
