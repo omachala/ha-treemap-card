@@ -444,6 +444,16 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
                 placeholder=${this._t('editor.colors.auto')}
               ></ha-textfield>
             </div>
+            <div class="color-scale-row">
+              <label class="color-field">
+                <input
+                  type="color"
+                  .value=${this._config.color?.unavailable ?? '#868e96'}
+                  @input=${(e: Event) => this._handleTextChange('color.unavailable', e)}
+                />
+              </label>
+              <span class="color-label">${this._t('editor.colors.unavailable')}</span>
+            </div>
             <span class="field-label">${this._t('editor.colors.hvac_colors')}</span>
             <div class="color-row">
               <label class="color-field">
@@ -469,14 +479,6 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
                   @input=${(e: Event) => this._handleTextChange('color.hvac.off', e)}
                 />
                 <span>${this._t('editor.colors.off')}</span>
-              </label>
-              <label class="color-field">
-                <input
-                  type="color"
-                  .value=${this._config.color?.unavailable ?? '#868e96'}
-                  @input=${(e: Event) => this._handleTextChange('color.unavailable', e)}
-                />
-                <span>${this._t('editor.colors.unavailable')}</span>
               </label>
             </div>
             ${this._renderDocsLink('color')}
