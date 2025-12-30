@@ -470,6 +470,14 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
                 />
                 <span>${this._t('editor.colors.off')}</span>
               </label>
+              <label class="color-field">
+                <input
+                  type="color"
+                  .value=${this._config.color?.unavailable ?? '#868e96'}
+                  @input=${(e: Event) => this._handleTextChange('color.unavailable', e)}
+                />
+                <span>${this._t('editor.colors.unavailable')}</span>
+              </label>
             </div>
             ${this._renderDocsLink('color')}
           </div>
@@ -552,6 +560,14 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
                 @input=${(e: Event) => this._handleNumberChange('filter.below', e)}
               ></ha-textfield>
             </div>
+            <label class="checkbox-field">
+              <input
+                type="checkbox"
+                .checked=${this._config.filter?.unavailable ?? false}
+                @change=${(e: Event) => this._handleBoolChange('filter.unavailable', e)}
+              />
+              <span>${this._t('editor.data.unavailable')}</span>
+            </label>
             ${this._renderDocsLink('order--filter')}
           </div>
         </ha-expansion-panel>

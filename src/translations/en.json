@@ -57,7 +57,8 @@
       "hvac_colors": "HVAC colors (climate entities)",
       "heating": "Heating",
       "cooling": "Cooling",
-      "off": "Off"
+      "off": "Off",
+      "unavailable": "Unavailable"
     },
     "size": {
       "title": "Size",
@@ -84,7 +85,8 @@
       "limit": "Limit",
       "all": "all",
       "above": "Filter above",
-      "below": "Filter below"
+      "below": "Filter below",
+      "unavailable": "Include unavailable entities"
     }
   }
 }
