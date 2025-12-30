@@ -4,12 +4,12 @@
     "yaml_only": "JSON-Attributmodus wird nur uber YAML konfiguriert.",
     "entities": {
       "label": "Entitaetsmuster (eines pro Zeile)",
-      "helper": "Unterstuetzt Wildcards: sensor.* entspricht allen Sensoren",
+      "helper": "Wildcards (*) werden unterstuetzt",
       "placeholder": "sensor.temperature_*\nclimate.*\nlight.living_*"
     },
     "exclude": {
-      "label": "Ausschlussmuster (optional)",
-      "placeholder": "sensor.*_battery\nsensor.*_unavailable"
+      "label": "Ausschlussmuster",
+      "placeholder": "*_battery\n*_unavailable\nlight.*"
     },
     "label": {
       "title": "Bezeichnung",
@@ -70,6 +70,11 @@
       "title": "Layout",
       "height": "Hoehe (px)",
       "gap": "Abstand (px)"
+    },
+    "footer": {
+      "docs": "Doku",
+      "issues": "Bug oder Idee?",
+      "star": "Gefaellt es? Stern geben!"
     },
     "data": {
       "title": "Daten",

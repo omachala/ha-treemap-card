@@ -13,6 +13,8 @@ import type { LovelaceCardEditor } from './types';
 import { editorStyles } from './styles';
 import { localize } from '../localize';
 
+const REPO_URL = 'https://github.com/omachala/ha-treemap-card';
+
 /**
  * Get value from HA component or native input
  */
@@ -152,24 +154,39 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
     this._fireConfigChanged();
   }
 
-  private _renderToggleSection(
-    id: string,
-    title: string,
-    checked: boolean,
-    onToggle: (e: Event) => void,
-    content: TemplateResult
-  ): TemplateResult {
+  private _docsUrl(anchor: string): string {
+    return `${REPO_URL}?tab=readme-ov-file#${anchor}`;
+  }
+
+  private _renderDocsLink(anchor: string): TemplateResult {
     return html`
-      <ha-expansion-panel outlined data-testid="${id}-section">
+      <a class="docs-link" href=${this._docsUrl(anchor)} target="_blank" rel="noopener">
+        <ha-icon icon="mdi:help-circle-outline"></ha-icon>
+      </a>
+    `;
+  }
+
+  private _renderToggleSection(opts: {
+    id: string;
+    title: string;
+    checked: boolean;
+    onToggle: (e: Event) => void;
+    content: TemplateResult;
+    docsAnchor?: string;
+  }): TemplateResult {
+    return html`
+      <ha-expansion-panel outlined data-testid="${opts.id}-section">
         <input
           slot="leading-icon"
           type="checkbox"
-          .checked=${checked}
-          @change=${onToggle}
+          .checked=${opts.checked}
+          @change=${opts.onToggle}
           @click=${(e: Event) => e.stopPropagation()}
         />
-        <span slot="header">${title}</span>
-        <div class="content">${content}</div>
+        <span slot="header">${opts.title}</span>
+        <div class="content">
+          ${opts.content} ${opts.docsAnchor ? this._renderDocsLink(opts.docsAnchor) : ''}
+        </div>
       </ha-expansion-panel>
     `;
   }
@@ -216,18 +233,18 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
             class="textarea"
             .value=${exclude}
             @input=${this._handleExcludeChange}
-            placeholder="sensor.*_battery&#10;sensor.*_unavailable"
             rows="2"
           ></textarea>
         </div>
 
         <!-- Label section -->
-        ${this._renderToggleSection(
-          'label',
-          this._t('editor.label.title'),
-          label.show !== false,
-          (e: Event) => this._handleBoolChange('label.show', e),
-          html`
+        ${this._renderToggleSection({
+          id: 'label',
+          title: this._t('editor.label.title'),
+          checked: label.show !== false,
+          onToggle: (e: Event) => this._handleBoolChange('label.show', e),
+          docsAnchor: 'label',
+          content: html`
             <div class="field-row">
               <ha-textfield
                 label=${this._t('editor.label.prefix')}
@@ -254,16 +271,17 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
                 placeholder=${this._t('editor.label.replace_placeholder')}
               ></ha-textfield>
             </div>
-          `
-        )}
+          `,
+        })}
 
         <!-- Value section -->
-        ${this._renderToggleSection(
-          'value',
-          this._t('editor.value.title'),
-          value.show !== false,
-          (e: Event) => this._handleBoolChange('value.show', e),
-          html`
+        ${this._renderToggleSection({
+          id: 'value',
+          title: this._t('editor.value.title'),
+          checked: value.show !== false,
+          onToggle: (e: Event) => this._handleBoolChange('value.show', e),
+          docsAnchor: 'value',
+          content: html`
             <div class="field-row">
               <ha-textfield
                 label=${this._t('editor.value.prefix')}
@@ -294,24 +312,25 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
               />
               <span>${this._t('editor.value.abbreviate')}</span>
             </label>
-          `
-        )}
+          `,
+        })}
 
         <!-- Icon section -->
-        ${this._renderToggleSection(
-          'icon',
-          this._t('editor.icon.title'),
-          icon.show !== false,
-          (e: Event) => this._handleBoolChange('icon.show', e),
-          html`
+        ${this._renderToggleSection({
+          id: 'icon',
+          title: this._t('editor.icon.title'),
+          checked: icon.show !== false,
+          onToggle: (e: Event) => this._handleBoolChange('icon.show', e),
+          docsAnchor: 'icon',
+          content: html`
             <ha-icon-picker
               label=${this._t('editor.icon.override')}
               .hass=${this.hass}
               .value=${icon.icon ?? ''}
               @value-changed=${this._handleIconChange}
             ></ha-icon-picker>
-          `
-        )}
+          `,
+        })}
 
         <!-- Sparkline section -->
         <ha-expansion-panel outlined data-testid="sparkline-section">
@@ -368,6 +387,7 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
               />
               <span>${this._t('editor.sparkline.show_hvac')}</span>
             </label>
+            ${this._renderDocsLink('sparkline')}
           </div>
         </ha-expansion-panel>
 
@@ -451,6 +471,7 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
                 <span>${this._t('editor.colors.off')}</span>
               </label>
             </div>
+            ${this._renderDocsLink('color')}
           </div>
         </ha-expansion-panel>
 
@@ -466,7 +487,7 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
               />
               <span>${this._t('editor.size.equal')}</span>
             </label>
-            <label class="checkbox-field ${this._config.size?.equal ? 'disabled' : ''}">
+            <label class="checkbox-field">
               <input
                 type="checkbox"
                 .checked=${this._config.size?.inverse ?? false}
@@ -493,6 +514,7 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
                 placeholder=${this._t('editor.colors.auto')}
               ></ha-textfield>
             </div>
+            ${this._renderDocsLink('size')}
           </div>
         </ha-expansion-panel>
 
@@ -530,6 +552,7 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
                 @input=${(e: Event) => this._handleNumberChange('filter.below', e)}
               ></ha-textfield>
             </div>
+            ${this._renderDocsLink('order--filter')}
           </div>
         </ha-expansion-panel>
 
@@ -553,8 +576,27 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
                 placeholder="6"
               ></ha-textfield>
             </div>
+            ${this._renderDocsLink('layout')}
           </div>
         </ha-expansion-panel>
+
+        <!-- Footer banner -->
+        <div class="footer-banner">
+          <a href=${REPO_URL} target="_blank" rel="noopener">
+            <ha-icon icon="mdi:book-open-variant"></ha-icon>
+            ${this._t('editor.footer.docs')}
+          </a>
+          <span class="separator">|</span>
+          <a href="${REPO_URL}/issues" target="_blank" rel="noopener">
+            <ha-icon icon="mdi:bug-outline"></ha-icon>
+            ${this._t('editor.footer.issues')}
+          </a>
+          <span class="separator">|</span>
+          <a href=${REPO_URL} target="_blank" rel="noopener">
+            <ha-icon icon="mdi:star-outline"></ha-icon>
+            ${this._t('editor.footer.star')}
+          </a>
+        </div>
       </div>
     `;
   }

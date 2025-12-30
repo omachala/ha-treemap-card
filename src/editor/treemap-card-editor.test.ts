@@ -5,20 +5,136 @@
  */
 
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
-import './treemap-card-editor'; // Register the custom element
 import type { TreemapCardEditor } from './treemap-card-editor';
 import type { TreemapCardConfig } from '../types';
+
+/**
+ * Interface for ha-textfield custom element
+ */
+interface HaTextfield extends HTMLElement {
+  value: string;
+}
+
+/**
+ * Interface for ha-select custom element
+ */
+interface HaSelect extends HTMLElement {
+  value: string;
+}
+
+/**
+ * Type guard for HaTextfield
+ */
+function isHaTextfield(el: Element | undefined | null): el is HaTextfield {
+  return el !== null && el !== undefined && 'value' in el;
+}
+
+/**
+ * Type guard for HaSelect
+ */
+function isHaSelect(el: Element | undefined | null): el is HaSelect {
+  return el !== null && el !== undefined && 'value' in el;
+}
+
+/**
+ * Mock ha-textfield component for tests
+ */
+class MockHaTextfield extends HTMLElement {
+  private _value = '';
+
+  get value(): string {
+    return this._value;
+  }
+
+  set value(val: string) {
+    this._value = val;
+  }
+}
+
+/**
+ * Mock ha-select component for tests
+ */
+class MockHaSelect extends HTMLElement {
+  private _value = '';
+
+  get value(): string {
+    return this._value;
+  }
+
+  set value(val: string) {
+    this._value = val;
+  }
+}
+
+/**
+ * Mock ha-expansion-panel component for tests
+ */
+class MockHaExpansionPanel extends HTMLElement {
+  connectedCallback(): void {
+    // Make slot content visible
+    this.style.display = 'block';
+  }
+}
+
+/**
+ * Mock ha-icon component for tests
+ */
+class MockHaIcon extends HTMLElement {}
+
+/**
+ * Mock ha-icon-picker component for tests
+ */
+class MockHaIconPicker extends HTMLElement {}
+
+// Register mock HA components before importing the editor
+if (!customElements.get('ha-textfield')) {
+  customElements.define('ha-textfield', MockHaTextfield);
+}
+if (!customElements.get('ha-select')) {
+  customElements.define('ha-select', MockHaSelect);
+}
+if (!customElements.get('ha-expansion-panel')) {
+  customElements.define('ha-expansion-panel', MockHaExpansionPanel);
+}
+if (!customElements.get('ha-icon')) {
+  customElements.define('ha-icon', MockHaIcon);
+}
+if (!customElements.get('ha-icon-picker')) {
+  customElements.define('ha-icon-picker', MockHaIconPicker);
+}
+
+// Import editor after mocks are registered
+import './treemap-card-editor';
+
+/**
+ * Type guard for TreemapCardEditor
+ */
+function isTreemapCardEditor(el: Element): el is TreemapCardEditor {
+  return 'setConfig' in el;
+}
+
+/**
+ * Type guard for config-changed custom event
+ */
+function isConfigChangedEvent(e: Event): e is CustomEvent<{ config: TreemapCardConfig }> {
+  if (!(e instanceof CustomEvent)) return false;
+  const detail: unknown = e.detail;
+  return (
+    detail !== null &&
+    typeof detail === 'object' &&
+    Object.prototype.hasOwnProperty.call(detail, 'config')
+  );
+}
 
 /**
  * Helper to get editor element with proper typing
  */
 function createEditor(): TreemapCardEditor {
   const el = document.createElement('treemap-card-editor');
-  if (!('setConfig' in el)) {
+  if (!isTreemapCardEditor(el)) {
     throw new Error('Element is not a TreemapCardEditor');
   }
-  // eslint-disable-next-line no-restricted-syntax
-  return el as unknown as TreemapCardEditor;
+  return el;
 }
 
 /**
@@ -29,13 +145,8 @@ async function waitForConfigChange(editor: TreemapCardEditor): Promise<TreemapCa
     editor.addEventListener(
       'config-changed',
       (e: Event) => {
-        if (e instanceof CustomEvent && e.detail && typeof e.detail === 'object') {
-          /* eslint-disable no-restricted-syntax */
-          const detail = e.detail as Record<string, unknown>;
-          if ('config' in detail) {
-            resolve(detail['config'] as TreemapCardConfig);
-          }
-          /* eslint-enable no-restricted-syntax */
+        if (isConfigChangedEvent(e)) {
+          resolve(e.detail.config);
         }
       },
       { once: true }
@@ -51,7 +162,7 @@ function getElement(editor: TreemapCardEditor, selector: string): Element | null
 }
 
 /**
- * Helper to check if section's show checkbox is checked
+ * Helper to check if section's show checkbox is checked (native checkbox in header)
  */
 function isSectionEnabled(editor: TreemapCardEditor, sectionId: string): boolean {
   const checkbox = getElement(
@@ -261,9 +372,7 @@ describe('TreemapCardEditor', () => {
       await editor.updateComplete;
 
       const checkbox = getElement(editor, '[data-testid="label-section"] input[type="checkbox"]');
-      if (checkbox instanceof HTMLInputElement) {
-        expect(checkbox.checked).toBe(true);
-      }
+      expect(checkbox instanceof HTMLInputElement && checkbox.checked).toBe(true);
     });
 
     it('unchecking checkbox sets show=false', async () => {
@@ -299,9 +408,8 @@ describe('TreemapCardEditor', () => {
         '[data-testid="label-section"] ha-textfield'
       );
       const prefixInput = inputs?.[0];
-      if (prefixInput) {
-        // eslint-disable-next-line no-restricted-syntax
-        (prefixInput as unknown as { value: string }).value = 'Room: ';
+      if (isHaTextfield(prefixInput)) {
+        prefixInput.value = 'Room: ';
         prefixInput.dispatchEvent(new Event('input', { bubbles: true }));
       }
 
@@ -329,9 +437,7 @@ describe('TreemapCardEditor', () => {
       await editor.updateComplete;
 
       const checkbox = getElement(editor, '[data-testid="value-section"] input[type="checkbox"]');
-      if (checkbox instanceof HTMLInputElement) {
-        expect(checkbox.checked).toBe(true);
-      }
+      expect(checkbox instanceof HTMLInputElement && checkbox.checked).toBe(true);
     });
 
     it('updates value.suffix on input', async () => {
@@ -346,10 +452,9 @@ describe('TreemapCardEditor', () => {
       const inputs = editor.shadowRoot?.querySelectorAll(
         '[data-testid="value-section"] ha-textfield'
       );
-      const suffixInput = inputs?.[1]; // Second input is suffix
-      if (suffixInput) {
-        // eslint-disable-next-line no-restricted-syntax
-        (suffixInput as unknown as { value: string }).value = ' %';
+      const suffixInput = inputs?.[1];
+      if (isHaTextfield(suffixInput)) {
+        suffixInput.value = ' %';
         suffixInput.dispatchEvent(new Event('input', { bubbles: true }));
       }
 
@@ -377,9 +482,7 @@ describe('TreemapCardEditor', () => {
       await editor.updateComplete;
 
       const checkbox = getElement(editor, '[data-testid="icon-section"] input[type="checkbox"]');
-      if (checkbox instanceof HTMLInputElement) {
-        expect(checkbox.checked).toBe(true);
-      }
+      expect(checkbox instanceof HTMLInputElement && checkbox.checked).toBe(true);
     });
 
     it('updates icon.icon via ha-icon-picker', async () => {
@@ -424,12 +527,10 @@ describe('TreemapCardEditor', () => {
       await editor.updateComplete;
 
       const checkboxes = editor.shadowRoot?.querySelectorAll(
-        '[data-testid="size-section"] input[type="checkbox"]'
+        '[data-testid="size-section"] .checkbox-field input[type="checkbox"]'
       );
       const equalCheckbox = checkboxes?.[0];
-      if (equalCheckbox instanceof HTMLInputElement) {
-        expect(equalCheckbox.checked).toBe(true);
-      }
+      expect(equalCheckbox instanceof HTMLInputElement && equalCheckbox.checked).toBe(true);
     });
 
     it('updates size.equal on checkbox change', async () => {
@@ -442,7 +543,7 @@ describe('TreemapCardEditor', () => {
       const configChangedPromise = waitForConfigChange(editor);
 
       const checkboxes = editor.shadowRoot?.querySelectorAll(
-        '[data-testid="size-section"] input[type="checkbox"]'
+        '[data-testid="size-section"] .checkbox-field input[type="checkbox"]'
       );
       const equalCheckbox = checkboxes?.[0];
       if (equalCheckbox instanceof HTMLInputElement) {
@@ -464,7 +565,7 @@ describe('TreemapCardEditor', () => {
       const configChangedPromise = waitForConfigChange(editor);
 
       const checkboxes = editor.shadowRoot?.querySelectorAll(
-        '[data-testid="size-section"] input[type="checkbox"]'
+        '[data-testid="size-section"] .checkbox-field input[type="checkbox"]'
       );
       const inverseCheckbox = checkboxes?.[1];
       if (inverseCheckbox instanceof HTMLInputElement) {
@@ -502,9 +603,8 @@ describe('TreemapCardEditor', () => {
         '[data-testid="layout-section"] ha-textfield'
       );
       const heightInput = inputs?.[0];
-      if (heightInput) {
-        // eslint-disable-next-line no-restricted-syntax
-        (heightInput as unknown as { value: string }).value = '300';
+      if (isHaTextfield(heightInput)) {
+        heightInput.value = '300';
         heightInput.dispatchEvent(new Event('input', { bubbles: true }));
       }
 
@@ -525,9 +625,8 @@ describe('TreemapCardEditor', () => {
         '[data-testid="layout-section"] ha-textfield'
       );
       const gapInput = inputs?.[1];
-      if (gapInput) {
-        // eslint-disable-next-line no-restricted-syntax
-        (gapInput as unknown as { value: string }).value = '8';
+      if (isHaTextfield(gapInput)) {
+        gapInput.value = '8';
         gapInput.dispatchEvent(new Event('input', { bubbles: true }));
       }
 
@@ -557,10 +656,8 @@ describe('TreemapCardEditor', () => {
 
       const select = getElement(editor, '[data-testid="data-section"] ha-select');
       expect(select).toBeTruthy();
-      if (select) {
-        // eslint-disable-next-line no-restricted-syntax
-        const value = (select as unknown as { value: string }).value;
-        expect(value).toBe('desc');
+      if (isHaSelect(select)) {
+        expect(select.value).toBe('desc');
       }
     });
 
@@ -574,9 +671,8 @@ describe('TreemapCardEditor', () => {
       const configChangedPromise = waitForConfigChange(editor);
 
       const select = getElement(editor, '[data-testid="data-section"] ha-select');
-      if (select) {
-        // eslint-disable-next-line no-restricted-syntax
-        (select as unknown as { value: string }).value = 'asc';
+      if (isHaSelect(select)) {
+        select.value = 'asc';
         select.dispatchEvent(new Event('selected', { bubbles: true }));
       }
 
@@ -597,9 +693,8 @@ describe('TreemapCardEditor', () => {
         '[data-testid="data-section"] ha-textfield'
       );
       const limitInput = inputs?.[0];
-      if (limitInput) {
-        // eslint-disable-next-line no-restricted-syntax
-        (limitInput as unknown as { value: string }).value = '10';
+      if (isHaTextfield(limitInput)) {
+        limitInput.value = '10';
         limitInput.dispatchEvent(new Event('input', { bubbles: true }));
       }
 
@@ -620,9 +715,8 @@ describe('TreemapCardEditor', () => {
         '[data-testid="data-section"] ha-textfield'
       );
       const aboveInput = inputs?.[1];
-      if (aboveInput) {
-        // eslint-disable-next-line no-restricted-syntax
-        (aboveInput as unknown as { value: string }).value = '50';
+      if (isHaTextfield(aboveInput)) {
+        aboveInput.value = '50';
         aboveInput.dispatchEvent(new Event('input', { bubbles: true }));
       }
 
@@ -690,10 +784,9 @@ describe('TreemapCardEditor', () => {
       const inputs = editor.shadowRoot?.querySelectorAll(
         '[data-testid="colors-section"] ha-textfield'
       );
-      const neutralInput = inputs?.[1]; // Second input is neutral
-      if (neutralInput) {
-        // eslint-disable-next-line no-restricted-syntax
-        (neutralInput as unknown as { value: string }).value = '50';
+      const neutralInput = inputs?.[1];
+      if (isHaTextfield(neutralInput)) {
+        neutralInput.value = '50';
         neutralInput.dispatchEvent(new Event('input', { bubbles: true }));
       }
 
@@ -725,9 +818,7 @@ describe('TreemapCardEditor', () => {
         editor,
         '[data-testid="sparkline-section"] input[type="checkbox"]'
       );
-      if (checkbox instanceof HTMLInputElement) {
-        expect(checkbox.checked).toBe(true);
-      }
+      expect(checkbox instanceof HTMLInputElement && checkbox.checked).toBe(true);
     });
 
     it('updates sparkline.show on checkbox change', async () => {
@@ -765,9 +856,8 @@ describe('TreemapCardEditor', () => {
         '[data-testid="sparkline-section"] ha-select'
       );
       const periodSelect = selects?.[0];
-      if (periodSelect) {
-        // eslint-disable-next-line no-restricted-syntax
-        (periodSelect as unknown as { value: string }).value = '7d';
+      if (isHaSelect(periodSelect)) {
+        periodSelect.value = '7d';
         periodSelect.dispatchEvent(new Event('selected', { bubbles: true }));
       }
 
@@ -788,9 +878,8 @@ describe('TreemapCardEditor', () => {
         '[data-testid="sparkline-section"] ha-select'
       );
       const modeSelect = selects?.[1];
-      if (modeSelect) {
-        // eslint-disable-next-line no-restricted-syntax
-        (modeSelect as unknown as { value: string }).value = 'light';
+      if (isHaSelect(modeSelect)) {
+        modeSelect.value = 'light';
         modeSelect.dispatchEvent(new Event('selected', { bubbles: true }));
       }
 

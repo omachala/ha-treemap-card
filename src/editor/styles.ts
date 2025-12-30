@@ -89,6 +89,29 @@ export const editorStyles = css`
     gap: 12px;
   }
 
+  /* Docs link at end of section */
+  .docs-link {
+    align-self: flex-end;
+    color: var(--secondary-text-color, #888);
+    opacity: 0.6;
+    transition: opacity 0.2s;
+    padding: 4px 8px;
+    margin: -4px -8px;
+    min-width: 40px;
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .docs-link:hover {
+    opacity: 1;
+  }
+
+  .docs-link ha-icon {
+    --mdc-icon-size: 20px;
+  }
+
   /* Color picker row */
   .color-row {
     display: flex;
@@ -151,6 +174,8 @@ export const editorStyles = css`
     align-items: center;
     gap: 8px;
     cursor: pointer;
+    font-size: 14px;
+    color: var(--primary-text-color, #333);
   }
 
   .checkbox-field input[type='checkbox'] {
@@ -161,18 +186,13 @@ export const editorStyles = css`
     accent-color: var(--primary-color, #03a9f4);
   }
 
-  .checkbox-field span {
-    font-size: 14px;
-    color: var(--primary-text-color, #333);
-  }
-
-  .checkbox-field.disabled {
+  .checkbox-field input[type='checkbox']:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
 
-  .checkbox-field.disabled input[type='checkbox'] {
-    cursor: not-allowed;
+  .checkbox-field input[type='checkbox']:disabled + span {
+    opacity: 0.5;
   }
 
   /* Color + scale value row */
@@ -189,5 +209,42 @@ export const editorStyles = css`
 
   .color-scale-row ha-textfield {
     flex: 1;
+  }
+
+  /* Footer banner */
+  .footer-banner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    font-size: 13px;
+    color: var(--secondary-text-color, #888);
+  }
+
+  .footer-banner a {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--secondary-text-color, #888);
+    text-decoration: none;
+    transition: color 0.2s;
+    padding: 10px 12px;
+    min-height: 44px;
+    box-sizing: border-box;
+    border-radius: 8px;
+  }
+
+  .footer-banner a:hover {
+    color: var(--primary-text-color, #333);
+    background: var(--secondary-background-color, rgba(0, 0, 0, 0.05));
+  }
+
+  .footer-banner ha-icon {
+    --mdc-icon-size: 18px;
+  }
+
+  .footer-banner .separator {
+    opacity: 0.3;
   }
 `;

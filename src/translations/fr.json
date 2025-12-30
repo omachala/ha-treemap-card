@@ -4,12 +4,12 @@
     "yaml_only": "Le mode attribut JSON est configurable uniquement via YAML.",
     "entities": {
       "label": "Motifs d'entites (un par ligne)",
-      "helper": "Supporte les wildcards : sensor.* correspond a tous les capteurs",
+      "helper": "Wildcards (*) supportes",
       "placeholder": "sensor.temperature_*\nclimate.*\nlight.living_*"
     },
     "exclude": {
-      "label": "Motifs a exclure (optionnel)",
-      "placeholder": "sensor.*_battery\nsensor.*_unavailable"
+      "label": "Motifs a exclure",
+      "placeholder": "*_battery\n*_unavailable\nlight.*"
     },
     "label": {
       "title": "Libelle",
@@ -70,6 +70,11 @@
       "title": "Disposition",
       "height": "Hauteur (px)",
       "gap": "Espacement (px)"
+    },
+    "footer": {
+      "docs": "Docs",
+      "issues": "Bug ou idee?",
+      "star": "Vous aimez? Etoile!"
     },
     "data": {
       "title": "Donnees",

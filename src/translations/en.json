@@ -4,12 +4,12 @@
     "yaml_only": "JSON attribute mode is configured via YAML only.",
     "entities": {
       "label": "Entity patterns (one per line)",
-      "helper": "Supports wildcards: sensor.* matches all sensors",
+      "helper": "Wildcards (*) are supported",
       "placeholder": "sensor.temperature_*\nclimate.*\nlight.living_*"
     },
     "exclude": {
-      "label": "Exclude patterns (optional)",
-      "placeholder": "sensor.*_battery\nsensor.*_unavailable"
+      "label": "Exclude patterns",
+      "placeholder": "*_battery\n*_unavailable\nlight.*"
     },
     "label": {
       "title": "Label",
@@ -70,6 +70,11 @@
       "title": "Layout",
       "height": "Height (px)",
       "gap": "Gap (px)"
+    },
+    "footer": {
+      "docs": "Docs",
+      "issues": "Bug or idea?",
+      "star": "Like it? Star it!"
     },
     "data": {
       "title": "Data",
