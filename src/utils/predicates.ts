@@ -139,3 +139,18 @@ export function matchesPattern(entityId: string, pattern: string): boolean {
   const regex = new RegExp('^' + pattern.replaceAll('*', '.*') + '$');
   return regex.test(entityId);
 }
+
+/**
+ * Home Assistant states for unreachable/non-reporting entities
+ * - "unavailable" - entity cannot be reached (device offline, integration error)
+ * - "unknown" - entity state is not known (just started, no data yet)
+ * - "none" - null/missing value (template sensor returned null)
+ */
+const UNAVAILABLE_STATES: readonly string[] = ['unavailable', 'unknown', 'none'];
+
+/**
+ * Check if an entity state indicates it's unavailable/unreachable
+ */
+export function isUnavailableState(state: string): boolean {
+  return UNAVAILABLE_STATES.includes(state.toLowerCase());
+}
