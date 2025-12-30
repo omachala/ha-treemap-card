@@ -383,7 +383,32 @@ export class TreemapCard extends LitElement {
           value = Number.parseFloat(String(entity.attributes[valueAttribute] ?? 0));
         }
 
-        if (Number.isNaN(value)) continue;
+        // Check for non-numeric states (unavailable, unknown, none)
+        const stateLower = entity.state.toLowerCase();
+        const isUnavailable =
+          stateLower === 'unavailable' || stateLower === 'unknown' || stateLower === 'none';
+
+        if (Number.isNaN(value)) {
+          // Skip non-numeric entities unless include_unavailable is enabled
+          if (!isUnavailable || !this._config?.filter?.include_unavailable) {
+            continue;
+          }
+
+          // Include unavailable entity with placeholder values
+          const unit = getString(entity.attributes['unit_of_measurement']);
+          items.push({
+            label,
+            value: 0, // Placeholder value for sizing
+            sizeValue: 1, // Minimal size
+            colorValue: 0,
+            entity_id: entityId,
+            icon,
+            unit,
+            unavailable: true,
+            rawState: entity.state,
+          });
+          continue;
+        }
 
         const unit = getString(entity.attributes['unit_of_measurement']);
 
@@ -619,8 +644,12 @@ export class TreemapCard extends LitElement {
     let color: string;
     const opacity = this._config?.color?.opacity;
 
-    // Climate entities that are off or unavailable always get gray color
-    if (
+    // Unavailable entities always get gray color
+    if (rect.unavailable) {
+      const unavailableColor = this._config?.color?.unavailable ?? '#868e96';
+      color = opacity !== undefined ? applyOpacity(unavailableColor, opacity) : unavailableColor;
+    } else if (
+      // Climate entities that are off or unavailable always get gray color
       rect.climate &&
       (rect.climate.hvacMode === 'off' || rect.climate.hvacMode === 'unavailable')
     ) {
@@ -684,18 +713,24 @@ export class TreemapCard extends LitElement {
     const signPrefix = isTemperatureOffset && rect.value > 0 ? '+' : '';
 
     // Format value: config precision > entity display_precision > default 1
-    const entityPrecision = rect.entity_id
-      ? this.hass?.entities?.[rect.entity_id]?.display_precision
-      : undefined;
-    const precision = resolvePrecision(this._config?.value?.precision, entityPrecision);
-    const abbreviate = this._config?.value?.abbreviate ?? false;
-    const formattedNumber = formatNumber(rect.value, precision, abbreviate);
+    let formattedValue: string;
+    if (rect.unavailable && rect.rawState) {
+      // Show raw state for unavailable entities (e.g., "unavailable", "unknown")
+      formattedValue = rect.rawState;
+    } else {
+      const entityPrecision = rect.entity_id
+        ? this.hass?.entities?.[rect.entity_id]?.display_precision
+        : undefined;
+      const precision = resolvePrecision(this._config?.value?.precision, entityPrecision);
+      const abbreviate = this._config?.value?.abbreviate ?? false;
+      const formattedNumber = formatNumber(rect.value, precision, abbreviate);
 
-    // If prefix or suffix is defined, use only those. Otherwise, auto-append unit from entity.
-    const hasCustomFormat = valuePrefix !== undefined || valueSuffix !== undefined;
-    const formattedValue = hasCustomFormat
-      ? `${valuePrefix || ''}${signPrefix}${formattedNumber}${valueSuffix || ''}`
-      : `${signPrefix}${formattedNumber}${rect.unit ? ` ${rect.unit}` : ''}`;
+      // If prefix or suffix is defined, use only those. Otherwise, auto-append unit from entity.
+      const hasCustomFormat = valuePrefix !== undefined || valueSuffix !== undefined;
+      formattedValue = hasCustomFormat
+        ? `${valuePrefix || ''}${signPrefix}${formattedNumber}${valueSuffix || ''}`
+        : `${signPrefix}${formattedNumber}${rect.unit ? ` ${rect.unit}` : ''}`;
+    }
 
     // Calculate gap in percentage terms
     // Container is 100% wide, gap is in pixels, so we need to use calc()

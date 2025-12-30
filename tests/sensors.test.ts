@@ -505,6 +505,250 @@ describe('Sensor Entities', () => {
     });
   });
 
+  /**
+   * Tests for non-numeric entity filtering
+   * Issue #20: Confirms unavailable/unknown entities are correctly excluded
+   *
+   * Home Assistant non-numeric states:
+   * - "unavailable" - entity cannot be reached (device offline, integration error)
+   * - "unknown" - entity state is not known (just started, no data yet)
+   * - "none" - null/missing value (less common, appears in some template sensors)
+   */
+  describe('non-numeric entity filtering', () => {
+    it('excludes unavailable entities', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.battery_living_room', '85', {
+          friendly_name: 'Living Room Battery',
+          device_class: 'battery',
+          unit_of_measurement: '%',
+        }),
+        mockEntity('sensor.battery_bedroom', '42', {
+          friendly_name: 'Bedroom Battery',
+          device_class: 'battery',
+          unit_of_measurement: '%',
+        }),
+        // Unavailable sensors (like sensor.driveway_plant_right_battery in real HA)
+        mockEntity('sensor.battery_driveway_right', 'unavailable', {
+          friendly_name: 'Driveway Plant Right Battery',
+          device_class: 'battery',
+          unit_of_measurement: '%',
+        }),
+        mockEntity('sensor.battery_driveway_left', 'unavailable', {
+          friendly_name: 'Driveway Plant Left Battery',
+          device_class: 'battery',
+          unit_of_measurement: '%',
+        }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.battery_*'],
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const items = getRenderedItems(card);
+
+      // Only numeric entities should be shown
+      expect(items).toHaveLength(2);
+      expect(items.find(i => i.label === 'Living Room Battery')).toBeDefined();
+      expect(items.find(i => i.label === 'Bedroom Battery')).toBeDefined();
+      expect(items.find(i => i.label === 'Driveway Plant Right Battery')).toBeUndefined();
+      expect(items.find(i => i.label === 'Driveway Plant Left Battery')).toBeUndefined();
+    });
+
+    it('excludes unknown entities', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.temp_kitchen', '22.5', {
+          friendly_name: 'Kitchen Temp',
+          unit_of_measurement: 'C',
+        }),
+        mockEntity('sensor.temp_garage', 'unknown', {
+          friendly_name: 'Garage Temp',
+          unit_of_measurement: 'C',
+        }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.temp_*'],
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const items = getRenderedItems(card);
+
+      expect(items).toHaveLength(1);
+      expect(items.find(i => i.label === 'Kitchen Temp')).toBeDefined();
+      expect(items.find(i => i.label === 'Garage Temp')).toBeUndefined();
+    });
+
+    it('excludes none entities', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.power_actual', '150', {
+          friendly_name: 'Actual Power',
+          unit_of_measurement: 'W',
+        }),
+        mockEntity('sensor.power_template', 'none', {
+          friendly_name: 'Template Power',
+          unit_of_measurement: 'W',
+        }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.power_*'],
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const items = getRenderedItems(card);
+
+      expect(items).toHaveLength(1);
+      expect(items.find(i => i.label === 'Actual Power')).toBeDefined();
+      expect(items.find(i => i.label === 'Template Power')).toBeUndefined();
+    });
+
+    it('excludes all non-numeric states in mixed scenario', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.good', '100', { friendly_name: 'Good Sensor' }),
+        mockEntity('sensor.unavail', 'unavailable', { friendly_name: 'Unavailable Sensor' }),
+        mockEntity('sensor.unknown', 'unknown', { friendly_name: 'Unknown Sensor' }),
+        mockEntity('sensor.none', 'none', { friendly_name: 'None Sensor' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const items = getRenderedItems(card);
+
+      expect(items).toHaveLength(1);
+      expect(items.find(i => i.label === 'Good Sensor')).toBeDefined();
+    });
+
+    it('includes unavailable entities when filter.include_unavailable is true', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.battery_good', '85', {
+          friendly_name: 'Good Battery',
+          device_class: 'battery',
+          unit_of_measurement: '%',
+        }),
+        mockEntity('sensor.battery_dead', 'unavailable', {
+          friendly_name: 'Dead Battery',
+          device_class: 'battery',
+          unit_of_measurement: '%',
+        }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.battery_*'],
+        filter: { include_unavailable: true },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const items = getRenderedItems(card);
+
+      expect(items).toHaveLength(2);
+      expect(items.find(i => i.label === 'Good Battery')).toBeDefined();
+      expect(items.find(i => i.label === 'Dead Battery')).toBeDefined();
+    });
+
+    it('includes all non-numeric states when filter.include_unavailable is true', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.good', '100', { friendly_name: 'Good Sensor' }),
+        mockEntity('sensor.unavail', 'unavailable', { friendly_name: 'Unavailable Sensor' }),
+        mockEntity('sensor.unknown', 'unknown', { friendly_name: 'Unknown Sensor' }),
+        mockEntity('sensor.none', 'none', { friendly_name: 'None Sensor' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+        filter: { include_unavailable: true },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const items = getRenderedItems(card);
+
+      expect(items).toHaveLength(4);
+    });
+
+    it('displays raw state text for unavailable entities', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.dead', 'unavailable', {
+          friendly_name: 'Dead Sensor',
+          unit_of_measurement: '%',
+        }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.dead'],
+        filter: { include_unavailable: true },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const shadow = card.shadowRoot;
+      const valueEl = shadow?.querySelector('.treemap-value');
+
+      expect(valueEl?.textContent).toBe('unavailable');
+    });
+
+    it('applies gray color to unavailable entities', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.dead', 'unavailable', {
+          friendly_name: 'Dead Sensor',
+        }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.dead'],
+        filter: { include_unavailable: true },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const items = getRenderedItems(card);
+      const deadSensor = items.find(i => i.label === 'Dead Sensor');
+
+      expect(deadSensor).toBeDefined();
+      // Default gray color #868e96
+      expect(deadSensor?.backgroundColor).toContain('rgb(134, 142, 150)');
+    });
+
+    it('applies custom color.unavailable to unavailable entities', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.dead', 'unavailable', {
+          friendly_name: 'Dead Sensor',
+        }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.dead'],
+        filter: { include_unavailable: true },
+        color: { unavailable: '#ff0000' },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const items = getRenderedItems(card);
+      const deadSensor = items.find(i => i.label === 'Dead Sensor');
+
+      expect(deadSensor).toBeDefined();
+      expect(deadSensor?.backgroundColor).toContain('rgb(255, 0, 0)');
+    });
+  });
+
   describe('value.precision and value.abbreviate', () => {
     it('formats whole numbers with precision: 0', async () => {
       const hass = mockHass([

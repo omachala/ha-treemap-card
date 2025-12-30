@@ -340,6 +340,7 @@ value:
 | `color.low`           | `#b91c1c` (red)           | Color for lowest values. Also used for off lights.                                   |
 | `color.mid`           |                           | Optional middle color. Creates three-color gradient: low → mid → high.               |
 | `color.high`          | `#16a34a` (green)         | Color for highest values.                                                            |
+| `color.unavailable`   | `#868e96` (gray)          | Color for unavailable/unknown entities (when `filter.include_unavailable` is true).  |
 | `color.opacity`       | `1`                       | Color opacity (0-1).                                                                 |
 | `color.attribute`     | same as `value.attribute` | Field/attribute for coloring. For climate: `temp_offset`, `hvac_action`.             |
 | `color.scale.neutral` |                           | Value where `mid` color appears. Example: `0` for profit/loss, `21` for temperature. |
@@ -361,12 +362,13 @@ value:
 
 ### Order & Filter
 
-| Option         | Default | Description                                                   |
-| -------------- | ------- | ------------------------------------------------------------- |
-| `order`        | `desc`  | Sort order: `desc` (largest first) or `asc` (smallest first). |
-| `limit`        |         | Maximum items to show.                                        |
-| `filter.above` |         | Only show items with value greater than this.                 |
-| `filter.below` |         | Only show items with value less than this.                    |
+| Option                       | Default | Description                                                                                                                                                                                                                                            |
+| ---------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `order`                      | `desc`  | Sort order: `desc` (largest first) or `asc` (smallest first).                                                                                                                                                                                          |
+| `limit`                      |         | Maximum items to show.                                                                                                                                                                                                                                 |
+| `filter.above`               |         | Only show items with value greater than this.                                                                                                                                                                                                          |
+| `filter.below`               |         | Only show items with value less than this.                                                                                                                                                                                                             |
+| `filter.include_unavailable` | `false` | Include entities with non-numeric states (`unavailable`, `unknown`, `none`). Useful for battery monitoring dashboards where dead sensors matter as much as low batteries. Displays state text and gray background (customize via `color.unavailable`). |
 
 ### Layout
 

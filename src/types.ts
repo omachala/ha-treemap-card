@@ -64,6 +64,7 @@ export interface TreemapCardConfig {
   filter?: {
     above?: number; // Only include values > this
     below?: number; // Only include values < this
+    include_unavailable?: boolean; // Include unavailable/unknown/none entities (default: false)
   };
   // Label configuration
   label?: {
@@ -108,6 +109,7 @@ export interface TreemapCardConfig {
     low?: string; // Color for low values (default: #b91c1c red)
     mid?: string; // Color for middle/neutral values (optional, e.g., #00b6ed blue)
     high?: string; // Color for high values (default: #16a34a green)
+    unavailable?: string; // Color for unavailable/unknown entities (default: #868e96 gray)
     opacity?: number; // Opacity 0-1 (e.g., 0.5 for 50% transparent)
     attribute?: string; // Field/attribute for color calculation (default: same as value.attribute)
     param?: string; // Deprecated alias for 'attribute'
@@ -186,6 +188,8 @@ export interface TreemapItem {
   light?: LightColorInfo; // Light-specific color info (only for light.* entities)
   climate?: ClimateInfo; // Climate-specific info (only for climate.* entities)
   sparklineData?: number[]; // Inline sparkline data (JSON mode)
+  unavailable?: boolean; // True if entity state is unavailable/unknown/none
+  rawState?: string; // Original state string (for unavailable entities)
 }
 
 /**
@@ -202,6 +206,8 @@ export interface TreemapRect {
   light?: LightColorInfo; // Light-specific color info (only for light.* entities)
   climate?: ClimateInfo; // Climate-specific info (only for climate.* entities)
   sparklineData?: number[]; // Inline sparkline data (JSON mode)
+  unavailable?: boolean; // True if entity state is unavailable/unknown/none
+  rawState?: string; // Original state string (for unavailable entities)
   x: number;
   y: number;
   width: number;
