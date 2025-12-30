@@ -335,21 +335,21 @@ value:
 
 ### Color
 
-| Option                | Default                   | Description                                                                                 |
-| --------------------- | ------------------------- | ------------------------------------------------------------------------------------------- |
-| `color.low`           | `#b91c1c` (red)           | Color for lowest values. Also used for off lights.                                          |
-| `color.mid`           |                           | Optional middle color. Creates three-color gradient: low → mid → high.                      |
-| `color.high`          | `#16a34a` (green)         | Color for highest values.                                                                   |
-| `color.unavailable`   | `#868e96` (gray)          | Color for unavailable/unknown entities. See [`filter.include_unavailable`](#order--filter). |
-| `color.opacity`       | `1`                       | Color opacity (0-1).                                                                        |
-| `color.attribute`     | same as `value.attribute` | Field/attribute for coloring. For climate: `temp_offset`, `hvac_action`.                    |
-| `color.scale.neutral` |                           | Value where `mid` color appears. Example: `0` for profit/loss, `21` for temperature.        |
-| `color.scale.min`     | auto                      | Values at or below get full `low` color.                                                    |
-| `color.scale.max`     | auto                      | Values at or above get full `high` color.                                                   |
-| `color.hvac.heating`  | `#ff6b35`                 | Color when actively heating (climate only).                                                 |
-| `color.hvac.cooling`  | `#4dabf7`                 | Color when actively cooling (climate only).                                                 |
-| `color.hvac.idle`     |                           | Not used - idle falls back to gradient.                                                     |
-| `color.hvac.off`      | `#868e96`                 | Color for off/unavailable climate entities.                                                 |
+| Option                | Default                   | Description                                                                          |
+| --------------------- | ------------------------- | ------------------------------------------------------------------------------------ |
+| `color.low`           | `#b91c1c` (red)           | Color for lowest values. Also used for off lights.                                   |
+| `color.mid`           |                           | Optional middle color. Creates three-color gradient: low → mid → high.               |
+| `color.high`          | `#16a34a` (green)         | Color for highest values.                                                            |
+| `color.unavailable`   | `#868e96` (gray)          | Color for unavailable/unknown entities. See [`filter.unavailable`](#order--filter).  |
+| `color.opacity`       | `1`                       | Color opacity (0-1).                                                                 |
+| `color.attribute`     | same as `value.attribute` | Field/attribute for coloring. For climate: `temp_offset`, `hvac_action`.             |
+| `color.scale.neutral` |                           | Value where `mid` color appears. Example: `0` for profit/loss, `21` for temperature. |
+| `color.scale.min`     | auto                      | Values at or below get full `low` color.                                             |
+| `color.scale.max`     | auto                      | Values at or above get full `high` color.                                            |
+| `color.hvac.heating`  | `#ff6b35`                 | Color when actively heating (climate only).                                          |
+| `color.hvac.cooling`  | `#4dabf7`                 | Color when actively cooling (climate only).                                          |
+| `color.hvac.idle`     |                           | Not used - idle falls back to gradient.                                              |
+| `color.hvac.off`      | `#868e96`                 | Color for off/unavailable climate entities.                                          |
 
 ### Icon
 
@@ -362,13 +362,13 @@ value:
 
 ### Order & Filter
 
-| Option                       | Default | Description                                                                                                                                                                                                                                                                    |
-| ---------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `order`                      | `desc`  | Sort order: `desc` (largest first) or `asc` (smallest first).                                                                                                                                                                                                                  |
-| `limit`                      |         | Maximum items to show.                                                                                                                                                                                                                                                         |
-| `filter.above`               |         | Only show items with value greater than this.                                                                                                                                                                                                                                  |
-| `filter.below`               |         | Only show items with value less than this.                                                                                                                                                                                                                                     |
-| `filter.include_unavailable` | `false` | Include entities that stopped reporting or are unreachable (`unavailable`, `unknown`, `none` states). Useful for battery monitoring where dead sensors matter as much as low batteries. Displays state text and gray background (customize via [`color.unavailable`](#color)). |
+| Option               | Default | Description                                                                                                                                                                                                                                                                    |
+| -------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `order`              | `desc`  | Sort order: `desc` (largest first) or `asc` (smallest first).                                                                                                                                                                                                                  |
+| `limit`              |         | Maximum items to show.                                                                                                                                                                                                                                                         |
+| `filter.above`       |         | Only show items with value greater than this.                                                                                                                                                                                                                                  |
+| `filter.below`       |         | Only show items with value less than this.                                                                                                                                                                                                                                     |
+| `filter.unavailable` | `false` | Include entities that stopped reporting or are unreachable (`unavailable`, `unknown`, `none` states). Useful for battery monitoring where dead sensors matter as much as low batteries. Displays state text and gray background (customize via [`color.unavailable`](#color)). |
 
 ### Layout
 

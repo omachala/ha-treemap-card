@@ -629,7 +629,7 @@ describe('Sensor Entities', () => {
       expect(items.find(i => i.label === 'Good Sensor')).toBeDefined();
     });
 
-    it('includes unavailable entities when filter.include_unavailable is true', async () => {
+    it('includes unavailable entities when filter.unavailable is true', async () => {
       const hass = mockHass([
         mockEntity('sensor.battery_good', '85', {
           friendly_name: 'Good Battery',
@@ -646,7 +646,7 @@ describe('Sensor Entities', () => {
       card.setConfig({
         type: 'custom:treemap-card',
         entities: ['sensor.battery_*'],
-        filter: { include_unavailable: true },
+        filter: { unavailable: true },
       });
       card.hass = hass;
       await card.updateComplete;
@@ -658,7 +658,7 @@ describe('Sensor Entities', () => {
       expect(items.find(i => i.label === 'Dead Battery')).toBeDefined();
     });
 
-    it('includes all non-numeric states when filter.include_unavailable is true', async () => {
+    it('includes all non-numeric states when filter.unavailable is true', async () => {
       const hass = mockHass([
         mockEntity('sensor.good', '100', { friendly_name: 'Good Sensor' }),
         mockEntity('sensor.unavail', 'unavailable', { friendly_name: 'Unavailable Sensor' }),
@@ -669,7 +669,7 @@ describe('Sensor Entities', () => {
       card.setConfig({
         type: 'custom:treemap-card',
         entities: ['sensor.*'],
-        filter: { include_unavailable: true },
+        filter: { unavailable: true },
       });
       card.hass = hass;
       await card.updateComplete;
@@ -690,7 +690,7 @@ describe('Sensor Entities', () => {
       card.setConfig({
         type: 'custom:treemap-card',
         entities: ['sensor.dead'],
-        filter: { include_unavailable: true },
+        filter: { unavailable: true },
       });
       card.hass = hass;
       await card.updateComplete;
@@ -711,7 +711,7 @@ describe('Sensor Entities', () => {
       card.setConfig({
         type: 'custom:treemap-card',
         entities: ['sensor.dead'],
-        filter: { include_unavailable: true },
+        filter: { unavailable: true },
       });
       card.hass = hass;
       await card.updateComplete;
@@ -734,7 +734,7 @@ describe('Sensor Entities', () => {
       card.setConfig({
         type: 'custom:treemap-card',
         entities: ['sensor.dead'],
-        filter: { include_unavailable: true },
+        filter: { unavailable: true },
         color: { unavailable: '#ff0000' },
       });
       card.hass = hass;

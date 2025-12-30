@@ -384,9 +384,9 @@ export class TreemapCard extends LitElement {
         }
 
         if (Number.isNaN(value)) {
-          // Skip non-numeric entities unless include_unavailable is enabled
+          // Skip non-numeric entities unless filter.unavailable is enabled
           const isUnavailable = isUnavailableState(entity.state);
-          if (!isUnavailable || !this._config?.filter?.include_unavailable) {
+          if (!isUnavailable || !this._config?.filter?.unavailable) {
             continue;
           }
 

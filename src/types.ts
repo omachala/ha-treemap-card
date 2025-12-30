@@ -64,7 +64,7 @@ export interface TreemapCardConfig {
   filter?: {
     above?: number; // Only include values > this
     below?: number; // Only include values < this
-    include_unavailable?: boolean; // Include unavailable/unknown/none entities (default: false)
+    unavailable?: boolean; // Include unavailable/unknown/none entities (default: false)
   };
   // Label configuration
   label?: {
