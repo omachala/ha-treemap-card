@@ -1,5 +1,11 @@
 # ha-treemap-card
 
+## 0.10.0
+
+### Minor Changes
+
+- d599a56: Show unavailable sensors in your treemap with `filter.unavailable: true`. Perfect for battery monitoring dashboards where dead sensors matter as much as low batteries. Customize the color with `color.unavailable`.
+
 ## 0.9.0
 
 ### Minor Changes
