@@ -34,6 +34,11 @@ export interface HomeAssistant {
 }
 
 /**
+ * Where to apply calculated color
+ */
+export type ColorApplyTarget = 'background' | 'foreground';
+
+/**
  * Card configuration
  */
 export interface TreemapCardConfig {
@@ -107,6 +112,7 @@ export interface TreemapCardConfig {
   };
   // Color gradient configuration
   color?: {
+    target?: ColorApplyTarget; // Where to apply the color: 'background' (default) or 'foreground'
     low?: string; // Color for low values (default: #b91c1c red)
     mid?: string; // Color for middle/neutral values (optional, e.g., #00b6ed blue)
     high?: string; // Color for high values (default: #16a34a green)
