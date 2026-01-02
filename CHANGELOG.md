@@ -1,5 +1,11 @@
 # ha-treemap-card
 
+## 0.11.0
+
+### Minor Changes
+
+- 3441859: Add `color.target` option to apply gradient color to text instead of background
+
 ## 0.10.0
 
 ### Minor Changes
