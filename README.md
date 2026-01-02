@@ -602,16 +602,8 @@ by BeardedTinker<br>
 
 ---
 
-## Contributing
+## Author
 
-Contributions and feedback are warmly welcomed! Feel free to open an issue or submit a pull request.
+Created and maintained by [Ondrej Machala](https://github.com/omachala) ([LinkedIn](https://linkedin.com/in/omachala)).
 
-## License
-
-MIT
-
----
-
-<p align="center">
-Made with :heart: in London - yes, those humidity readings in the screenshot are real.
-</p>
+MIT License. Contributions and feedback are welcome - feel free to open an issue or submit a PR.
