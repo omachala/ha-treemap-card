@@ -1,5 +1,5 @@
 /**
- * Integration tests for color.apply_to feature
+ * Integration tests for color.target feature
  */
 
 import { describe, expect, it, beforeEach } from 'vitest';
@@ -52,7 +52,7 @@ describe('color.target', () => {
       expect(temp?.backgroundColor).not.toBe('rgba(0, 0, 0, 0.1)');
     });
 
-    it('uses contrast colors for text when apply_to is background', async () => {
+    it('uses contrast colors for text when target is background', async () => {
       const hass = mockHass([mockEntity('sensor.temp', '50', { friendly_name: 'Temperature' })]);
 
       card.setConfig({
@@ -73,7 +73,7 @@ describe('color.target', () => {
   });
 
   describe('target: foreground', () => {
-    it('applies dark overlay to background when apply_to is foreground', async () => {
+    it('applies dark overlay to background when target is foreground', async () => {
       const hass = mockHass([mockEntity('sensor.temp', '50', { friendly_name: 'Temperature' })]);
 
       card.setConfig({
@@ -92,7 +92,7 @@ describe('color.target', () => {
       expect(temp?.backgroundColor).toBe('rgba(0, 0, 0, 0.1)');
     });
 
-    it('applies calculated color to text when apply_to is foreground', async () => {
+    it('applies calculated color to text when target is foreground', async () => {
       const hass = mockHass([
         mockEntity('sensor.temp_high', '100', { friendly_name: 'High Temp' }),
         mockEntity('sensor.temp_low', '0', { friendly_name: 'Low Temp' }),
