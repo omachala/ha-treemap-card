@@ -732,8 +732,17 @@ export class TreemapCard extends LitElement {
     // Container is 100% wide, gap is in pixels, so we need to use calc()
     const halfGap = gap / 2;
 
-    // Calculate contrasting text colors based on background
-    const textColors = getContrastColors(color);
+    // Determine where to apply color: background (default) or foreground
+    const colorTarget = this._config?.color?.target ?? 'background';
+    const applyToForeground = colorTarget === 'foreground';
+
+    // Background color: calculated color for background mode, dark overlay for foreground mode
+    const backgroundColor = applyToForeground ? 'rgba(0, 0, 0, 0.1)' : color;
+
+    // Text/icon colors: calculated color for foreground mode, contrast colors for background mode
+    const textColors = applyToForeground
+      ? { icon: color, label: color, value: color }
+      : getContrastColors(color);
 
     // Custom styles (user styles override auto contrast)
     const iconStyle = this._config?.icon?.style || '';
@@ -753,7 +762,7 @@ export class TreemapCard extends LitElement {
           top: calc(${rect.y}% + ${halfGap}px);
           width: calc(${rect.width}% - ${gap}px);
           height: calc(${rect.height}% - ${gap}px);
-          background-color: ${color};
+          background-color: ${backgroundColor};
         "
         @click="${() => this._handleClick(rect)}"
         title="${rect.label}: ${rect.value}"
