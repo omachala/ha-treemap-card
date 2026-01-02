@@ -1,5 +1,11 @@
 # ha-treemap-card
 
+## 0.12.0
+
+### Minor Changes
+
+- 94e8c36: Add visual configuration editor - no more YAML-only setup! Configure entities, colors, labels, sparklines, and all options directly in the UI.
+
 ## 0.11.0
 
 ### Minor Changes
