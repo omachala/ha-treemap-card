@@ -15,8 +15,6 @@ export interface SparklineFillOptions {
 
 export interface SparklineHvacOptions {
   show?: boolean;
-  heatingColor?: string;
-  coolingColor?: string;
 }
 
 export interface SparklineOptions {
@@ -89,33 +87,19 @@ function getSparklineColors(mode: SparklineMode): {
 let gradientIdCounter = 0;
 
 /**
- * Get default HVAC fill colors based on mode.
- * Uses the same colors as sparkline line/fill for heating, blue for cooling.
+ * Get HVAC fill colors based on mode.
+ * Uses the same dark/light colors as the sparkline for consistency.
  */
-function getHvacColors(
-  mode: SparklineMode,
-  hvacOptions?: SparklineHvacOptions
-): { heating: string; cooling: string } {
-  // User-defined colors take precedence
-  if (hvacOptions?.heatingColor || hvacOptions?.coolingColor) {
-    return {
-      heating:
-        hvacOptions.heatingColor ||
-        (mode === 'light' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.25)'),
-      cooling: hvacOptions.coolingColor || (mode === 'light' ? '#4a90d9' : '#64b5f6'),
-    };
-  }
-
-  // Default: heating uses same color as sparkline fill but more opaque, cooling uses blue
+function getHvacColors(mode: SparklineMode): { heating: string; cooling: string } {
   if (mode === 'light') {
     return {
-      heating: 'rgba(255, 255, 255, 0.4)', // Same as sparkline fill (light mode)
-      cooling: 'rgba(74, 144, 217, 0.6)', // Blue for cooling
+      heating: 'rgba(255, 255, 255, 0.4)',
+      cooling: 'rgba(255, 255, 255, 0.4)',
     };
   }
   return {
-    heating: 'rgba(0, 0, 0, 0.35)', // Same as sparkline fill (dark mode), more visible
-    cooling: 'rgba(100, 181, 246, 0.5)', // Blue for cooling
+    heating: 'rgba(0, 0, 0, 0.35)',
+    cooling: 'rgba(0, 0, 0, 0.35)',
   };
 }
 
@@ -254,7 +238,7 @@ export function renderSparkline(
     ? getSparklinePoints(data, options, 0)
     : { linePoints: '', fillPoints: '' };
   const colors = getSparklineColors(mode);
-  const hvacColors = getHvacColors(mode, hvac);
+  const hvacColors = getHvacColors(mode);
 
   const showFill = fill?.show !== false && hasData;
   const showLine = line?.show !== false && hasData; // Line visible by default

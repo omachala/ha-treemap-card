@@ -30,6 +30,34 @@ console.info(
 export class TreemapCard extends LitElement {
   static override styles = styles;
 
+  /**
+   * Return the editor element for visual configuration
+   */
+  public static getConfigElement(): HTMLElement {
+    // Ensure editor is registered (fire-and-forget import)
+    void import('./editor/treemap-card-editor');
+    return document.createElement('treemap-card-editor');
+  }
+
+  /**
+   * Return stub config for card picker (finds temperature sensors for preview)
+   */
+  public static getStubConfig(hass: HomeAssistant): Partial<TreemapCardConfig> {
+    // Find temperature sensors for a meaningful preview
+    const temperatureSensors = Object.keys(hass.states)
+      .filter(entityId => {
+        if (!entityId.startsWith('sensor.')) return false;
+        const entity = hass.states[entityId];
+        return entity?.attributes?.['device_class'] === 'temperature';
+      })
+      .slice(0, 3);
+
+    return {
+      type: 'custom:treemap-card',
+      entities: temperatureSensors.length > 0 ? temperatureSensors : ['sensor.*'],
+    };
+  }
+
   @property({ attribute: false }) public hass?: HomeAssistant;
   @state() private _config?: TreemapCardConfig;
   @state() private _sparklineData = new Map<string, SparklineData>();

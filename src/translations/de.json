@@ -1,0 +1,95 @@
+{
+  "editor": {
+    "no_config": "Keine Konfiguration",
+    "yaml_only": "JSON-Attributmodus wird nur über YAML konfiguriert.",
+    "entities": {
+      "label": "Entitätsmuster (eines pro Zeile)",
+      "helper": "Wildcards (*) werden unterstützt",
+      "placeholder": "sensor.temperature_*\nclimate.*\nlight.living_*"
+    },
+    "exclude": {
+      "label": "Ausschlussmuster",
+      "placeholder": "*_battery\n*_unavailable\nlight.*"
+    },
+    "label": {
+      "title": "Bezeichnung",
+      "prefix": "Präfix",
+      "suffix": "Suffix",
+      "find": "Suchen",
+      "replace": "Ersetzen mit",
+      "find_placeholder": "Temperatur",
+      "replace_placeholder": "Temp"
+    },
+    "value": {
+      "title": "Wert",
+      "prefix": "Präfix",
+      "suffix": "Suffix",
+      "suffix_placeholder": "%",
+      "precision": "Dezimalstellen",
+      "abbreviate": "Große Zahlen abkürzen (k, M, B)"
+    },
+    "icon": {
+      "title": "Symbol",
+      "override": "Symbol ersetzen"
+    },
+    "sparkline": {
+      "title": "Sparkline",
+      "period": "Zeitraum",
+      "period_12h": "12 Stunden",
+      "period_24h": "24 Stunden",
+      "period_7d": "7 Tage",
+      "period_30d": "30 Tage",
+      "mode": "Modus",
+      "mode_dark": "Dunkel",
+      "mode_light": "Hell",
+      "show_line": "Linie anzeigen",
+      "show_fill": "Füllung anzeigen",
+      "show_hvac": "HVAC-Balken anzeigen (Klimaentitäten)"
+    },
+    "colors": {
+      "title": "Farben",
+      "target": "Farbe anwenden auf",
+      "target_background": "Hintergrund",
+      "target_foreground": "Vordergrund (Text)",
+      "gradient": "Farbverlauf (niedrig → mittel → hoch)",
+      "low": "Niedrig ≤",
+      "mid": "Mittel =",
+      "high": "Hoch ≥",
+      "auto": "auto",
+      "middle": "mitte",
+      "hvac_colors": "HVAC-Farben (Klimaentitäten)",
+      "heating": "Heizen",
+      "cooling": "Kühlen",
+      "off": "Aus",
+      "unavailable": "Nicht verfügbar"
+    },
+    "size": {
+      "title": "Größe",
+      "equal": "Gleich große Rechtecke",
+      "inverse": "Invertiert (niedrige Werte = größer)",
+      "min": "Min",
+      "max": "Max"
+    },
+    "layout": {
+      "title": "Layout",
+      "height": "Höhe (px)",
+      "gap": "Abstand (px)"
+    },
+    "footer": {
+      "docs": "Doku",
+      "issues": "Bug oder Idee?",
+      "star": "Gefällt es? Stern geben!"
+    },
+    "data": {
+      "title": "Daten",
+      "order": "Sortierung",
+      "desc": "Absteigend (hoch zuerst)",
+      "asc": "Aufsteigend (niedrig zuerst)",
+      "limit": "Limit",
+      "all": "alle",
+      "above": "Filter oberhalb",
+      "below": "Filter unterhalb",
+      "unavailable": "Nicht verfügbare Entitäten einschließen"
+    }
+  }
+}

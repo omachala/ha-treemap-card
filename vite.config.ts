@@ -15,6 +15,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         entryFileNames: 'treemap-card.js',
+        inlineDynamicImports: true,
       },
     },
     sourcemap: false,

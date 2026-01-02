@@ -17,10 +17,18 @@ export default defineConfig({
       exclude: [
         'src/index.ts',
         'src/types.ts',
+        'src/editor/index.ts', // Re-exports only
+        'src/editor/types.ts', // Type definitions only
+        'src/editor/styles.ts', // CSS-in-JS styles
         'src/utils/history.ts', // Async HA API calls - tested via integration
         'vite.dev.config.ts',
+        'vite.config.ts',
+        'vitest.config.ts',
+        'eslint.config.js',
+        'vitest.perf.config.ts',
         'tests/performance.bench.ts',
         'tests/performance.test.ts',
+        'dist/**',
       ],
       thresholds: {
         lines: 90,
