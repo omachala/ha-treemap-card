@@ -31,7 +31,7 @@ describe('localize', () => {
 
     it('uses French for fr language', () => {
       const result = localize(mockHass('fr'), 'editor.label.title');
-      expect(result).toBe('Libelle');
+      expect(result).toBe('Libellé');
     });
 
     it('handles regional variants (e.g., en-US -> en)', () => {

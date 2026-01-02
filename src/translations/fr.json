@@ -3,38 +3,38 @@
     "no_config": "Aucune configuration",
     "yaml_only": "Le mode attribut JSON est configurable uniquement via YAML.",
     "entities": {
-      "label": "Motifs d'entites (un par ligne)",
-      "helper": "Wildcards (*) supportes",
+      "label": "Motifs d'entités (un par ligne)",
+      "helper": "Wildcards (*) supportés",
       "placeholder": "sensor.temperature_*\nclimate.*\nlight.living_*"
     },
     "exclude": {
-      "label": "Motifs a exclure",
+      "label": "Motifs à exclure",
       "placeholder": "*_battery\n*_unavailable\nlight.*"
     },
     "label": {
-      "title": "Libelle",
-      "prefix": "Prefixe",
+      "title": "Libellé",
+      "prefix": "Préfixe",
       "suffix": "Suffixe",
       "find": "Rechercher",
       "replace": "Remplacer par",
-      "find_placeholder": "Temperature",
+      "find_placeholder": "Température",
       "replace_placeholder": "Temp"
     },
     "value": {
       "title": "Valeur",
-      "prefix": "Prefixe",
+      "prefix": "Préfixe",
       "suffix": "Suffixe",
       "suffix_placeholder": "%",
-      "precision": "Decimales",
-      "abbreviate": "Abreger les grands nombres (k, M, B)"
+      "precision": "Décimales",
+      "abbreviate": "Abréger les grands nombres (k, M, B)"
     },
     "icon": {
-      "title": "Icone",
-      "override": "Remplacer l'icone"
+      "title": "Icône",
+      "override": "Remplacer l'icône"
     },
     "sparkline": {
       "title": "Sparkline",
-      "period": "Periode",
+      "period": "Période",
       "period_12h": "12 heures",
       "period_24h": "24 heures",
       "period_7d": "7 jours",
@@ -44,28 +44,28 @@
       "mode_light": "Clair",
       "show_line": "Afficher la ligne",
       "show_fill": "Afficher le remplissage",
-      "show_hvac": "Afficher les barres HVAC (entites climatiques)"
+      "show_hvac": "Afficher les barres HVAC (entités climatiques)"
     },
     "colors": {
       "title": "Couleurs",
-      "target": "Appliquer la couleur a",
-      "target_background": "Arriere-plan",
+      "target": "Appliquer la couleur à",
+      "target_background": "Arrière-plan",
       "target_foreground": "Premier plan (texte)",
-      "gradient": "Degrade de couleur (bas -> milieu -> haut)",
-      "low": "Bas <=",
+      "gradient": "Dégradé de couleur (bas → milieu → haut)",
+      "low": "Bas ≤",
       "mid": "Milieu =",
-      "high": "Haut >=",
+      "high": "Haut ≥",
       "auto": "auto",
       "middle": "milieu",
-      "hvac_colors": "Couleurs HVAC (entites climatiques)",
+      "hvac_colors": "Couleurs HVAC (entités climatiques)",
       "heating": "Chauffage",
       "cooling": "Climatisation",
-      "off": "Eteint",
+      "off": "Éteint",
       "unavailable": "Indisponible"
     },
     "size": {
       "title": "Taille",
-      "equal": "Rectangles de taille egale",
+      "equal": "Rectangles de taille égale",
       "inverse": "Inverse (valeurs basses = plus grand)",
       "min": "Min",
       "max": "Max"
@@ -77,19 +77,19 @@
     },
     "footer": {
       "docs": "Docs",
-      "issues": "Bug ou idee?",
-      "star": "Vous aimez? Etoile!"
+      "issues": "Bug ou idée?",
+      "star": "Vous aimez? Étoile!"
     },
     "data": {
-      "title": "Donnees",
+      "title": "Données",
       "order": "Ordre",
-      "desc": "Decroissant (haut en premier)",
+      "desc": "Décroissant (haut en premier)",
       "asc": "Croissant (bas en premier)",
       "limit": "Limite",
       "all": "tous",
       "above": "Filtrer au-dessus",
       "below": "Filtrer en-dessous",
-      "unavailable": "Inclure les entites indisponibles"
+      "unavailable": "Inclure les entités indisponibles"
     }
   }
 }

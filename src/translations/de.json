@@ -1,10 +1,10 @@
 {
   "editor": {
     "no_config": "Keine Konfiguration",
-    "yaml_only": "JSON-Attributmodus wird nur uber YAML konfiguriert.",
+    "yaml_only": "JSON-Attributmodus wird nur über YAML konfiguriert.",
     "entities": {
-      "label": "Entitaetsmuster (eines pro Zeile)",
-      "helper": "Wildcards (*) werden unterstuetzt",
+      "label": "Entitätsmuster (eines pro Zeile)",
+      "helper": "Wildcards (*) werden unterstützt",
       "placeholder": "sensor.temperature_*\nclimate.*\nlight.living_*"
     },
     "exclude": {
@@ -13,7 +13,7 @@
     },
     "label": {
       "title": "Bezeichnung",
-      "prefix": "Praefix",
+      "prefix": "Präfix",
       "suffix": "Suffix",
       "find": "Suchen",
       "replace": "Ersetzen mit",
@@ -22,11 +22,11 @@
     },
     "value": {
       "title": "Wert",
-      "prefix": "Praefix",
+      "prefix": "Präfix",
       "suffix": "Suffix",
       "suffix_placeholder": "%",
       "precision": "Dezimalstellen",
-      "abbreviate": "Grosse Zahlen abkuerzen (k, M, B)"
+      "abbreviate": "Große Zahlen abkürzen (k, M, B)"
     },
     "icon": {
       "title": "Symbol",
@@ -43,42 +43,42 @@
       "mode_dark": "Dunkel",
       "mode_light": "Hell",
       "show_line": "Linie anzeigen",
-      "show_fill": "Fuellung anzeigen",
-      "show_hvac": "HVAC-Balken anzeigen (Klimaentitaeten)"
+      "show_fill": "Füllung anzeigen",
+      "show_hvac": "HVAC-Balken anzeigen (Klimaentitäten)"
     },
     "colors": {
       "title": "Farben",
       "target": "Farbe anwenden auf",
       "target_background": "Hintergrund",
       "target_foreground": "Vordergrund (Text)",
-      "gradient": "Farbverlauf (niedrig -> mittel -> hoch)",
-      "low": "Niedrig <=",
+      "gradient": "Farbverlauf (niedrig → mittel → hoch)",
+      "low": "Niedrig ≤",
       "mid": "Mittel =",
-      "high": "Hoch >=",
+      "high": "Hoch ≥",
       "auto": "auto",
       "middle": "mitte",
-      "hvac_colors": "HVAC-Farben (Klimaentitaeten)",
+      "hvac_colors": "HVAC-Farben (Klimaentitäten)",
       "heating": "Heizen",
-      "cooling": "Kuehlen",
+      "cooling": "Kühlen",
       "off": "Aus",
-      "unavailable": "Nicht verfuegbar"
+      "unavailable": "Nicht verfügbar"
     },
     "size": {
-      "title": "Groesse",
-      "equal": "Gleich grosse Rechtecke",
-      "inverse": "Invertiert (niedrige Werte = groesser)",
+      "title": "Größe",
+      "equal": "Gleich große Rechtecke",
+      "inverse": "Invertiert (niedrige Werte = größer)",
       "min": "Min",
       "max": "Max"
     },
     "layout": {
       "title": "Layout",
-      "height": "Hoehe (px)",
+      "height": "Höhe (px)",
       "gap": "Abstand (px)"
     },
     "footer": {
       "docs": "Doku",
       "issues": "Bug oder Idee?",
-      "star": "Gefaellt es? Stern geben!"
+      "star": "Gefällt es? Stern geben!"
     },
     "data": {
       "title": "Daten",
@@ -89,7 +89,7 @@
       "all": "alle",
       "above": "Filter oberhalb",
       "below": "Filter unterhalb",
-      "unavailable": "Nicht verfuegbare Entitaeten einschliessen"
+      "unavailable": "Nicht verfügbare Entitäten einschließen"
     }
   }
 }

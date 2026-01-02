@@ -211,6 +211,12 @@ export const editorStyles = css`
     flex: 1;
   }
 
+  .color-label {
+    font-size: 14px;
+    color: var(--primary-text-color, #333);
+    align-self: center;
+  }
+
   /* Footer banner */
   .footer-banner {
     display: flex;
