@@ -48,6 +48,9 @@
     },
     "colors": {
       "title": "Farben",
+      "target": "Farbe anwenden auf",
+      "target_background": "Hintergrund",
+      "target_foreground": "Vordergrund (Text)",
       "gradient": "Farbverlauf (niedrig -> mittel -> hoch)",
       "low": "Niedrig <=",
       "mid": "Mittel =",

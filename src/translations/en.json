@@ -48,6 +48,9 @@
     },
     "colors": {
       "title": "Colors",
+      "target": "Apply color to",
+      "target_background": "Background",
+      "target_foreground": "Foreground (text)",
       "gradient": "Color gradient (low \u2192 mid \u2192 high)",
       "low": "Low \u2264",
       "mid": "Mid =",

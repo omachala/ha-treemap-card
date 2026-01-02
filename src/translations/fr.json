@@ -48,6 +48,9 @@
     },
     "colors": {
       "title": "Couleurs",
+      "target": "Appliquer la couleur a",
+      "target_background": "Arriere-plan",
+      "target_foreground": "Premier plan (texte)",
       "gradient": "Degrade de couleur (bas -> milieu -> haut)",
       "low": "Bas <=",
       "mid": "Milieu =",

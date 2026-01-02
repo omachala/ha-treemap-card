@@ -395,6 +395,19 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
         <ha-expansion-panel outlined data-testid="colors-section">
           <span slot="header">${this._t('editor.colors.title')}</span>
           <div class="content">
+            <ha-select
+              label=${this._t('editor.colors.target')}
+              .value=${this._config.color?.target ?? 'background'}
+              @selected=${(e: Event) => this._handleTextChange('color.target', e)}
+              @closed=${(e: Event) => e.stopPropagation()}
+            >
+              <ha-list-item value="background"
+                >${this._t('editor.colors.target_background')}</ha-list-item
+              >
+              <ha-list-item value="foreground"
+                >${this._t('editor.colors.target_foreground')}</ha-list-item
+              >
+            </ha-select>
             <span class="field-label">${this._t('editor.colors.gradient')}</span>
             <div class="color-scale-row">
               <label class="color-field">

@@ -758,6 +758,62 @@ describe('TreemapCardEditor', () => {
       expect(colorsSection).toBeTruthy();
     });
 
+    it('displays color.target dropdown with default value', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+      });
+      await editor.updateComplete;
+
+      const selects = editor.shadowRoot?.querySelectorAll(
+        '[data-testid="colors-section"] ha-select'
+      );
+      const targetSelect = selects?.[0];
+      expect(targetSelect).toBeTruthy();
+      if (isHaSelect(targetSelect)) {
+        expect(targetSelect.value).toBe('background');
+      }
+    });
+
+    it('displays color.target dropdown with configured value', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+        color: { target: 'foreground' },
+      });
+      await editor.updateComplete;
+
+      const selects = editor.shadowRoot?.querySelectorAll(
+        '[data-testid="colors-section"] ha-select'
+      );
+      const targetSelect = selects?.[0];
+      if (isHaSelect(targetSelect)) {
+        expect(targetSelect.value).toBe('foreground');
+      }
+    });
+
+    it('updates color.target on dropdown change', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+
+      const selects = editor.shadowRoot?.querySelectorAll(
+        '[data-testid="colors-section"] ha-select'
+      );
+      const targetSelect = selects?.[0];
+      if (isHaSelect(targetSelect)) {
+        targetSelect.value = 'foreground';
+        targetSelect.dispatchEvent(new Event('selected', { bubbles: true }));
+      }
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.color?.target).toBe('foreground');
+    });
+
     it('displays color inputs with default values', async () => {
       editor.setConfig({
         type: 'custom:treemap-card',
