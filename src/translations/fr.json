@@ -1,0 +1,95 @@
+{
+  "editor": {
+    "no_config": "Aucune configuration",
+    "yaml_only": "Le mode attribut JSON est configurable uniquement via YAML.",
+    "entities": {
+      "label": "Motifs d'entités (un par ligne)",
+      "helper": "Wildcards (*) supportés",
+      "placeholder": "sensor.temperature_*\nclimate.*\nlight.living_*"
+    },
+    "exclude": {
+      "label": "Motifs à exclure",
+      "placeholder": "*_battery\n*_unavailable\nlight.*"
+    },
+    "label": {
+      "title": "Libellé",
+      "prefix": "Préfixe",
+      "suffix": "Suffixe",
+      "find": "Rechercher",
+      "replace": "Remplacer par",
+      "find_placeholder": "Température",
+      "replace_placeholder": "Temp"
+    },
+    "value": {
+      "title": "Valeur",
+      "prefix": "Préfixe",
+      "suffix": "Suffixe",
+      "suffix_placeholder": "%",
+      "precision": "Décimales",
+      "abbreviate": "Abréger les grands nombres (k, M, B)"
+    },
+    "icon": {
+      "title": "Icône",
+      "override": "Remplacer l'icône"
+    },
+    "sparkline": {
+      "title": "Sparkline",
+      "period": "Période",
+      "period_12h": "12 heures",
+      "period_24h": "24 heures",
+      "period_7d": "7 jours",
+      "period_30d": "30 jours",
+      "mode": "Mode",
+      "mode_dark": "Sombre",
+      "mode_light": "Clair",
+      "show_line": "Afficher la ligne",
+      "show_fill": "Afficher le remplissage",
+      "show_hvac": "Afficher les barres HVAC (entités climatiques)"
+    },
+    "colors": {
+      "title": "Couleurs",
+      "target": "Appliquer la couleur à",
+      "target_background": "Arrière-plan",
+      "target_foreground": "Premier plan (texte)",
+      "gradient": "Dégradé de couleur (bas → milieu → haut)",
+      "low": "Bas ≤",
+      "mid": "Milieu =",
+      "high": "Haut ≥",
+      "auto": "auto",
+      "middle": "milieu",
+      "hvac_colors": "Couleurs HVAC (entités climatiques)",
+      "heating": "Chauffage",
+      "cooling": "Climatisation",
+      "off": "Éteint",
+      "unavailable": "Indisponible"
+    },
+    "size": {
+      "title": "Taille",
+      "equal": "Rectangles de taille égale",
+      "inverse": "Inverse (valeurs basses = plus grand)",
+      "min": "Min",
+      "max": "Max"
+    },
+    "layout": {
+      "title": "Disposition",
+      "height": "Hauteur (px)",
+      "gap": "Espacement (px)"
+    },
+    "footer": {
+      "docs": "Docs",
+      "issues": "Bug ou idée?",
+      "star": "Vous aimez? Étoile!"
+    },
+    "data": {
+      "title": "Données",
+      "order": "Ordre",
+      "desc": "Décroissant (haut en premier)",
+      "asc": "Croissant (bas en premier)",
+      "limit": "Limite",
+      "all": "tous",
+      "above": "Filtrer au-dessus",
+      "below": "Filtrer en-dessous",
+      "unavailable": "Inclure les entités indisponibles"
+    }
+  }
+}
