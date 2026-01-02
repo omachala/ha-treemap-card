@@ -22,7 +22,7 @@
 - Optimized for thousands of entities without breaking a sweat
 - Works beautifully with sensors, lights, thermostats, and custom data
 - Smart defaults, fully customizable - including per-tile CSS when you need pixel-perfect control
-- 17kb gzipped, zero dependencies, 90%+ test coverage
+- 18 KB gzipped, 90%+ test coverage
 
 ## Installation
 
