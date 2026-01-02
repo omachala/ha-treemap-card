@@ -78,6 +78,9 @@ export interface RenderedItem {
   width: number;
   height: number;
   backgroundColor?: string;
+  labelColor?: string;
+  valueColor?: string;
+  iconColor?: string;
 }
 
 export function getRenderedItems(card: TreemapCard): RenderedItem[] {
@@ -88,8 +91,9 @@ export function getRenderedItems(card: TreemapCard): RenderedItem[] {
   const result: RenderedItem[] = [];
 
   for (const item of items) {
-    const labelEl = item.querySelector('.treemap-label');
-    const valueEl = item.querySelector('.treemap-value');
+    const labelEl = item.querySelector('.treemap-label') as HTMLElement | null;
+    const valueEl = item.querySelector('.treemap-value') as HTMLElement | null;
+    const iconEl = item.querySelector('.treemap-icon') as HTMLElement | null;
     if (!(item instanceof HTMLElement)) continue;
     const style = item.style;
 
@@ -103,6 +107,11 @@ export function getRenderedItems(card: TreemapCard): RenderedItem[] {
     const heightMatch = /height:\s*calc\(([0-9.]+)%/.exec(style.cssText);
     const bgMatch = /background(?:-color)?:\s*([^;]+)/.exec(style.cssText);
 
+    // Extract colors from inline styles
+    const labelColorMatch = labelEl?.style.cssText.match(/color:\s*([^;]+)/);
+    const valueColorMatch = valueEl?.style.cssText.match(/color:\s*([^;]+)/);
+    const iconColorMatch = iconEl?.style.cssText.match(/color:\s*([^;]+)/);
+
     result.push({
       label,
       value,
@@ -111,6 +120,9 @@ export function getRenderedItems(card: TreemapCard): RenderedItem[] {
       width: widthMatch?.[1] ? parseFloat(widthMatch[1]) : 0,
       height: heightMatch?.[1] ? parseFloat(heightMatch[1]) : 0,
       backgroundColor: bgMatch?.[1]?.trim(),
+      labelColor: labelColorMatch?.[1]?.trim(),
+      valueColor: valueColorMatch?.[1]?.trim(),
+      iconColor: iconColorMatch?.[1]?.trim(),
     });
   }
 

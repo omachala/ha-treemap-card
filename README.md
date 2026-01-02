@@ -337,6 +337,7 @@ value:
 
 | Option                | Default                   | Description                                                                          |
 | --------------------- | ------------------------- | ------------------------------------------------------------------------------------ |
+| `color.target`        | `background`              | Where to apply color: `background` (default) or `foreground` (text/icon).            |
 | `color.low`           | `#b91c1c` (red)           | Color for lowest values. Also used for off lights.                                   |
 | `color.mid`           |                           | Optional middle color. Creates three-color gradient: low → mid → high.               |
 | `color.high`          | `#16a34a` (green)         | Color for highest values.                                                            |
@@ -350,6 +351,22 @@ value:
 | `color.hvac.cooling`  | `#4dabf7`                 | Color when actively cooling (climate only).                                          |
 | `color.hvac.idle`     |                           | Not used - idle falls back to gradient.                                              |
 | `color.hvac.off`      | `#868e96`                 | Color for off/unavailable climate entities.                                          |
+
+**Foreground coloring:**
+
+Use `color.target: foreground` to apply the gradient color to text and icons instead of the background. The background becomes a subtle dark overlay, making the colored text stand out.
+
+```yaml
+type: custom:treemap-card
+entities:
+  - sensor.temperature_*
+color:
+  target: foreground
+  low: '#4dabf7'
+  high: '#ff6b35'
+```
+
+> **Note:** Custom styles (`label.style`, `value.style`, `icon.style`) always take priority over `color.target`.
 
 ### Icon
 
