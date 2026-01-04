@@ -170,6 +170,35 @@ describe('Auto-entities compatibility', () => {
     expect(items).toHaveLength(0);
   });
 
+  it('per-entity icon override takes priority over global icon.icon', async () => {
+    const hass = mockHass([
+      mockEntity('sensor.temp_living', '22.5', { friendly_name: 'Living Room' }),
+      mockEntity('sensor.temp_bedroom', '20.0', { friendly_name: 'Bedroom' }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: [
+        { entity: 'sensor.temp_living', icon: 'mdi:thermometer' },
+        'sensor.temp_bedroom',
+      ] as unknown as string[],
+      icon: { icon: 'mdi:home' }, // Global icon
+    });
+    card.hass = hass;
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    expect(items).toHaveLength(2);
+
+    // Entity with override should use its icon, not global
+    const living = items.find(i => i.label === 'Living Room');
+    expect(living?.icon).toBe('mdi:thermometer');
+
+    // Entity without override should use global icon
+    const bedroom = items.find(i => i.label === 'Bedroom');
+    expect(bedroom?.icon).toBe('mdi:home');
+  });
+
   it('wildcards still work with string format', async () => {
     const hass = mockHass([
       mockEntity('sensor.power_a', '100', { friendly_name: 'Power A' }),

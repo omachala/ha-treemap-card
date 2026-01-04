@@ -813,11 +813,11 @@ export class TreemapCard extends LitElement {
         @click="${() => this._handleClick(rect)}"
         title="${rect.label}: ${rect.value}"
       >
-        ${showIcon && (this._config?.icon?.icon || rect.icon)
+        ${showIcon && (rect.icon || this._config?.icon?.icon)
           ? html`<ha-icon
               class="treemap-icon ${isHvacActive ? 'hvac-active' : ''}"
               style="${autoIconStyle}"
-              icon="${this._config?.icon?.icon || rect.icon}"
+              icon="${rect.icon || this._config?.icon?.icon}"
             ></ha-icon>`
           : nothing}
         ${showLabel
