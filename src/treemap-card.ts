@@ -134,7 +134,7 @@ export class TreemapCard extends LitElement {
       const result: string[] = [];
 
       for (const input of this._config.entities) {
-        const pattern = this._normalizeEntity(input);
+        const { entity: pattern } = this._normalizeEntity(input);
         if (pattern.includes('*')) {
           // Wildcard pattern - match against all entities
           for (const id of allEntityIds) {
@@ -165,13 +165,14 @@ export class TreemapCard extends LitElement {
   }
 
   /**
-   * Normalize EntityInput to entity ID string
-   * Accepts both "sensor.foo" and { entity: "sensor.foo", name: "..." }
+   * Normalize EntityInput to object format
+   * Converts "sensor.foo" to { entity: "sensor.foo" }
+   * Preserves existing { entity, name, icon } objects as-is
    */
-  private _normalizeEntity(input: string | TreemapEntityConfig): string {
-    if (typeof input === 'string') return input;
-    if (isEntityConfig(input)) return input.entity;
-    return String(input);
+  private _normalizeEntity(input: string | TreemapEntityConfig): TreemapEntityConfig {
+    if (typeof input === 'string') return { entity: input };
+    if (isEntityConfig(input)) return input;
+    return { entity: String(input) };
   }
 
   public getCardSize(): number {
@@ -294,11 +295,11 @@ export class TreemapCard extends LitElement {
     const allEntityIds = Object.keys(this.hass.states);
 
     for (const input of inputs) {
-      const pattern = this._normalizeEntity(input);
-
-      // Extract overrides from EntityConfig (name, icon)
-      const nameOverride = isEntityConfig(input) ? input.name : undefined;
-      const iconOverride = isEntityConfig(input) ? input.icon : undefined;
+      const {
+        entity: pattern,
+        name: nameOverride,
+        icon: iconOverride,
+      } = this._normalizeEntity(input);
 
       const matchingIds = allEntityIds.filter(
         id => matchesPattern(id, pattern) && !this._isExcluded(id)
