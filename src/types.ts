@@ -38,8 +38,6 @@ export interface HomeAssistant {
  */
 export type ColorApplyTarget = 'background' | 'foreground';
 
-// Re-export EntityConfig from custom-card-helpers (official HA type)
-export type { EntityConfig } from 'custom-card-helpers';
 import type { EntityConfig } from 'custom-card-helpers';
 
 /**
