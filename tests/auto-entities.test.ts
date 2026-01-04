@@ -39,15 +39,52 @@ describe('Auto-entities compatibility', () => {
     expect(items.find(i => i.label === 'Kitchen')).toBeDefined();
   });
 
-  it('accepts auto-entities format with additional options (ignored)', async () => {
+  it('uses name override from EntityConfig', async () => {
     const hass = mockHass([mockEntity('sensor.power', '100', { friendly_name: 'Power Sensor' })]);
 
-    // Auto-entities can pass additional options like 'name', 'icon', etc.
-    // These should be ignored by treemap-card (we use our own config)
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: [{ entity: 'sensor.power', name: 'Custom Name' }] as unknown as string[],
+    });
+    card.hass = hass;
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    expect(items).toHaveLength(1);
+    // Uses name from EntityConfig, overriding friendly_name
+    expect(items[0]?.label).toBe('Custom Name');
+  });
+
+  it('uses icon override from EntityConfig', async () => {
+    const hass = mockHass([
+      mockEntity('sensor.power', '100', { friendly_name: 'Power', icon: 'mdi:lightning-bolt' }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: [{ entity: 'sensor.power', icon: 'mdi:flash' }] as unknown as string[],
+    });
+    card.hass = hass;
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    expect(items).toHaveLength(1);
+    // Uses icon from EntityConfig, overriding entity's icon
+    expect(items[0]?.icon).toBe('mdi:flash');
+  });
+
+  it('uses both name and icon overrides together', async () => {
+    const hass = mockHass([
+      mockEntity('sensor.power', '100', {
+        friendly_name: 'Power Sensor',
+        icon: 'mdi:lightning-bolt',
+      }),
+    ]);
+
     card.setConfig({
       type: 'custom:treemap-card',
       entities: [
-        { entity: 'sensor.power', name: 'Custom Name', icon: 'mdi:flash' },
+        { entity: 'sensor.power', name: 'Custom Label', icon: 'mdi:flash' },
       ] as unknown as string[],
     });
     card.hass = hass;
@@ -55,8 +92,30 @@ describe('Auto-entities compatibility', () => {
 
     const items = getRenderedItems(card);
     expect(items).toHaveLength(1);
-    // Uses friendly_name from entity, not auto-entities' name override
+    expect(items[0]?.label).toBe('Custom Label');
+    expect(items[0]?.icon).toBe('mdi:flash');
+  });
+
+  it('falls back to entity values when no override provided', async () => {
+    const hass = mockHass([
+      mockEntity('sensor.power', '100', {
+        friendly_name: 'Power Sensor',
+        icon: 'mdi:lightning-bolt',
+      }),
+    ]);
+
+    // EntityConfig without name/icon - should use entity's values
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: [{ entity: 'sensor.power' }] as unknown as string[],
+    });
+    card.hass = hass;
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    expect(items).toHaveLength(1);
     expect(items[0]?.label).toBe('Power Sensor');
+    expect(items[0]?.icon).toBe('mdi:lightning-bolt');
   });
 
   it('still accepts original string array format', async () => {

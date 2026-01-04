@@ -306,6 +306,11 @@ export class TreemapCard extends LitElement {
 
     for (const input of inputs) {
       const pattern = this._normalizeEntity(input);
+
+      // Extract overrides from EntityConfig (name, icon)
+      const nameOverride = isEntityConfig(input) ? input.name : undefined;
+      const iconOverride = isEntityConfig(input) ? input.icon : undefined;
+
       const matchingIds = allEntityIds.filter(
         id => matchesPattern(id, pattern) && !this._isExcluded(id)
       );
@@ -315,12 +320,16 @@ export class TreemapCard extends LitElement {
         if (!entity) continue;
 
         const labelAttribute = this._config?.label?.attribute || 'friendly_name';
-        const label =
+        const defaultLabel =
           labelAttribute === 'entity_id'
             ? entityId
             : String(entity.attributes[labelAttribute] ?? entityId.split('.').pop());
 
-        const icon = getString(entity.attributes['icon']);
+        // Use name override from EntityConfig if provided
+        const label = nameOverride ?? defaultLabel;
+
+        // Use icon override from EntityConfig if provided
+        const icon = iconOverride ?? getString(entity.attributes['icon']);
 
         // Special handling for light entities
         if (isLightEntity(entityId)) {
