@@ -22,6 +22,7 @@
 - Optimized for thousands of entities without breaking a sweat
 - Works beautifully with sensors, lights, thermostats, and custom data
 - Smart defaults, fully customizable - including per-tile CSS when you need pixel-perfect control
+- Works with [auto-entities](https://github.com/thomasloven/lovelace-auto-entities) for powerful entity filtering
 - 18 KB gzipped, 90%+ test coverage
 
 ## Installation
@@ -80,6 +81,72 @@ label:
 value:
   attribute: amount
 ```
+
+## Auto-Entities Integration
+
+For advanced entity filtering by area, device, label, or attributes, use [auto-entities](https://github.com/thomasloven/lovelace-auto-entities) - the community's go-to query engine for Home Assistant entities.
+
+**When to use auto-entities vs built-in wildcards:**
+
+| Use Case                      | Solution                   |
+| ----------------------------- | -------------------------- |
+| Simple pattern matching       | Built-in: `sensor.power_*` |
+| Filter by area, device, label | Auto-entities              |
+| Filter by attributes or state | Auto-entities              |
+| Complex include/exclude logic | Auto-entities              |
+
+### Basic Example
+
+Show all entities with a specific label:
+
+```yaml
+type: custom:auto-entities
+card:
+  type: custom:treemap-card
+filter:
+  include:
+    - label: energy_monitoring
+```
+
+### Combining Filters
+
+Auto-entities handles _which_ entities to include. Treemap Card handles _how_ to visualize them:
+
+```yaml
+type: custom:auto-entities
+card:
+  type: custom:treemap-card
+  filter:
+    above: 10 # Only show values > 10W (treemap filtering)
+  order: desc
+  limit: 20
+filter:
+  include:
+    - domain: sensor
+      area: Kitchen
+      attributes:
+        device_class: power
+  exclude:
+    - state: unavailable
+```
+
+### Per-Entity Customization
+
+The standard Home Assistant entity format is fully supported. Override labels and icons per entity:
+
+```yaml
+type: custom:treemap-card
+entities:
+  - sensor.power_* # Wildcards work
+  - entity: sensor.solar_production # Object format
+    name: 'Solar Panels' # Override label
+    icon: mdi:solar-power # Override icon
+  - entity: sensor.grid_consumption
+    name: 'Grid Import'
+    icon: mdi:transmission-tower
+```
+
+This format is what auto-entities passes automatically, so any entity customizations from auto-entities flow through seamlessly.
 
 ## Entity Types
 
@@ -261,12 +328,12 @@ Climate entities show temperature history with HVAC activity highlighted. The fi
 
 ### Data Source
 
-| Option           | Default | Description                                                          |
-| ---------------- | ------- | -------------------------------------------------------------------- |
-| `entities`       |         | List of entity IDs. Supports `*` wildcards like `sensor.*_humidity`. |
-| `exclude`        |         | List of entity patterns to exclude. Supports `*` wildcards.          |
-| `entity`         |         | Single entity ID with array data in attributes (JSON mode).          |
-| `data_attribute` | `items` | Which attribute contains the array (JSON mode).                      |
+| Option           | Default | Description                                                                                                                                         |
+| ---------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entities`       |         | List of entity IDs or entity objects. Supports wildcards (`sensor.*`) and [HA entity format](#per-entity-customization) (`{ entity, name, icon }`). |
+| `exclude`        |         | List of entity patterns to exclude. Supports `*` wildcards.                                                                                         |
+| `entity`         |         | Single entity ID with array data in attributes (JSON mode).                                                                                         |
+| `data_attribute` | `items` | Which attribute contains the array (JSON mode).                                                                                                     |
 
 ### Label
 
@@ -386,6 +453,8 @@ color:
 | `filter.above`       |         | Only show items with value greater than this.                                                                                                                                                                                                                                  |
 | `filter.below`       |         | Only show items with value less than this.                                                                                                                                                                                                                                     |
 | `filter.unavailable` | `false` | Include entities that stopped reporting or are unreachable (`unavailable`, `unknown`, `none` states). Useful for battery monitoring where dead sensors matter as much as low batteries. Displays state text and gray background (customize via [`color.unavailable`](#color)). |
+
+> **Note:** These filters work on entity _values_ after entities are resolved. For entity-level filtering (by area, device, label, attributes), use [auto-entities](#auto-entities-integration).
 
 ### Layout
 
