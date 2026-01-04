@@ -81,6 +81,7 @@ export interface RenderedItem {
   labelColor?: string;
   valueColor?: string;
   iconColor?: string;
+  icon?: string;
 }
 
 export function getRenderedItems(card: TreemapCard): RenderedItem[] {
@@ -112,6 +113,10 @@ export function getRenderedItems(card: TreemapCard): RenderedItem[] {
     const valueColorMatch = valueEl?.style.cssText.match(/color:\s*([^;]+)/);
     const iconColorMatch = iconEl?.style.cssText.match(/color:\s*([^;]+)/);
 
+    // Extract icon name from ha-icon element
+    const haIcon = item.querySelector('ha-icon');
+    const iconName = haIcon?.getAttribute('icon') ?? undefined;
+
     result.push({
       label,
       value,
@@ -123,6 +128,7 @@ export function getRenderedItems(card: TreemapCard): RenderedItem[] {
       labelColor: labelColorMatch?.[1]?.trim(),
       valueColor: valueColorMatch?.[1]?.trim(),
       iconColor: iconColorMatch?.[1]?.trim(),
+      icon: iconName,
     });
   }
 

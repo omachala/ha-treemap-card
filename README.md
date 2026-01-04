@@ -20,8 +20,9 @@
 ### Why Treemap Card?
 
 - Optimized for thousands of entities without breaking a sweat
-- Works beautifully with sensors, lights, thermostats, and custom data
-- Smart defaults, fully customizable - including per-tile CSS when you need pixel-perfect control
+- Works beautifully with [sensors](#sensors), [lights](#lights), [thermostats](#climate), and [custom data](#json-attribute-mode)
+- Smart defaults, fully customizable - including [per-tile CSS](#styling-guide) when you need pixel-perfect control
+- Works with [auto-entities](#auto-entities-guide) for advanced filtering (area, device, label)
 - 18 KB gzipped, 90%+ test coverage
 
 ## Installation
@@ -46,13 +47,16 @@ The card supports two ways to get data:
 
 ### Entities Mode
 
-Display Home Assistant entities directly. Supports wildcards to match multiple entities at once.
+Display Home Assistant entities directly. Supports wildcards and per-entity customization.
 
 ```yaml
 type: custom:treemap-card
 entities:
-  - sensor.temperature_*
+  - sensor.temperature_* # Wildcard pattern
   - sensor.humidity_*
+  - entity: sensor.power_total # Object format with overrides
+    name: 'Total Power'
+    icon: mdi:lightning-bolt
 exclude:
   - sensor.*_battery
 ```
@@ -261,12 +265,12 @@ Climate entities show temperature history with HVAC activity highlighted. The fi
 
 ### Data Source
 
-| Option           | Default | Description                                                          |
-| ---------------- | ------- | -------------------------------------------------------------------- |
-| `entities`       |         | List of entity IDs. Supports `*` wildcards like `sensor.*_humidity`. |
-| `exclude`        |         | List of entity patterns to exclude. Supports `*` wildcards.          |
-| `entity`         |         | Single entity ID with array data in attributes (JSON mode).          |
-| `data_attribute` | `items` | Which attribute contains the array (JSON mode).                      |
+| Option           | Default | Description                                                                                                   |
+| ---------------- | ------- | ------------------------------------------------------------------------------------------------------------- |
+| `entities`       |         | List of entity IDs or patterns. Supports wildcards (`sensor.*`) and object format (`{ entity, name, icon }`). |
+| `exclude`        |         | List of entity patterns to exclude. Supports `*` wildcards.                                                   |
+| `entity`         |         | Single entity ID with array data in attributes (JSON mode).                                                   |
+| `data_attribute` | `items` | Which attribute contains the array (JSON mode).                                                               |
 
 ### Label
 
@@ -386,6 +390,8 @@ color:
 | `filter.above`       |         | Only show items with value greater than this.                                                                                                                                                                                                                                  |
 | `filter.below`       |         | Only show items with value less than this.                                                                                                                                                                                                                                     |
 | `filter.unavailable` | `false` | Include entities that stopped reporting or are unreachable (`unavailable`, `unknown`, `none` states). Useful for battery monitoring where dead sensors matter as much as low batteries. Displays state text and gray background (customize via [`color.unavailable`](#color)). |
+
+> **Note:** These filters work on entity _values_ after entities are resolved. For entity-level filtering (by area, device, label, attributes), see the [Auto-Entities guide](#auto-entities-guide).
 
 ### Layout
 
@@ -587,6 +593,62 @@ Below are common sizing and ordering configurations to achieve different visual 
 >
 > - One device at 2500W dominates the layout, others at 50-200W are tiny
 > - `size.max: 500` - Caps the 2500W device to 500W for sizing, giving other devices more visible space
+
+## Auto-Entities guide
+
+For advanced entity filtering by area, device, label, or attributes, use [auto-entities](https://github.com/thomasloven/lovelace-auto-entities). This is YAML-only (no visual editor when using auto-entities as a wrapper).
+
+| Use Case                      | Solution                   |
+| ----------------------------- | -------------------------- |
+| Simple pattern matching       | Built-in: `sensor.power_*` |
+| Filter by area, device, label | Auto-entities              |
+| Filter by attributes or state | Auto-entities              |
+
+**Filter by area and device class:**
+
+```yaml
+type: custom:auto-entities
+card:
+  type: custom:treemap-card
+  header:
+    title: Kitchen Power
+filter:
+  include:
+    - domain: sensor
+      area: Kitchen
+      attributes:
+        device_class: power
+  exclude:
+    - state: unavailable
+```
+
+**With treemap filtering:**
+
+```yaml
+type: custom:auto-entities
+card:
+  type: custom:treemap-card
+  filter:
+    above: 10 # Only show values > 10W
+  order: desc
+  limit: 20
+filter:
+  include:
+    - domain: sensor
+      attributes:
+        device_class: power
+```
+
+**Per-entity customization** (works with or without auto-entities):
+
+```yaml
+type: custom:treemap-card
+entities:
+  - sensor.power_*
+  - entity: sensor.solar_production
+    name: 'Solar Panels'
+    icon: mdi:solar-power
+```
 
 ## Resources
 
