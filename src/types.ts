@@ -38,6 +38,30 @@ export interface HomeAssistant {
  */
 export type ColorApplyTarget = 'background' | 'foreground';
 
+import type { EntityConfig } from 'custom-card-helpers';
+
+/**
+ * Treemap entity config - currently same as HA EntityConfig
+ * Can be extended with treemap-specific options in the future (color, size_value, etc.)
+ */
+export type TreemapEntityConfig = EntityConfig;
+
+/**
+ * Entity input: string (with wildcard support) or object config
+ * Examples:
+ *   - "sensor.power_*"                    (string with wildcard)
+ *   - "sensor.temperature"                (plain string)
+ *   - { entity: "sensor.x", name: "Y" }   (object config)
+ */
+export type EntityInput = string | TreemapEntityConfig;
+
+/**
+ * Type guard for object-style entity config
+ */
+export function isEntityConfig(e: EntityInput): e is TreemapEntityConfig {
+  return typeof e === 'object' && e !== null && 'entity' in e && typeof e.entity === 'string';
+}
+
 /**
  * Card configuration
  */
@@ -51,7 +75,8 @@ export interface TreemapCardConfig {
     style?: string; // Custom CSS for header
   };
   // Mode 1 & 2: List of entities (supports wildcards with *)
-  entities?: string[];
+  // Accepts both string[] and auto-entities object format
+  entities?: EntityInput[];
   // Exclude entities matching these patterns (supports wildcards with *)
   exclude?: string[];
   // Mode 3: Single entity containing data array in attributes

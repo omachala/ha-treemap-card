@@ -1,6 +1,14 @@
 import { LitElement, html, nothing, type TemplateResult, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import type { HomeAssistant, TreemapCardConfig, TreemapItem, TreemapRect } from './types';
+import { fireEvent, debounce } from 'custom-card-helpers';
+import {
+  isEntityConfig,
+  type HomeAssistant,
+  type TreemapCardConfig,
+  type TreemapItem,
+  type TreemapRect,
+  type TreemapEntityConfig,
+} from './types';
 import { getNumber, getString, matchesPattern, isUnavailableState } from './utils/predicates';
 import { isLightEntity, extractLightInfo, getLightBackgroundColor } from './utils/lights';
 import { isClimateEntity, extractClimateInfo, getClimateValue } from './utils/climate';
@@ -65,7 +73,7 @@ export class TreemapCard extends LitElement {
   private _lastRelevantStates: string | undefined;
   private _cachedData: TreemapItem[] | undefined;
   private _cachedDataHash: string | undefined;
-  private _sparklineDebounceTimer: ReturnType<typeof setTimeout> | undefined;
+  private _debouncedFetchSparklines = debounce(() => void this._fetchSparklineData(), 100);
 
   /**
    * Optimize re-renders: only update when relevant entity states change
@@ -125,7 +133,8 @@ export class TreemapCard extends LitElement {
       const allEntityIds = Object.keys(this.hass.states);
       const result: string[] = [];
 
-      for (const pattern of this._config.entities) {
+      for (const input of this._config.entities) {
+        const { entity: pattern } = this._normalizeEntity(input);
         if (pattern.includes('*')) {
           // Wildcard pattern - match against all entities
           for (const id of allEntityIds) {
@@ -148,10 +157,22 @@ export class TreemapCard extends LitElement {
     if (!config.entities && !config.entity) {
       throw new Error('Please define "entities" (list) or "entity" (single with JSON array)');
     }
+
     this._config = {
       gap: 4, // smaller gap
       ...config,
     };
+  }
+
+  /**
+   * Normalize EntityInput to object format
+   * Converts "sensor.foo" to { entity: "sensor.foo" }
+   * Preserves existing { entity, name, icon } objects as-is
+   */
+  private _normalizeEntity(input: string | TreemapEntityConfig): TreemapEntityConfig {
+    if (typeof input === 'string') return { entity: input };
+    if (isEntityConfig(input)) return input;
+    return { entity: String(input) };
   }
 
   public getCardSize(): number {
@@ -160,19 +181,7 @@ export class TreemapCard extends LitElement {
 
   protected override updated(): void {
     // Debounce sparkline fetching to reduce API calls
-    if (this._sparklineDebounceTimer) {
-      clearTimeout(this._sparklineDebounceTimer);
-    }
-    this._sparklineDebounceTimer = setTimeout(() => {
-      void this._fetchSparklineData();
-    }, 100);
-  }
-
-  override disconnectedCallback(): void {
-    super.disconnectedCallback();
-    if (this._sparklineDebounceTimer) {
-      clearTimeout(this._sparklineDebounceTimer);
-    }
+    this._debouncedFetchSparklines();
   }
 
   private async _fetchSparklineData(): Promise<void> {
@@ -279,13 +288,19 @@ export class TreemapCard extends LitElement {
     return false;
   }
 
-  private _resolveEntities(patterns: string[]): TreemapItem[] {
+  private _resolveEntities(inputs: (string | TreemapEntityConfig)[]): TreemapItem[] {
     if (!this.hass) return [];
 
     const items: TreemapItem[] = [];
     const allEntityIds = Object.keys(this.hass.states);
 
-    for (const pattern of patterns) {
+    for (const input of inputs) {
+      const {
+        entity: pattern,
+        name: nameOverride,
+        icon: iconOverride,
+      } = this._normalizeEntity(input);
+
       const matchingIds = allEntityIds.filter(
         id => matchesPattern(id, pattern) && !this._isExcluded(id)
       );
@@ -295,12 +310,16 @@ export class TreemapCard extends LitElement {
         if (!entity) continue;
 
         const labelAttribute = this._config?.label?.attribute || 'friendly_name';
-        const label =
+        const defaultLabel =
           labelAttribute === 'entity_id'
             ? entityId
             : String(entity.attributes[labelAttribute] ?? entityId.split('.').pop());
 
-        const icon = getString(entity.attributes['icon']);
+        // Use name override from EntityConfig if provided
+        const label = nameOverride ?? defaultLabel;
+
+        // Use icon override from EntityConfig if provided
+        const icon = iconOverride ?? getString(entity.attributes['icon']);
 
         // Special handling for light entities
         if (isLightEntity(entityId)) {
@@ -795,11 +814,11 @@ export class TreemapCard extends LitElement {
         @click="${() => this._handleClick(rect)}"
         title="${rect.label}: ${rect.value}"
       >
-        ${showIcon && (this._config?.icon?.icon || rect.icon)
+        ${showIcon && (rect.icon || this._config?.icon?.icon)
           ? html`<ha-icon
               class="treemap-icon ${isHvacActive ? 'hvac-active' : ''}"
               style="${autoIconStyle}"
-              icon="${this._config?.icon?.icon || rect.icon}"
+              icon="${rect.icon || this._config?.icon?.icon}"
             ></ha-icon>`
           : nothing}
         ${showLabel
@@ -829,13 +848,7 @@ export class TreemapCard extends LitElement {
 
   private _handleClick(rect: TreemapRect): void {
     if (!rect.entity_id) return;
-
-    const event = new CustomEvent('hass-more-info', {
-      bubbles: true,
-      composed: true,
-      detail: { entityId: rect.entity_id },
-    });
-    this.dispatchEvent(event);
+    fireEvent(this, 'hass-more-info', { entityId: rect.entity_id });
   }
 }
 
