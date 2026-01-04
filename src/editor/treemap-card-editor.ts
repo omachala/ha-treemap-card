@@ -8,7 +8,7 @@
 import { LitElement, html, type TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { set } from 'es-toolkit/compat';
-import type { HomeAssistant, TreemapCardConfig } from '../types';
+import { isEntityConfig, type HomeAssistant, type TreemapCardConfig } from '../types';
 import type { LovelaceCardEditor } from './types';
 import { editorStyles } from './styles';
 import { localize } from '../localize';
@@ -205,7 +205,8 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
       `;
     }
 
-    const entities = this._config.entities?.join('\n') ?? '';
+    const entities =
+      this._config.entities?.map(e => (isEntityConfig(e) ? e.entity : e)).join('\n') ?? '';
     const exclude = this._config.exclude?.join('\n') ?? '';
     const label = this._config.label ?? {};
     const value = this._config.value ?? {};

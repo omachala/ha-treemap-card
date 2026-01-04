@@ -229,6 +229,39 @@ describe('TreemapCardEditor', () => {
       }
     });
 
+    it('displays EntityConfig objects by extracting entity ID', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: [
+          { entity: 'sensor.temp_living', name: 'Living Room' },
+          { entity: 'sensor.temp_bedroom', icon: 'mdi:bed' },
+        ],
+      });
+      await editor.updateComplete;
+
+      const textarea = getElement(editor, '[data-testid="entities-field"] textarea');
+      if (textarea instanceof HTMLTextAreaElement) {
+        expect(textarea.value).toBe('sensor.temp_living\nsensor.temp_bedroom');
+      }
+    });
+
+    it('displays mixed string and EntityConfig format', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: [
+          'sensor.power_*',
+          { entity: 'sensor.temp_living', name: 'Living Room' },
+          'light.*',
+        ],
+      });
+      await editor.updateComplete;
+
+      const textarea = getElement(editor, '[data-testid="entities-field"] textarea');
+      if (textarea instanceof HTMLTextAreaElement) {
+        expect(textarea.value).toBe('sensor.power_*\nsensor.temp_living\nlight.*');
+      }
+    });
+
     it('updates entities on input', async () => {
       editor.setConfig({
         type: 'custom:treemap-card',
