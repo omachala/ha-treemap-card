@@ -1,6 +1,13 @@
 import { LitElement, html, nothing, type TemplateResult, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import type { HomeAssistant, TreemapCardConfig, TreemapItem, TreemapRect } from './types';
+import {
+  isEntityConfig,
+  type HomeAssistant,
+  type TreemapCardConfig,
+  type TreemapItem,
+  type TreemapRect,
+  type TreemapEntityConfig,
+} from './types';
 import { getNumber, getString, matchesPattern, isUnavailableState } from './utils/predicates';
 import { isLightEntity, extractLightInfo, getLightBackgroundColor } from './utils/lights';
 import { isClimateEntity, extractClimateInfo, getClimateValue } from './utils/climate';
@@ -125,7 +132,8 @@ export class TreemapCard extends LitElement {
       const allEntityIds = Object.keys(this.hass.states);
       const result: string[] = [];
 
-      for (const pattern of this._config.entities) {
+      for (const input of this._config.entities) {
+        const pattern = this._normalizeEntity(input);
         if (pattern.includes('*')) {
           // Wildcard pattern - match against all entities
           for (const id of allEntityIds) {
@@ -148,10 +156,21 @@ export class TreemapCard extends LitElement {
     if (!config.entities && !config.entity) {
       throw new Error('Please define "entities" (list) or "entity" (single with JSON array)');
     }
+
     this._config = {
       gap: 4, // smaller gap
       ...config,
     };
+  }
+
+  /**
+   * Normalize EntityInput to entity ID string
+   * Accepts both "sensor.foo" and { entity: "sensor.foo", name: "..." }
+   */
+  private _normalizeEntity(input: string | TreemapEntityConfig): string {
+    if (typeof input === 'string') return input;
+    if (isEntityConfig(input)) return input.entity;
+    return String(input);
   }
 
   public getCardSize(): number {
@@ -279,13 +298,14 @@ export class TreemapCard extends LitElement {
     return false;
   }
 
-  private _resolveEntities(patterns: string[]): TreemapItem[] {
+  private _resolveEntities(inputs: (string | TreemapEntityConfig)[]): TreemapItem[] {
     if (!this.hass) return [];
 
     const items: TreemapItem[] = [];
     const allEntityIds = Object.keys(this.hass.states);
 
-    for (const pattern of patterns) {
+    for (const input of inputs) {
+      const pattern = this._normalizeEntity(input);
       const matchingIds = allEntityIds.filter(
         id => matchesPattern(id, pattern) && !this._isExcluded(id)
       );
