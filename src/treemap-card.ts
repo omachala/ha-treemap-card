@@ -1,5 +1,6 @@
 import { LitElement, html, nothing, type TemplateResult, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { fireEvent, debounce } from 'custom-card-helpers';
 import {
   isEntityConfig,
   type HomeAssistant,
@@ -72,7 +73,7 @@ export class TreemapCard extends LitElement {
   private _lastRelevantStates: string | undefined;
   private _cachedData: TreemapItem[] | undefined;
   private _cachedDataHash: string | undefined;
-  private _sparklineDebounceTimer: ReturnType<typeof setTimeout> | undefined;
+  private _debouncedFetchSparklines = debounce(() => void this._fetchSparklineData(), 100);
 
   /**
    * Optimize re-renders: only update when relevant entity states change
@@ -179,19 +180,7 @@ export class TreemapCard extends LitElement {
 
   protected override updated(): void {
     // Debounce sparkline fetching to reduce API calls
-    if (this._sparklineDebounceTimer) {
-      clearTimeout(this._sparklineDebounceTimer);
-    }
-    this._sparklineDebounceTimer = setTimeout(() => {
-      void this._fetchSparklineData();
-    }, 100);
-  }
-
-  override disconnectedCallback(): void {
-    super.disconnectedCallback();
-    if (this._sparklineDebounceTimer) {
-      clearTimeout(this._sparklineDebounceTimer);
-    }
+    this._debouncedFetchSparklines();
   }
 
   private async _fetchSparklineData(): Promise<void> {
@@ -858,13 +847,7 @@ export class TreemapCard extends LitElement {
 
   private _handleClick(rect: TreemapRect): void {
     if (!rect.entity_id) return;
-
-    const event = new CustomEvent('hass-more-info', {
-      bubbles: true,
-      composed: true,
-      detail: { entityId: rect.entity_id },
-    });
-    this.dispatchEvent(event);
+    fireEvent(this, 'hass-more-info', { entityId: rect.entity_id });
   }
 }
 
