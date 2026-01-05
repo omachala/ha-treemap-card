@@ -1,19 +1,19 @@
 import { svg, nothing, type SVGTemplateResult } from 'lit';
 import type { SparklineData, HvacActionSegment } from './history';
 
-export type SparklineMode = 'light' | 'dark';
+type SparklineMode = 'light' | 'dark';
 
-export interface SparklineLineOptions {
+interface SparklineLineOptions {
   show?: boolean;
   style?: string;
 }
 
-export interface SparklineFillOptions {
+interface SparklineFillOptions {
   show?: boolean;
   style?: string;
 }
 
-export interface SparklineHvacOptions {
+interface SparklineHvacOptions {
   show?: boolean;
 }
 
