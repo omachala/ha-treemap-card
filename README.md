@@ -19,7 +19,7 @@
 
 <p align="center">
   <br>
-  <strong>This is an open source community project.<br>If you find it useful, please support it by giving a <a href="https://github.com/omachala/ha-treemap-card">⭐️ on GitHub</a></strong>
+  <strong>This is an open source community project.<br>If you find it useful, please support it by giving a ⭐️ <a href="https://github.com/omachala/ha-treemap-card">on GitHub</a></strong>
   <br><br>
 </p>
 
