@@ -556,6 +556,11 @@ export class TreemapCard extends LitElement {
     const filterBelow = this._config.filter?.below;
 
     return data.filter(item => {
+      // Skip filter.above/below checks for unavailable entities
+      // (they have placeholder value 0, which would incorrectly trigger filters)
+      if (item.unavailable) {
+        return true;
+      }
       if (filterAbove !== undefined && item.value <= filterAbove) {
         return false;
       }
@@ -758,8 +763,8 @@ export class TreemapCard extends LitElement {
     // Format value: config precision > entity display_precision > default 1
     let formattedValue: string;
     if (rect.unavailable && rect.rawState) {
-      // Show raw state for unavailable entities (e.g., "unavailable", "unknown")
-      formattedValue = rect.rawState;
+      // Show raw state for unavailable entities, capitalized like HA does (e.g., "Unavailable", "Unknown")
+      formattedValue = rect.rawState.charAt(0).toUpperCase() + rect.rawState.slice(1);
     } else {
       const entityPrecision = rect.entity_id
         ? this.hass?.entities?.[rect.entity_id]?.display_precision
