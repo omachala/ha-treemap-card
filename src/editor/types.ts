@@ -12,10 +12,3 @@ export interface LovelaceCardEditor extends HTMLElement {
   lovelace?: unknown;
   setConfig(config: TreemapCardConfig): void;
 }
-
-/**
- * Config changed event detail
- */
-export interface ConfigChangedEventDetail {
-  config: TreemapCardConfig;
-}
