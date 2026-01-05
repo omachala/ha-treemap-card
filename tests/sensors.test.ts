@@ -698,7 +698,7 @@ describe('Sensor Entities', () => {
       const shadow = card.shadowRoot;
       const valueEl = shadow?.querySelector('.treemap-value');
 
-      expect(valueEl?.textContent).toBe('unavailable');
+      expect(valueEl?.textContent).toBe('Unavailable');
     });
 
     it('applies gray color to unavailable entities', async () => {
@@ -745,6 +745,83 @@ describe('Sensor Entities', () => {
 
       expect(deadSensor).toBeDefined();
       expect(deadSensor?.backgroundColor).toContain('rgb(255, 0, 0)');
+    });
+
+    it('includes unavailable entities when using filter.above', async () => {
+      // Bug report: "Unknown" entities not showing when used with filter.above
+      // https://github.com/omachala/ha-treemap-card/issues/20
+      const hass = mockHass([
+        mockEntity('sensor.mqtt_1', '5', { friendly_name: 'MQTT 1' }),
+        mockEntity('sensor.mqtt_2', '10', { friendly_name: 'MQTT 2' }),
+        mockEntity('sensor.mqtt_3', 'unknown', { friendly_name: 'MQTT Unknown' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.mqtt_*'],
+        filter: { unavailable: true, above: 3 },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const items = getRenderedItems(card);
+
+      // Should include: mqtt_1 (5 > 3), mqtt_2 (10 > 3), and mqtt_unknown (unavailable, should be included)
+      expect(items).toHaveLength(3);
+      expect(items.find(i => i.label === 'MQTT 1')).toBeDefined();
+      expect(items.find(i => i.label === 'MQTT 2')).toBeDefined();
+      expect(items.find(i => i.label === 'MQTT Unknown')).toBeDefined();
+    });
+
+    it('includes unavailable entities when using filter.below', async () => {
+      // This should work (reported as working in issue)
+      const hass = mockHass([
+        mockEntity('sensor.mqtt_1', '5', { friendly_name: 'MQTT 1' }),
+        mockEntity('sensor.mqtt_2', '10', { friendly_name: 'MQTT 2' }),
+        mockEntity('sensor.mqtt_3', 'unknown', { friendly_name: 'MQTT Unknown' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.mqtt_*'],
+        filter: { unavailable: true, below: 8 },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const items = getRenderedItems(card);
+
+      // Should include: mqtt_1 (5 < 8), and mqtt_unknown (unavailable, should be included)
+      // mqtt_2 (10) should be filtered out
+      expect(items).toHaveLength(2);
+      expect(items.find(i => i.label === 'MQTT 1')).toBeDefined();
+      expect(items.find(i => i.label === 'MQTT Unknown')).toBeDefined();
+      expect(items.find(i => i.label === 'MQTT 2')).toBeUndefined();
+    });
+
+    it('displays capitalized state text for unavailable entities', async () => {
+      // Bug report: raw state shows as "unknown" instead of "Unknown"
+      // https://github.com/omachala/ha-treemap-card/issues/20
+      const hass = mockHass([
+        mockEntity('sensor.dead', 'unknown', {
+          friendly_name: 'Dead Sensor',
+          unit_of_measurement: '%',
+        }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.dead'],
+        filter: { unavailable: true },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const shadow = card.shadowRoot;
+      const valueEl = shadow?.querySelector('.treemap-value');
+
+      // Should capitalize like HA does: "Unknown" not "unknown"
+      expect(valueEl?.textContent).toBe('Unknown');
     });
   });
 
