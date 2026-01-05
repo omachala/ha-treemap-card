@@ -38,6 +38,9 @@ jobs:
       - name: Type check
         run: pnpm typecheck
 
+      - name: Check unused code
+        run: pnpm knip
+
       - name: Test with coverage
         run: pnpm vitest run --coverage
 

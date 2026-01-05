@@ -78,8 +78,10 @@ export async function getHistoryData(
 
 /**
  * Clear all cached history data.
+ * Currently unused but kept for future debugging/testing needs.
  */
-export function clearHistoryCache(): void {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function clearHistoryCache(): void {
   cache.clear();
 }
 
