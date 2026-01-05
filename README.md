@@ -12,16 +12,14 @@
 </p>
 
 <p align="center">
+  <strong>Free open source community project.<br>If you find it useful, please support it by giving a ⭐️ <a href="https://github.com/omachala/ha-treemap-card">on GitHub</a></strong>
+</p>
+
+<p align="center">
   A custom Lovelace card that dynamically visualizes entities as a treemap. Rectangle sizes represent relative values while colors indicate status - perfect for comparing sensors, lights, thermostats, portfolios or any numeric data at a glance.
 </p>
 
 <img src="https://raw.githubusercontent.com/omachala/ha-treemap-card/master/docs/screenshot.png" width="800" alt="Treemap Card">
-
-<p align="center">
-  <br>
-  <strong>This is an open source community project.<br>If you find it useful, please support it by giving a ⭐️ <a href="https://github.com/omachala/ha-treemap-card">on GitHub</a></strong>
-  <br><br>
-</p>
 
 ### Why Treemap Card?
 
