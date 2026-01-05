@@ -1,5 +1,11 @@
 # ha-treemap-card
 
+## 0.13.1
+
+### Patch Changes
+
+- 3dfd77e: Fixed unavailable entities being incorrectly filtered out when using `filter.above`. Also fixed capitalization of "Unknown" and "Unavailable" states to match Home Assistant's UI.
+
 ## 0.13.0
 
 ### Minor Changes
