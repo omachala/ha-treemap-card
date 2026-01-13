@@ -1,0 +1,29 @@
+{
+  "outputDirectory": "heroshots",
+  "outputFormat": "png",
+  "jpegQuality": 80,
+  "screenshots": [
+    {
+      "id": "20h67r9h",
+      "name": "Humidity",
+      "url": "https://homeassistant.macha.la/lovelace/2",
+      "selector": "html > body > home-assistant  >>>  home-assistant-main  >>>  ha-drawer > partial-panel-resolver > ha-panel-lovelace  >>>  hui-root  >>>  div > #view > hui-view > hui-masonry-view  >>>  #columns > div.column:nth-of-type(1) > hui-card:nth-of-type(1) > treemap-card.type-custom-treemap-card  >>>  ha-card",
+      "filename": "humidity.png",
+      "scroll": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "xnoww150",
+      "name": "Radioators",
+      "url": "https://homeassistant.macha.la/lovelace/2",
+      "selector": "html > body > home-assistant  >>>  home-assistant-main  >>>  ha-drawer > partial-panel-resolver > ha-panel-lovelace  >>>  hui-root  >>>  div > #view > hui-view > hui-masonry-view  >>>  #columns > div.column:nth-of-type(2) > hui-card:nth-of-type(1) > treemap-card.type-custom-treemap-card  >>>  ha-card",
+      "filename": "radioators.png",
+      "scroll": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  ]
+}
