@@ -4,6 +4,7 @@
   "project": ["src/**/*.ts"],
   "ignore": ["src/**/*.test.ts"],
   "ignoreDependencies": [],
+  "ignoreBinaries": ["heroshot"],
   "rules": {
     "files": "error",
     "dependencies": "error",
