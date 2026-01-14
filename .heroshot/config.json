@@ -9,10 +9,17 @@
       "url": "https://homeassistant.macha.la/lovelace/2",
       "selector": "html > body > home-assistant  >>>  home-assistant-main  >>>  ha-drawer > partial-panel-resolver > ha-panel-lovelace  >>>  hui-root  >>>  div > #view > hui-view > hui-masonry-view  >>>  #columns > div.column:nth-of-type(1) > hui-card:nth-of-type(1) > treemap-card.type-custom-treemap-card  >>>  ha-card",
       "filename": "humidity.png",
+      "padding": {
+        "top": 10,
+        "right": 10,
+        "bottom": 10,
+        "left": 10
+      },
       "scroll": {
         "x": 0,
         "y": 0
-      }
+      },
+      "maskPadding": true
     },
     {
       "id": "xnoww150",
@@ -20,10 +27,53 @@
       "url": "https://homeassistant.macha.la/lovelace/2",
       "selector": "html > body > home-assistant  >>>  home-assistant-main  >>>  ha-drawer > partial-panel-resolver > ha-panel-lovelace  >>>  hui-root  >>>  div > #view > hui-view > hui-masonry-view  >>>  #columns > div.column:nth-of-type(2) > hui-card:nth-of-type(1) > treemap-card.type-custom-treemap-card  >>>  ha-card",
       "filename": "radioators.png",
+      "padding": {
+        "top": 10,
+        "right": 10,
+        "bottom": 10,
+        "left": 10
+      },
       "scroll": {
         "x": 0,
         "y": 0
-      }
+      },
+      "maskPadding": true
+    },
+    {
+      "id": "f5qfh0ie",
+      "name": "Climate",
+      "url": "https://homeassistant.macha.la/lovelace/2",
+      "selector": "html > body > home-assistant  >>>  home-assistant-main  >>>  ha-drawer > partial-panel-resolver > ha-panel-lovelace  >>>  hui-root  >>>  div > #view > hui-view > hui-masonry-view  >>>  #columns > div.column:nth-of-type(3) > hui-card:nth-of-type(1) > treemap-card.type-custom-treemap-card  >>>  ha-card",
+      "filename": "climate.png",
+      "padding": {
+        "top": 10,
+        "right": 10,
+        "bottom": 10,
+        "left": 10
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0
+      },
+      "maskPadding": true
+    },
+    {
+      "id": "f3ek97ap",
+      "name": "Stocks",
+      "url": "https://homeassistant.macha.la/lovelace/2",
+      "selector": "html > body > home-assistant  >>>  home-assistant-main  >>>  ha-drawer > partial-panel-resolver > ha-panel-lovelace  >>>  hui-root  >>>  div > #view > hui-view > hui-masonry-view  >>>  #columns > div.column:nth-of-type(1) > hui-card:nth-of-type(2) > treemap-card.type-custom-treemap-card  >>>  ha-card",
+      "filename": "stocks.png",
+      "padding": {
+        "top": 10,
+        "right": 10,
+        "bottom": 10,
+        "left": 10
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0
+      },
+      "maskPadding": true
     }
   ]
 }
