@@ -666,6 +666,13 @@ by BeardedTinker<br>
 
 ---
 
+**[Visualizing Your Smart Home Health with the HA Treemap Card](https://www.dima.pm/visualizing-your-smart-home-health-with-the-ha-treemap-card/)**<br>
+by Dima Tokar<br>
+In-depth guide on using the treemap card for maintenance dashboards: battery monitoring, MQTT reconnect tracking, and WiFi signal strength visualization.<br>
+<a href="https://www.dima.pm/visualizing-your-smart-home-health-with-the-ha-treemap-card/"><img src="https://img.shields.io/badge/Blog-Post-blue?style=flat" alt="Blog Post"></a>
+
+---
+
 ## Author
 
 Created and maintained by [Ondrej Machala](https://github.com/omachala) ([LinkedIn](https://linkedin.com/in/omachala)).
