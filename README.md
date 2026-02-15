@@ -387,13 +387,43 @@ color:
 
 | Option               | Default | Description                                                                                                                                                                                                                                                                    |
 | -------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `order`              | `desc`  | Sort order: `desc` (largest first) or `asc` (smallest first).                                                                                                                                                                                                                  |
+| `order`              | `desc`  | Sort direction: `desc` (high to low) or `asc` (low to high). Works with any `sort_by` option.                                                                                                                                                                                  |
+| `sort_by`            | `value` | What to sort by: `value` (optimal layout), `entity_id` (alphabetically), `label` (by friendly name), or `default` (preserve config order). Perfect for battery grids or alphabetical lists where predictable positioning matters.                                              |
 | `limit`              |         | Maximum items to show.                                                                                                                                                                                                                                                         |
 | `filter.above`       |         | Only show items with value greater than this.                                                                                                                                                                                                                                  |
 | `filter.below`       |         | Only show items with value less than this.                                                                                                                                                                                                                                     |
 | `filter.unavailable` | `false` | Include entities that stopped reporting or are unreachable (`unavailable`, `unknown`, `none` states). Useful for battery monitoring where dead sensors matter as much as low batteries. Displays state text and gray background (customize via [`color.unavailable`](#color)). |
 
 > **Note:** These filters work on entity _values_ after entities are resolved. For entity-level filtering (by area, device, label, attributes), see the [Auto-Entities guide](#auto-entities-guide).
+
+**Battery monitoring with fixed positions:**
+
+When monitoring battery cells or sensors where predictable positioning matters more than value-based layout, use `sort_by: entity_id` or `sort_by: label`:
+
+```yaml
+type: custom:treemap-card
+header:
+  title: Battery Cells
+entities:
+  - sensor.battery_cell_1
+  - sensor.battery_cell_2
+  - sensor.battery_cell_3
+  - sensor.battery_cell_4
+  - sensor.battery_cell_5
+  - sensor.battery_cell_6
+  - sensor.battery_cell_7
+  - sensor.battery_cell_8
+sort_by: entity_id # Cells always appear in same position
+size:
+  equal: true # Equal-size grid
+color:
+  low: '#ff6b35' # Red for low battery
+  high: '#16a34a' # Green for full
+```
+
+This creates a predictable grid where each cell stays in the same position regardless of charge level. Perfect for quickly spotting which specific cell needs attention.
+
+For alphabetical sorting by friendly name, use `sort_by: label`. For exact config order (top to bottom, left to right), use `sort_by: default`.
 
 ### Layout
 
@@ -571,16 +601,19 @@ sparkline:
 
 Below are common sizing and ordering configurations to achieve different visual effects:
 
-| What you want                                     | Configuration                        |
-| ------------------------------------------------- | ------------------------------------ |
-| Biggest values = biggest rectangles, shown first  | `order: desc` (default)              |
-| Biggest values = biggest rectangles, shown last   | `order: asc`                         |
-| Smallest values = biggest rectangles, shown first | `order: desc` + `size.inverse: true` |
-| Smallest values = biggest rectangles, shown last  | `order: asc` + `size.inverse: true`  |
-| All rectangles same size                          | `size.equal: true`                   |
-| Hide zero-value items                             | `size.min: 0`                        |
-| Tame outliers (e.g., cap 1000W at 100W)           | `size.max: 100`                      |
-| Boost small items (e.g., 0-5 become 10)           | `size.min: 10`                       |
+| What you want                                     | Configuration                             |
+| ------------------------------------------------- | ----------------------------------------- |
+| Biggest values = biggest rectangles, shown first  | `order: desc` (default)                   |
+| Biggest values = biggest rectangles, shown last   | `order: asc`                              |
+| Smallest values = biggest rectangles, shown first | `order: desc` + `size.inverse: true`      |
+| Smallest values = biggest rectangles, shown last  | `order: asc` + `size.inverse: true`       |
+| All rectangles same size                          | `size.equal: true`                        |
+| Battery grid sorted by cell number                | `size.equal: true` + `sort_by: entity_id` |
+| Alphabetical list by friendly name                | `sort_by: label`                          |
+| Keep exact config order                           | `sort_by: default`                        |
+| Hide zero-value items                             | `size.min: 0`                             |
+| Tame outliers (e.g., cap 1000W at 100W)           | `size.max: 100`                           |
+| Boost small items (e.g., 0-5 become 10)           | `size.min: 10`                            |
 
 > **Note:** `size.min` and `size.max` use the same units as your entity values, not percentages of the layout.
 >

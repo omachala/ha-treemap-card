@@ -115,10 +115,44 @@ function layoutRow(
   }
 }
 
+type SortBy = 'value' | 'entity_id' | 'label' | 'default';
+
 interface SquarifyOptions {
   compressRange?: boolean;
   equalSize?: boolean;
   ascending?: boolean;
+  sortBy?: SortBy;
+}
+
+/**
+ * Sort items based on sortBy strategy
+ */
+function sortItems<T extends TreemapItem>(items: T[], sortBy: SortBy, ascending: boolean): T[] {
+  if (sortBy === 'default') {
+    return [...items];
+  }
+
+  return [...items].sort((a, b) => {
+    let comparison: number;
+
+    if (sortBy === 'entity_id') {
+      const aId = a.entity_id ?? '';
+      const bId = b.entity_id ?? '';
+      comparison = aId.localeCompare(bId);
+    } else if (sortBy === 'label') {
+      comparison = a.label.localeCompare(b.label);
+    } else {
+      // sortBy === 'value'
+      comparison = a.value - b.value;
+    }
+
+    return ascending ? comparison : -comparison;
+  });
+}
+
+export interface SquarifyResult {
+  rects: TreemapRect[];
+  rows: number; // Number of rows in the layout
 }
 
 /**
@@ -128,10 +162,11 @@ function gridLayout(
   items: TreemapItem[],
   width: number,
   height: number,
-  ascending = false
-): TreemapRect[] {
+  ascending = false,
+  sortBy: SortBy = 'value'
+): SquarifyResult {
   const n = items.length;
-  if (n === 0) return [];
+  if (n === 0) return { rects: [], rows: 0 };
 
   // Calculate optimal grid dimensions
   const aspectRatio = width / height;
@@ -145,12 +180,10 @@ function gridLayout(
   const cellWidth = width / cols;
   const cellHeight = height / rows;
 
-  // Sort items by value for grid layout
-  const sortedItems = [...items].sort((a, b) =>
-    ascending ? a.value - b.value : b.value - a.value
-  );
+  // Sort items using shared sorting logic
+  const sortedItems = sortItems(items, sortBy, ascending);
 
-  return sortedItems.map((item, index) => ({
+  const rects = sortedItems.map((item, index) => ({
     label: item.label,
     value: item.value,
     sizeValue: item.sizeValue,
@@ -167,6 +200,121 @@ function gridLayout(
     width: cellWidth,
     height: cellHeight,
   }));
+
+  return { rects, rows };
+}
+
+/**
+ * Normalize and sort items for squarify algorithm
+ */
+function normalizeAndSort(
+  items: TreemapItem[],
+  compressRange: boolean,
+  area: number,
+  sortBy: SortBy
+): { item: TreemapItem; normalizedValue: number }[] {
+  const absValues = items.map(item => Math.abs(item.value));
+  const maxAbs = Math.max(...absValues);
+
+  // Compress range using sqrt so small values are still visible
+  const sizeValues = compressRange
+    ? absValues.map(absValue => Math.sqrt(absValue / maxAbs) * maxAbs)
+    : absValues;
+
+  const totalSizeValue = sizeValues.reduce((a, b) => a + b, 0);
+
+  // Filter and map with indices preserved
+  const validItems: { item: TreemapItem; absValue: number; sizeValue: number }[] = [];
+  for (const [index, item] of items.entries()) {
+    const absValue = absValues[index];
+    const sizeValue = sizeValues[index];
+    if (absValue !== undefined && sizeValue !== undefined && sizeValue > 0 && item) {
+      validItems.push({ item, absValue, sizeValue });
+    }
+  }
+
+  // Map items with normalized values
+  const normalized = validItems.map(({ item, sizeValue }) => ({
+    item,
+    normalizedValue: (sizeValue / totalSizeValue) * area,
+  }));
+
+  // Sort based on sortBy parameter
+  if (sortBy === 'default') {
+    // Keep input order - no sorting
+  } else if (sortBy === 'entity_id') {
+    normalized.sort((a, b) => {
+      const aId = a.item.entity_id ?? '';
+      const bId = b.item.entity_id ?? '';
+      return aId.localeCompare(bId);
+    });
+  } else if (sortBy === 'label') {
+    normalized.sort((a, b) => a.item.label.localeCompare(b.item.label));
+  } else {
+    // sortBy === 'value': sort by normalizedValue descending for optimal squarify layout
+    normalized.sort((a, b) => b.normalizedValue - a.normalizedValue);
+  }
+
+  return normalized;
+}
+
+/**
+ * Build a row of items that minimizes aspect ratio
+ */
+function buildRow(
+  remaining: { item: TreemapItem; normalizedValue: number }[],
+  side: number
+): {
+  row: { item: TreemapItem; normalizedValue: number }[];
+  rowValues: number[];
+  newRemaining: { item: TreemapItem; normalizedValue: number }[];
+} {
+  const row: { item: TreemapItem; normalizedValue: number }[] = [];
+  let rowValues: number[] = [];
+  let currentRemaining = [...remaining];
+
+  while (currentRemaining.length > 0) {
+    const next = currentRemaining[0];
+    if (!next) break;
+
+    const newRowValues = [...rowValues, next.normalizedValue];
+    const currentWorst = worst(rowValues, side);
+    const newWorst = worst(newRowValues, side);
+
+    // Force last items together to avoid lonely items on their own row
+    const forceAdd = currentRemaining.length <= 3 && rowValues.length > 0;
+
+    if (rowValues.length > 0 && newWorst > currentWorst && !forceAdd) {
+      break;
+    }
+
+    row.push(next);
+    rowValues = newRowValues;
+    currentRemaining = currentRemaining.slice(1);
+  }
+
+  return { row, rowValues, newRemaining: currentRemaining };
+}
+
+/**
+ * Mirror layout for ascending order (smallest items top-left)
+ */
+function mirrorLayout(result: TreemapRect[], width: number, height: number): void {
+  for (const rect of result) {
+    // Mirror: new_x = width - old_x - rect_width, new_y = height - old_y - rect_height
+    rect.x = width - rect.x - rect.width;
+    rect.y = height - rect.y - rect.height;
+  }
+
+  // Normalize: shift all rects so the layout starts at (0,0)
+  const minX = Math.min(...result.map(rect => rect.x));
+  const minY = Math.min(...result.map(rect => rect.y));
+  if (minX !== 0 || minY !== 0) {
+    for (const rect of result) {
+      rect.x -= minX;
+      rect.y -= minY;
+    }
+  }
 }
 
 /**
@@ -181,49 +329,35 @@ export function squarify(
   width: number,
   height: number,
   options: SquarifyOptions = {}
-): TreemapRect[] {
-  const { compressRange = true, equalSize = false, ascending = false } = options;
+): SquarifyResult {
+  const { compressRange = true, equalSize = false, ascending = false, sortBy = 'value' } = options;
 
-  if (items.length === 0) return [];
+  if (items.length === 0) return { rects: [], rows: 0 };
 
   // Use grid layout for equal sizes
   if (equalSize) {
-    return gridLayout(items, width, height, ascending);
+    return gridLayout(items, width, height, ascending, sortBy);
   }
 
-  // Use absolute values for sizing (we want small losses to show as small, big losses as big)
+  // Check for zero values
   const absValues = items.map(item => Math.abs(item.value));
   const maxAbs = Math.max(...absValues);
-  if (maxAbs === 0) return [];
+  if (maxAbs === 0) return { rects: [], rows: 0 };
 
-  const area = width * height;
-
-  // Compress range using sqrt so small values are still visible
-  // sqrt(1) = 1, sqrt(100) = 10, so 1% becomes 10% of max instead of 1%
-  const sizeValues = compressRange
-    ? absValues.map(absValue => Math.sqrt(absValue / maxAbs) * maxAbs)
-    : absValues;
-
-  const totalSizeValue = sizeValues.reduce((a, b) => a + b, 0);
-
-  // Filter and map with indices preserved
-  // Note: size.min is applied before squarify, so all items should have sizeValue > 0
-  const validItems: { item: TreemapItem; absValue: number; sizeValue: number }[] = [];
-  for (const [index, item] of items.entries()) {
-    const absValue = absValues[index];
-    const sizeValue = sizeValues[index];
-    if (absValue !== undefined && sizeValue !== undefined && sizeValue > 0 && item) {
-      validItems.push({ item, absValue, sizeValue });
+  // Auto-detect equal values and use grid layout for equal row heights
+  // If all non-zero values are within 1% of each other, they're effectively equal
+  const nonZeroValues = absValues.filter(v => v > 0);
+  if (nonZeroValues.length > 1) {
+    const minAbs = Math.min(...nonZeroValues);
+    const valueRange = maxAbs - minAbs;
+    const isEqualValues = valueRange / maxAbs < 0.01; // <1% variance
+    if (isEqualValues) {
+      return gridLayout(items, width, height, ascending, sortBy);
     }
   }
 
-  // Always sort descending for optimal layout - we'll flip coordinates later if ascending
-  const normalized = validItems
-    .map(({ item, sizeValue }) => ({
-      item,
-      normalizedValue: (sizeValue / totalSizeValue) * area,
-    }))
-    .sort((a, b) => b.normalizedValue - a.normalizedValue);
+  const area = width * height;
+  const normalized = normalizeAndSort(items, compressRange, area, sortBy);
 
   const result: TreemapRect[] = [];
   let container: Container = { x: 0, y: 0, width, height };
@@ -233,32 +367,9 @@ export function squarify(
     const vertical = container.width < container.height;
     const side = vertical ? container.height : container.width;
 
-    const row: { item: TreemapItem; normalizedValue: number }[] = [];
-    let rowValues: number[] = [];
+    const { row, newRemaining } = buildRow(remaining, side);
+    remaining = newRemaining;
 
-    // Add items to row while aspect ratio improves
-    while (remaining.length > 0) {
-      const next = remaining[0];
-      if (!next) break;
-
-      const newRowValues = [...rowValues, next.normalizedValue];
-      const currentWorst = worst(rowValues, side);
-      const newWorst = worst(newRowValues, side);
-
-      // Force last items together to avoid lonely items on their own row
-      // If only 1-3 items remain and we already have some in row, keep adding
-      const forceAdd = remaining.length <= 3 && rowValues.length > 0;
-
-      if (rowValues.length > 0 && newWorst > currentWorst && !forceAdd) {
-        break;
-      }
-
-      row.push(next);
-      rowValues = newRowValues;
-      remaining = remaining.slice(1);
-    }
-
-    // Layout the row
     const { rects, remaining: newContainer } = layoutRow(row, container, vertical);
     result.push(...rects);
     container = newContainer;
@@ -267,30 +378,14 @@ export function squarify(
     if (container.width <= 0 || container.height <= 0) break;
   }
 
-  // Note: We intentionally do NOT post-process aspect ratios here
-  // Shrinking individual rectangles would break row consistency
-  // (items in the same row must have the same height/width)
-
   // For ascending order, flip the entire layout by mirroring coordinates
-  // This puts smallest items top-left while keeping their original sizes
   if (ascending && result.length > 0) {
-    for (const rect of result) {
-      // Mirror: new_x = width - old_x - rect_width, new_y = height - old_y - rect_height
-      rect.x = width - rect.x - rect.width;
-      rect.y = height - rect.y - rect.height;
-    }
-
-    // Normalize: shift all rects so the layout starts at (0,0)
-    // This is needed because aspect ratio post-processing may leave gaps
-    const minX = Math.min(...result.map(rect => rect.x));
-    const minY = Math.min(...result.map(rect => rect.y));
-    if (minX !== 0 || minY !== 0) {
-      for (const rect of result) {
-        rect.x -= minX;
-        rect.y -= minY;
-      }
-    }
+    mirrorLayout(result, width, height);
   }
 
-  return result;
+  // Count rows by unique Y positions
+  const uniqueYPositions = new Set(result.map(rect => Math.round(rect.y * 100) / 100));
+  const rows = uniqueYPositions.size;
+
+  return { rects: result, rows };
 }
