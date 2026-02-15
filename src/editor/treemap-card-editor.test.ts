@@ -119,11 +119,7 @@ function isTreemapCardEditor(el: Element): el is TreemapCardEditor {
 function isConfigChangedEvent(e: Event): e is CustomEvent<{ config: TreemapCardConfig }> {
   if (!(e instanceof CustomEvent)) return false;
   const detail: unknown = e.detail;
-  return (
-    detail !== null &&
-    typeof detail === 'object' &&
-    Object.prototype.hasOwnProperty.call(detail, 'config')
-  );
+  return detail !== null && typeof detail === 'object' && Object.hasOwn(detail, 'config');
 }
 
 /**
@@ -687,10 +683,11 @@ describe('TreemapCardEditor', () => {
       });
       await editor.updateComplete;
 
-      const select = getElement(editor, '[data-testid="data-section"] ha-select');
-      expect(select).toBeTruthy();
-      if (isHaSelect(select)) {
-        expect(select.value).toBe('desc');
+      const selects = editor.shadowRoot?.querySelectorAll('[data-testid="data-section"] ha-select');
+      const orderSelect = selects?.[1]; // Second select is "Order"
+      expect(orderSelect).toBeTruthy();
+      if (isHaSelect(orderSelect)) {
+        expect(orderSelect.value).toBe('desc');
       }
     });
 
@@ -703,10 +700,11 @@ describe('TreemapCardEditor', () => {
 
       const configChangedPromise = waitForConfigChange(editor);
 
-      const select = getElement(editor, '[data-testid="data-section"] ha-select');
-      if (isHaSelect(select)) {
-        select.value = 'asc';
-        select.dispatchEvent(new Event('selected', { bubbles: true }));
+      const selects = editor.shadowRoot?.querySelectorAll('[data-testid="data-section"] ha-select');
+      const orderSelect = selects?.[1]; // Second select is "Order"
+      if (isHaSelect(orderSelect)) {
+        orderSelect.value = 'asc';
+        orderSelect.dispatchEvent(new Event('selected', { bubbles: true }));
       }
 
       const newConfig = await configChangedPromise;

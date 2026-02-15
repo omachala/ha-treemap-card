@@ -173,7 +173,7 @@ describe('Auto-entities compatibility', () => {
   it('per-entity icon override takes priority over global icon.icon', async () => {
     const hass = mockHass([
       mockEntity('sensor.temp_living', '22.5', { friendly_name: 'Living Room' }),
-      mockEntity('sensor.temp_bedroom', '20.0', { friendly_name: 'Bedroom' }),
+      mockEntity('sensor.temp_bedroom', '20', { friendly_name: 'Bedroom' }),
     ]);
 
     card.setConfig({
