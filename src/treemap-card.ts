@@ -73,7 +73,7 @@ export class TreemapCard extends LitElement {
   private _lastRelevantStates: string | undefined;
   private _cachedData: TreemapItem[] | undefined;
   private _cachedDataHash: string | undefined;
-  private _debouncedFetchSparklines = debounce(() => void this._fetchSparklineData(), 100);
+  private readonly _debouncedFetchSparklines = debounce(() => void this._fetchSparklineData(), 100);
 
   /**
    * Optimize re-renders: only update when relevant entity states change
@@ -313,7 +313,7 @@ export class TreemapCard extends LitElement {
         const defaultLabel =
           labelAttribute === 'entity_id'
             ? entityId
-            : String(entity.attributes[labelAttribute] ?? entityId.split('.').pop());
+            : String(entity.attributes[labelAttribute] ?? entityId.split('.').pop() ?? entityId);
 
         // Use name override from EntityConfig if provided
         const label = nameOverride ?? defaultLabel;
@@ -427,7 +427,8 @@ export class TreemapCard extends LitElement {
         if (valueAttribute === 'state') {
           value = Number.parseFloat(entity.state);
         } else {
-          value = Number.parseFloat(String(entity.attributes[valueAttribute] ?? 0));
+          const attrValue = entity.attributes[valueAttribute];
+          value = Number.parseFloat(String(attrValue ?? 0));
         }
 
         if (Number.isNaN(value)) {
@@ -641,10 +642,12 @@ export class TreemapCard extends LitElement {
     const orderAsc = this._config?.order === 'asc';
     const sizeInverse = this._config?.size?.inverse === true;
     const isAsc = sizeInverse ? !orderAsc : orderAsc;
-    const rects = squarify(layoutInput, 100, 100, {
+    const sortBy = this._config?.sort_by ?? 'value';
+    const { rects, rows } = squarify(layoutInput, 100, 100, {
       compressRange: true,
       equalSize,
       ascending: isAsc,
+      sortBy,
     });
 
     // Restore original display values by matching on entity_id (or label for JSON mode)
@@ -659,10 +662,8 @@ export class TreemapCard extends LitElement {
       }
     }
 
-    // Dynamic height based on number of rows (not items)
-    // Count unique Y positions to estimate rows
-    const uniqueYPositions = new Set(rects.map(rect => Math.round(rect.y)));
-    const numberRows = Math.max(1, uniqueYPositions.size);
+    // Dynamic height based on actual row count from squarify algorithm
+    const numberRows = Math.max(1, rows);
     const baseHeight = Math.max(150, numberRows * 100); // 100px per row, min 150px
     const height = this._config.height ?? baseHeight;
     const gap = this._config.gap ?? 6;
@@ -681,58 +682,60 @@ export class TreemapCard extends LitElement {
     `;
   }
 
-  private _renderRect(
-    rect: TreemapRect,
-    min: number,
-    max: number,
-    _containerHeight: number,
-    gap: number
-  ): TemplateResult {
-    // Determine color: climate off/unavailable > active HVAC > light entities > standard gradient
-    let color: string;
+  /**
+   * Determine color for a treemap rect based on entity type and state.
+   * Priority: unavailable > climate off > climate HVAC active > light > gradient
+   */
+  private _getRectColor(rect: TreemapRect, min: number, max: number): string {
     const opacity = this._config?.color?.opacity;
 
     // Unavailable entities always get gray color
     if (rect.unavailable) {
       const unavailableColor = this._config?.color?.unavailable ?? '#868e96';
-      color = opacity !== undefined ? applyOpacity(unavailableColor, opacity) : unavailableColor;
-    } else if (
-      // Climate entities that are off or unavailable always get gray color
+      return opacity === undefined ? unavailableColor : applyOpacity(unavailableColor, opacity);
+    }
+
+    // Climate entities that are off or unavailable always get gray color
+    if (
       rect.climate &&
       (rect.climate.hvacMode === 'off' || rect.climate.hvacMode === 'unavailable')
     ) {
       const offColor = this._config?.color?.hvac?.off ?? '#868e96';
-      color = opacity !== undefined ? applyOpacity(offColor, opacity) : offColor;
-    } else if (rect.climate && this._config?.color?.hvac) {
-      // HVAC colors only override when ACTIVELY heating/cooling
+      return opacity === undefined ? offColor : applyOpacity(offColor, opacity);
+    }
+
+    // HVAC colors only override when ACTIVELY heating/cooling
+    if (rect.climate && this._config?.color?.hvac) {
       const hvacConfig = this._config.color.hvac;
       if (rect.climate.hvacAction === 'heating' && hvacConfig.heating) {
-        color =
-          opacity !== undefined ? applyOpacity(hvacConfig.heating, opacity) : hvacConfig.heating;
-      } else if (rect.climate.hvacAction === 'cooling' && hvacConfig.cooling) {
-        color =
-          opacity !== undefined ? applyOpacity(hvacConfig.cooling, opacity) : hvacConfig.cooling;
-      } else {
-        // idle, off, or no active action - use gradient
-        color = this._getColor(rect.colorValue, min, max);
+        return opacity === undefined
+          ? hvacConfig.heating
+          : applyOpacity(hvacConfig.heating, opacity);
       }
-    } else if (rect.light) {
-      color = this._getLightColor(rect);
-    } else {
-      color = this._getColor(rect.colorValue, min, max);
+      if (rect.climate.hvacAction === 'cooling' && hvacConfig.cooling) {
+        return opacity === undefined
+          ? hvacConfig.cooling
+          : applyOpacity(hvacConfig.cooling, opacity);
+      }
+      // idle, off, or no active action - fall through to gradient
     }
-    const sizeClass = this._getSizeClass(rect);
 
-    // Check if HVAC is actively heating/cooling (for pulsing animation)
-    const isHvacActive =
-      rect.climate?.hvacAction === 'heating' || rect.climate?.hvacAction === 'cooling';
+    // Light entities use custom light color logic
+    if (rect.light) {
+      return this._getLightColor(rect);
+    }
 
-    const showIcon = this._config?.icon?.show ?? true;
-    const showLabel = this._config?.label?.show ?? true;
-    const showValue = this._config?.value?.show ?? true;
+    // Default: use gradient color
+    return this._getColor(rect.colorValue, min, max);
+  }
+
+  /**
+   * Format label with replace regex and prefix/suffix.
+   */
+  private _formatLabel(rect: TreemapRect): string {
+    let displayLabel = rect.label;
 
     // Apply label replace regex if configured
-    let displayLabel = rect.label;
     const replacePattern = this._config?.label?.replace;
     if (replacePattern) {
       const parts = replacePattern.split('/');
@@ -751,40 +754,51 @@ export class TreemapCard extends LitElement {
     // Apply prefix/suffix
     const labelPrefix = this._config?.label?.prefix || '';
     const labelSuffix = this._config?.label?.suffix || '';
+    return `${labelPrefix}${displayLabel}${labelSuffix}`;
+  }
+
+  /**
+   * Format value with precision, abbreviation, prefix/suffix, and unit.
+   */
+  private _formatValue(rect: TreemapRect): string {
     const valuePrefix = this._config?.value?.prefix;
     const valueSuffix = this._config?.value?.suffix;
 
-    const formattedLabel = `${labelPrefix}${displayLabel}${labelSuffix}`;
+    // Show raw state for unavailable entities, capitalized like HA does
+    if (rect.unavailable && rect.rawState) {
+      return rect.rawState.charAt(0).toUpperCase() + rect.rawState.slice(1);
+    }
 
-    // Add + sign for positive temp_offset values (negative already has -, zero has no sign)
+    // Format numeric value
+    const entityPrecision = rect.entity_id
+      ? this.hass?.entities?.[rect.entity_id]?.display_precision
+      : undefined;
+    const precision = resolvePrecision(this._config?.value?.precision, entityPrecision);
+    const abbreviate = this._config?.value?.abbreviate ?? false;
+    const formattedNumber = formatNumber(rect.value, precision, abbreviate);
+
+    // Add + sign for positive temp_offset values
     const isTemperatureOffset = this._config?.value?.attribute === 'temp_offset';
     const signPrefix = isTemperatureOffset && rect.value > 0 ? '+' : '';
 
-    // Format value: config precision > entity display_precision > default 1
-    let formattedValue: string;
-    if (rect.unavailable && rect.rawState) {
-      // Show raw state for unavailable entities, capitalized like HA does (e.g., "Unavailable", "Unknown")
-      formattedValue = rect.rawState.charAt(0).toUpperCase() + rect.rawState.slice(1);
-    } else {
-      const entityPrecision = rect.entity_id
-        ? this.hass?.entities?.[rect.entity_id]?.display_precision
-        : undefined;
-      const precision = resolvePrecision(this._config?.value?.precision, entityPrecision);
-      const abbreviate = this._config?.value?.abbreviate ?? false;
-      const formattedNumber = formatNumber(rect.value, precision, abbreviate);
+    // If prefix or suffix is defined, use only those. Otherwise, auto-append unit from entity.
+    const hasCustomFormat = valuePrefix !== undefined || valueSuffix !== undefined;
+    const unitSuffix = rect.unit ? ' ' + rect.unit : '';
 
-      // If prefix or suffix is defined, use only those. Otherwise, auto-append unit from entity.
-      const hasCustomFormat = valuePrefix !== undefined || valueSuffix !== undefined;
-      formattedValue = hasCustomFormat
-        ? `${valuePrefix || ''}${signPrefix}${formattedNumber}${valueSuffix || ''}`
-        : `${signPrefix}${formattedNumber}${rect.unit ? ` ${rect.unit}` : ''}`;
-    }
+    return hasCustomFormat
+      ? `${valuePrefix ?? ''}${signPrefix}${formattedNumber}${valueSuffix ?? ''}`
+      : `${signPrefix}${formattedNumber}${unitSuffix}`;
+  }
 
-    // Calculate gap in percentage terms
-    // Container is 100% wide, gap is in pixels, so we need to use calc()
-    const halfGap = gap / 2;
-
-    // Determine where to apply color: background (default) or foreground
+  /**
+   * Calculate styles for icon, label, and value based on color target mode.
+   */
+  private _calculateStyles(color: string): {
+    backgroundColor: string;
+    iconStyle: string;
+    labelStyle: string;
+    valueStyle: string;
+  } {
     const colorTarget = this._config?.color?.target ?? 'background';
     const applyToForeground = colorTarget === 'foreground';
 
@@ -797,14 +811,34 @@ export class TreemapCard extends LitElement {
       : getContrastColors(color);
 
     // Custom styles (user styles override auto contrast)
-    const iconStyle = this._config?.icon?.style || '';
-    const labelStyle = this._config?.label?.style || '';
-    const valueStyle = this._config?.value?.style || '';
+    const iconStyle = this._config?.icon?.style || `color: ${textColors.icon};`;
+    const labelStyle = this._config?.label?.style || `color: ${textColors.label};`;
+    const valueStyle = this._config?.value?.style || `color: ${textColors.value};`;
 
-    // Only apply auto text color if no custom style is set
-    const autoIconStyle = iconStyle || `color: ${textColors.icon};`;
-    const autoLabelStyle = labelStyle || `color: ${textColors.label};`;
-    const autoValueStyle = valueStyle || `color: ${textColors.value};`;
+    return { backgroundColor, iconStyle, labelStyle, valueStyle };
+  }
+
+  private _renderRect(
+    rect: TreemapRect,
+    min: number,
+    max: number,
+    _containerHeight: number,
+    gap: number
+  ): TemplateResult {
+    const color = this._getRectColor(rect, min, max);
+    const sizeClass = this._getSizeClass(rect);
+    const isHvacActive =
+      rect.climate?.hvacAction === 'heating' || rect.climate?.hvacAction === 'cooling';
+
+    const showIcon = this._config?.icon?.show ?? true;
+    const showLabel = this._config?.label?.show ?? true;
+    const showValue = this._config?.value?.show ?? true;
+
+    const formattedLabel = this._formatLabel(rect);
+    const formattedValue = this._formatValue(rect);
+    const { backgroundColor, iconStyle, labelStyle, valueStyle } = this._calculateStyles(color);
+
+    const halfGap = gap / 2;
 
     return html`
       <div
@@ -822,30 +856,31 @@ export class TreemapCard extends LitElement {
         ${showIcon && (rect.icon || this._config?.icon?.icon)
           ? html`<ha-icon
               class="treemap-icon ${isHvacActive ? 'hvac-active' : ''}"
-              style="${autoIconStyle}"
+              style="${iconStyle}"
               icon="${rect.icon || this._config?.icon?.icon}"
             ></ha-icon>`
           : nothing}
         ${showLabel
-          ? html`<span class="treemap-label" style="${autoLabelStyle}">${formattedLabel}</span>`
+          ? html`<span class="treemap-label" style="${labelStyle}">${formattedLabel}</span>`
           : nothing}
         ${showValue
-          ? html`<span class="treemap-value" style="${autoValueStyle}">${formattedValue}</span>`
+          ? html`<span class="treemap-value" style="${valueStyle}">${formattedValue}</span>`
           : nothing}
         ${this._config?.sparkline?.show !== false
-          ? html`<div class="treemap-sparkline">
-              ${renderSparklineWithData(
+          ? (() => {
+              const sparklineData =
                 rect.sparklineData ??
-                  (rect.entity_id ? this._sparklineData.get(rect.entity_id) : undefined),
-                {
+                (rect.entity_id ? this._sparklineData.get(rect.entity_id) : undefined);
+              return html`<div class="treemap-sparkline">
+                ${renderSparklineWithData(sparklineData, {
                   mode: this._config?.sparkline?.mode || 'dark',
                   line: this._config?.sparkline?.line,
                   fill: this._config?.sparkline?.fill,
                   hvac: this._config?.sparkline?.hvac,
                   periodHours: this._getPeriodHours(),
-                }
-              )}
-            </div>`
+                })}
+              </div>`;
+            })()
           : nothing}
       </div>
     `;

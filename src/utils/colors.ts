@@ -41,7 +41,7 @@ export function hsToRgb(h: number, s: number): [number, number, number] {
 export function parseColor(color: string): [number, number, number] | null {
   // Handle hex colors
   if (color.startsWith('#')) {
-    const hex = color.replace('#', '');
+    const hex = color.replaceAll('#', '');
     return [
       Number.parseInt(hex.slice(0, 2), 16),
       Number.parseInt(hex.slice(2, 4), 16),
@@ -127,8 +127,8 @@ export function interpolateColor(
   factor: number,
   opacity?: number
 ): string {
-  const hex1 = color1.replace('#', '');
-  const hex2 = color2.replace('#', '');
+  const hex1 = color1.replaceAll('#', '');
+  const hex2 = color2.replaceAll('#', '');
 
   const r1 = Number.parseInt(hex1.slice(0, 2), 16);
   const g1 = Number.parseInt(hex1.slice(2, 4), 16);
@@ -161,6 +161,70 @@ export interface GradientColorOptions {
   opacity?: number;
 }
 
+interface ThreeColorGradientParams {
+  clampedValue: number;
+  minValue: number;
+  maxValue: number;
+  midPoint: number;
+  colorLow: string;
+  colorMid: string;
+  colorHigh: string;
+  opacity?: number;
+}
+
+/**
+ * Calculate color for three-color gradient (low -> mid -> high)
+ */
+function getThreeColorGradient(params: ThreeColorGradientParams): string {
+  const { clampedValue, minValue, maxValue, midPoint, colorLow, colorMid, colorHigh, opacity } =
+    params;
+
+  if (clampedValue <= midPoint) {
+    // Below midpoint: interpolate low -> mid
+    if (minValue >= midPoint) {
+      return interpolateColor(colorMid, colorMid, 1, opacity);
+    }
+    const factor = (clampedValue - minValue) / (midPoint - minValue);
+    return interpolateColor(colorLow, colorMid, factor, opacity);
+  } else {
+    // Above midpoint: interpolate mid -> high
+    if (maxValue <= midPoint) {
+      return interpolateColor(colorMid, colorMid, 1, opacity);
+    }
+    const factor = (clampedValue - midPoint) / (maxValue - midPoint);
+    return interpolateColor(colorMid, colorHigh, factor, opacity);
+  }
+}
+
+interface TwoColorNeutralParams {
+  clampedValue: number;
+  minValue: number;
+  maxValue: number;
+  neutral: number;
+  colorLow: string;
+  colorHigh: string;
+  opacity?: number;
+}
+
+/**
+ * Calculate color for two-color gradient with neutral point
+ */
+function getTwoColorGradientWithNeutral(params: TwoColorNeutralParams): string {
+  const { clampedValue, minValue, maxValue, neutral, colorLow, colorHigh, opacity } = params;
+
+  if (clampedValue <= neutral) {
+    // Below neutral: interpolate from low to 50% blend
+    if (minValue >= neutral) return interpolateColor(colorLow, colorHigh, 0.5, opacity);
+    const factor = (clampedValue - minValue) / (neutral - minValue);
+    return interpolateColor(colorLow, colorHigh, factor * 0.5, opacity);
+  } else {
+    // Above neutral: interpolate from 50% blend to high
+    if (maxValue <= neutral) return interpolateColor(colorLow, colorHigh, 0.5, opacity);
+    const factor = (clampedValue - neutral) / (maxValue - neutral);
+    return interpolateColor(colorLow, colorHigh, 0.5 + factor * 0.5, opacity);
+  }
+}
+
 /**
  * Calculate gradient color for a value within a range
  * Supports two-color and three-color gradients with optional neutral point
@@ -184,37 +248,29 @@ export function getGradientColor(
 
   // If mid color is defined, use three-color gradient: low -> mid -> high
   if (colorMid) {
-    if (clampedValue <= midPoint) {
-      // Below midpoint: interpolate low -> mid
-      if (minValue >= midPoint) {
-        return interpolateColor(colorMid, colorMid, 1, opacity);
-      }
-      const factor = (clampedValue - minValue) / (midPoint - minValue);
-      return interpolateColor(colorLow, colorMid, factor, opacity);
-    } else {
-      // Above midpoint: interpolate mid -> high
-      if (maxValue <= midPoint) {
-        return interpolateColor(colorMid, colorMid, 1, opacity);
-      }
-      const factor = (clampedValue - midPoint) / (maxValue - midPoint);
-      return interpolateColor(colorMid, colorHigh, factor, opacity);
-    }
+    return getThreeColorGradient({
+      clampedValue,
+      minValue,
+      maxValue,
+      midPoint,
+      colorLow,
+      colorMid,
+      colorHigh,
+      opacity,
+    });
   }
 
-  // No mid color - use two-color gradient
-  // If neutral is set, use it as the center point for blending
+  // No mid color - use two-color gradient with neutral point
   if (neutral !== undefined) {
-    if (clampedValue <= neutral) {
-      // Below neutral: interpolate from low to 50% blend
-      if (minValue >= neutral) return interpolateColor(colorLow, colorHigh, 0.5, opacity);
-      const factor = (clampedValue - minValue) / (neutral - minValue);
-      return interpolateColor(colorLow, colorHigh, factor * 0.5, opacity);
-    } else {
-      // Above neutral: interpolate from 50% blend to high
-      if (maxValue <= neutral) return interpolateColor(colorLow, colorHigh, 0.5, opacity);
-      const factor = (clampedValue - neutral) / (maxValue - neutral);
-      return interpolateColor(colorLow, colorHigh, 0.5 + factor * 0.5, opacity);
-    }
+    return getTwoColorGradientWithNeutral({
+      clampedValue,
+      minValue,
+      maxValue,
+      neutral,
+      colorLow,
+      colorHigh,
+      opacity,
+    });
   }
 
   // Default: simple linear gradient from low to high

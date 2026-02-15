@@ -89,7 +89,12 @@
       "all": "tous",
       "above": "Filtrer au-dessus",
       "below": "Filtrer en-dessous",
-      "unavailable": "Inclure les entités indisponibles"
+      "unavailable": "Inclure les entités indisponibles",
+      "sort_by": "Trier par",
+      "sort_by_value": "Valeur (disposition optimale)",
+      "sort_by_entity_id": "ID d'entité",
+      "sort_by_label": "Étiquette",
+      "sort_by_default": "Ordre de configuration"
     }
   }
 }

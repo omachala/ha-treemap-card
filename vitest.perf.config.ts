@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config';
-import { readFileSync } from 'fs';
+import { readFileSync } from 'node:fs';
 
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
 

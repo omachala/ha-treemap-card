@@ -36,7 +36,7 @@ describe('Label Configuration', () => {
     it('replaces text using regex pattern', async () => {
       const hass = mockHass([
         mockEntity('sensor.room_1_temp', '22.5', { friendly_name: 'Room 1 Temp' }),
-        mockEntity('sensor.room_2_temp', '20.0', { friendly_name: 'Room 2 Temp' }),
+        mockEntity('sensor.room_2_temp', '20', { friendly_name: 'Room 2 Temp' }),
       ]);
 
       card.setConfig({
@@ -56,7 +56,7 @@ describe('Label Configuration', () => {
 
     it('replaces with replacement text', async () => {
       const hass = mockHass([
-        mockEntity('sensor.bedroom_temp', '18.0', { friendly_name: 'Bedroom Temp' }),
+        mockEntity('sensor.bedroom_temp', '18', { friendly_name: 'Bedroom Temp' }),
       ]);
 
       card.setConfig({

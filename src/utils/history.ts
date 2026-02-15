@@ -244,7 +244,7 @@ function extractTemperatures(history: HistoryState[]): number[] {
 
     const attrs = state.attributes || state.a;
     const temp = attrs?.['current_temperature'];
-    if (typeof temp === 'number' && !isNaN(temp)) {
+    if (typeof temp === 'number' && !Number.isNaN(temp)) {
       temperatures.push(temp);
     }
   }
@@ -279,11 +279,15 @@ function convertToHvacSegments(
     const stateTime = state.last_updated
       ? new Date(state.last_updated).getTime()
       : new Date((state.lu ?? 0) * 1000).getTime();
-    const nextTime = nextState
-      ? nextState.last_updated
+
+    let nextTime: number;
+    if (nextState) {
+      nextTime = nextState.last_updated
         ? new Date(nextState.last_updated).getTime()
-        : new Date((nextState.lu ?? 0) * 1000).getTime()
-      : endMs;
+        : new Date((nextState.lu ?? 0) * 1000).getTime();
+    } else {
+      nextTime = endMs;
+    }
 
     // Convert to 0-1 position
     const start = Math.max(0, (stateTime - startMs) / periodMs);

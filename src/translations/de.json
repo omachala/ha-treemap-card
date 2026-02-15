@@ -89,7 +89,12 @@
       "all": "alle",
       "above": "Filter oberhalb",
       "below": "Filter unterhalb",
-      "unavailable": "Nicht verfügbare Entitäten einschließen"
+      "unavailable": "Nicht verfügbare Entitäten einschließen",
+      "sort_by": "Sortieren nach",
+      "sort_by_value": "Wert (optimales Layout)",
+      "sort_by_entity_id": "Entitäts-ID",
+      "sort_by_label": "Bezeichnung",
+      "sort_by_default": "Konfigurationsreihenfolge"
     }
   }
 }

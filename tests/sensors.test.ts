@@ -17,7 +17,7 @@ describe('Sensor Entities', () => {
     const hass = mockHass([
       mockEntity('sensor.temp_bathroom', '22.3', { friendly_name: 'Bathroom' }),
       mockEntity('sensor.temp_kitchen', '20.5', { friendly_name: 'Kitchen' }),
-      mockEntity('sensor.temp_bedroom', '18.0', { friendly_name: 'Bedroom' }),
+      mockEntity('sensor.temp_bedroom', '18', { friendly_name: 'Bedroom' }),
     ]);
 
     card.setConfig({
@@ -34,14 +34,14 @@ describe('Sensor Entities', () => {
 
     expect(bathroom?.value).toBeCloseTo(22.3, 1);
     expect(kitchen?.value).toBeCloseTo(20.5, 1);
-    expect(bedroom?.value).toBeCloseTo(18.0, 1);
+    expect(bedroom?.value).toBeCloseTo(18, 1);
   });
 
   it('renders correct values with order asc', async () => {
     const hass = mockHass([
       mockEntity('sensor.temp_bathroom', '22.3', { friendly_name: 'Bathroom' }),
       mockEntity('sensor.temp_kitchen', '20.5', { friendly_name: 'Kitchen' }),
-      mockEntity('sensor.temp_bedroom', '18.0', { friendly_name: 'Bedroom' }),
+      mockEntity('sensor.temp_bedroom', '18', { friendly_name: 'Bedroom' }),
     ]);
 
     card.setConfig({
@@ -59,7 +59,7 @@ describe('Sensor Entities', () => {
 
     expect(bathroom?.value).toBeCloseTo(22.3, 1);
     expect(kitchen?.value).toBeCloseTo(20.5, 1);
-    expect(bedroom?.value).toBeCloseTo(18.0, 1);
+    expect(bedroom?.value).toBeCloseTo(18, 1);
 
     // With asc, smallest should be first (top-left)
     const bedroomPos = bedroom!.y * 1000 + bedroom!.x;
@@ -74,7 +74,7 @@ describe('Sensor Entities', () => {
     const hass = mockHass([
       mockEntity('sensor.temp_bathroom', '22.3', { friendly_name: 'Bathroom' }),
       mockEntity('sensor.temp_kitchen', '20.5', { friendly_name: 'Kitchen' }),
-      mockEntity('sensor.temp_bedroom', '18.0', { friendly_name: 'Bedroom' }),
+      mockEntity('sensor.temp_bedroom', '18', { friendly_name: 'Bedroom' }),
     ]);
 
     card.setConfig({
@@ -102,7 +102,7 @@ describe('Sensor Entities', () => {
     const hass = mockHass([
       mockEntity('sensor.temp_bathroom', '22.3', { friendly_name: 'Bathroom' }),
       mockEntity('sensor.temp_kitchen', '20.5', { friendly_name: 'Kitchen' }),
-      mockEntity('sensor.temp_bedroom', '18.0', { friendly_name: 'Bedroom' }),
+      mockEntity('sensor.temp_bedroom', '18', { friendly_name: 'Bedroom' }),
     ]);
 
     card.setConfig({
@@ -133,7 +133,7 @@ describe('Sensor Entities', () => {
     const hass = mockHass([
       mockEntity('sensor.temp_bathroom', '22.3', { friendly_name: 'Bathroom' }),
       mockEntity('sensor.temp_kitchen', '20.5', { friendly_name: 'Kitchen' }),
-      mockEntity('sensor.temp_bedroom', '18.0', { friendly_name: 'Bedroom' }),
+      mockEntity('sensor.temp_bedroom', '18', { friendly_name: 'Bedroom' }),
       mockEntity('sensor.temp_office', '19.5', { friendly_name: 'Office' }),
     ]);
 
@@ -150,7 +150,7 @@ describe('Sensor Entities', () => {
 
     expect(items).toHaveLength(3);
     expect(items.find(i => i.label === 'Bathroom')).toBeUndefined();
-    expect(items.find(i => i.label === 'Bedroom')?.value).toBeCloseTo(18.0, 1);
+    expect(items.find(i => i.label === 'Bedroom')?.value).toBeCloseTo(18, 1);
     expect(items.find(i => i.label === 'Office')?.value).toBeCloseTo(19.5, 1);
     expect(items.find(i => i.label === 'Kitchen')?.value).toBeCloseTo(20.5, 1);
   });

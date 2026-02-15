@@ -22,7 +22,8 @@ function getEventValue(e: Event): string {
   const target = e.target;
   // HA components and native inputs both have .value
   if (target && typeof target === 'object' && 'value' in target) {
-    return String(target.value ?? '');
+    const value = target.value;
+    return String(value ?? '');
   }
   return '';
 }
@@ -94,7 +95,7 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
   private _handleNumberChange(path: string, e: Event): void {
     if (!this._config) return;
     const strValue = getEventValue(e);
-    const value = strValue ? parseFloat(strValue) : undefined;
+    const value = strValue ? Number.parseFloat(strValue) : undefined;
     this._config = set({ ...this._config }, path, value);
     this._fireConfigChanged();
   }
@@ -546,6 +547,19 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
         <ha-expansion-panel outlined data-testid="data-section">
           <span slot="header">${this._t('editor.data.title')}</span>
           <div class="content">
+            <ha-select
+              label=${this._t('editor.data.sort_by')}
+              .value=${this._config.sort_by ?? 'value'}
+              @selected=${(e: Event) => this._handleTextChange('sort_by', e)}
+              @closed=${(e: Event) => e.stopPropagation()}
+            >
+              <ha-list-item value="value">${this._t('editor.data.sort_by_value')}</ha-list-item>
+              <ha-list-item value="entity_id"
+                >${this._t('editor.data.sort_by_entity_id')}</ha-list-item
+              >
+              <ha-list-item value="label">${this._t('editor.data.sort_by_label')}</ha-list-item>
+              <ha-list-item value="default">${this._t('editor.data.sort_by_default')}</ha-list-item>
+            </ha-select>
             <ha-select
               label=${this._t('editor.data.order')}
               .value=${this._config.order ?? 'desc'}

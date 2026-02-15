@@ -89,6 +89,8 @@ export interface TreemapCardConfig {
   gap?: number;
   // Sort order: 'desc' (largest first, default) or 'asc' (smallest first)
   order?: 'asc' | 'desc';
+  // Sort by: what to sort items by (default: 'value')
+  sort_by?: 'value' | 'entity_id' | 'label' | 'default';
   // Limit number of items shown
   limit?: number;
   // Filter configuration

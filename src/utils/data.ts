@@ -19,6 +19,98 @@ export interface PreparedData {
   colorMax: number;
 }
 
+interface DataStats {
+  colorMin: number;
+  colorMax: number;
+  sizeMin: number;
+  sizeMax: number;
+}
+
+/**
+ * Calculate min/max statistics for color and size values in a single pass
+ */
+function calculateStats(data: TreemapItem[]): DataStats {
+  let colorMin = Number.POSITIVE_INFINITY;
+  let colorMax = Number.NEGATIVE_INFINITY;
+  let sizeMin = Number.POSITIVE_INFINITY;
+  let sizeMax = Number.NEGATIVE_INFINITY;
+
+  for (const item of data) {
+    if (item.colorValue < colorMin) colorMin = item.colorValue;
+    if (item.colorValue > colorMax) colorMax = item.colorValue;
+    if (item.sizeValue < sizeMin) sizeMin = item.sizeValue;
+    if (item.sizeValue > sizeMax) sizeMax = item.sizeValue;
+  }
+
+  return { colorMin, colorMax, sizeMin, sizeMax };
+}
+
+/**
+ * Apply inverse sizing: low values get bigger rectangles
+ * Returns the new max value after inversion
+ */
+function applyInverseSizing(data: TreemapItem[], sizeMin: number, sizeMax: number): number {
+  const sizeSum = sizeMax + sizeMin;
+
+  // Invert all values
+  for (const item of data) {
+    item.sizeValue = sizeSum - item.sizeValue;
+  }
+
+  // Calculate new max and apply floor (10% of max)
+  const invertedMax = sizeSum - sizeMin;
+  const minFloor = invertedMax * 0.1;
+
+  for (const item of data) {
+    if (item.sizeValue < minFloor) {
+      item.sizeValue = minFloor;
+    }
+  }
+
+  return invertedMax;
+}
+
+/**
+ * Sort data by size value
+ */
+function sortBySize(data: TreemapItem[], inverse: boolean, ascending: boolean): TreemapItem[] {
+  const effectiveAsc = inverse ? !ascending : ascending;
+  return [...data].sort((a, b) =>
+    effectiveAsc ? a.sizeValue - b.sizeValue : b.sizeValue - a.sizeValue
+  );
+}
+
+/**
+ * Apply size maximum constraint and return the actual max value
+ */
+function applySizeMax(data: TreemapItem[], sizeMax: number | undefined): number {
+  let currentMax = 1;
+
+  for (const item of data) {
+    if (sizeMax !== undefined && item.sizeValue > sizeMax) {
+      item.sizeValue = sizeMax;
+    }
+    if (item.sizeValue > currentMax) {
+      currentMax = item.sizeValue;
+    }
+  }
+
+  return currentMax;
+}
+
+/**
+ * Apply size minimum constraint (default: 15% of max)
+ */
+function applySizeMin(data: TreemapItem[], sizeMin: number | undefined, currentMax: number): void {
+  const effectiveMin = sizeMin ?? currentMax * 0.15;
+
+  for (const item of data) {
+    if (item.sizeValue < effectiveMin) {
+      item.sizeValue = effectiveMin;
+    }
+  }
+}
+
 /**
  * Prepare treemap data for layout: calculate stats, apply sizing options, sort
  * Uses single-pass algorithms to minimize iterations over data
@@ -33,63 +125,21 @@ export function prepareTreemapData(
     return { items: [], colorMin: 0, colorMax: 0 };
   }
 
-  // Single pass: calculate all stats at once
-  let colorMin = Number.POSITIVE_INFINITY;
-  let colorMax = Number.NEGATIVE_INFINITY;
-  let sizeMinVal = Number.POSITIVE_INFINITY;
-  let sizeMaxVal = Number.NEGATIVE_INFINITY;
+  // Calculate all stats in single pass
+  const stats = calculateStats(data);
 
-  for (const item of data) {
-    if (item.colorValue < colorMin) colorMin = item.colorValue;
-    if (item.colorValue > colorMax) colorMax = item.colorValue;
-    if (item.sizeValue < sizeMinVal) sizeMinVal = item.sizeValue;
-    if (item.sizeValue > sizeMaxVal) sizeMaxVal = item.sizeValue;
-  }
-
-  // Apply inverse sizing (low values get bigger rectangles)
+  // Apply inverse sizing if requested
   if (inverse) {
-    const sizeSum = sizeMaxVal + sizeMinVal;
-    for (const item of data) {
-      item.sizeValue = sizeSum - item.sizeValue;
-    }
-    // Recalculate max after inversion for min floor calculation
-    sizeMaxVal = sizeSum - sizeMinVal;
-    const minFloor = sizeMaxVal * 0.1;
-    for (const item of data) {
-      if (item.sizeValue < minFloor) {
-        item.sizeValue = minFloor;
-      }
-    }
+    applyInverseSizing(data, stats.sizeMin, stats.sizeMax);
   }
 
-  // Sort by sizeValue
-  // When inverse is true, we flip ascending because values are already inverted
-  const effectiveAsc = inverse ? !ascending : ascending;
-  const sortedData = [...data].sort((a, b) =>
-    effectiveAsc ? a.sizeValue - b.sizeValue : b.sizeValue - a.sizeValue
-  );
-
-  // Apply limit
+  // Sort and limit
+  const sortedData = sortBySize(data, inverse, ascending);
   const limitedData = limit !== undefined && limit > 0 ? sortedData.slice(0, limit) : sortedData;
 
-  // Apply size constraints in single pass, also find currentMax
-  let currentMax = 1;
-  for (const item of limitedData) {
-    if (sizeMax !== undefined && item.sizeValue > sizeMax) {
-      item.sizeValue = sizeMax;
-    }
-    if (item.sizeValue > currentMax) {
-      currentMax = item.sizeValue;
-    }
-  }
+  // Apply size constraints
+  const currentMax = applySizeMax(limitedData, sizeMax);
+  applySizeMin(limitedData, sizeMin, currentMax);
 
-  // Apply min floor (default: 15% of max sizeValue)
-  const effectiveMin = sizeMin ?? currentMax * 0.15;
-  for (const item of limitedData) {
-    if (item.sizeValue < effectiveMin) {
-      item.sizeValue = effectiveMin;
-    }
-  }
-
-  return { items: limitedData, colorMin, colorMax };
+  return { items: limitedData, colorMin: stats.colorMin, colorMax: stats.colorMax };
 }

@@ -100,7 +100,7 @@ export function getRenderedItems(card: TreemapCard): RenderedItem[] {
 
     const label = labelEl?.textContent || '';
     const valueText = valueEl?.textContent || '';
-    const value = parseFloat(valueText);
+    const value = Number.parseFloat(valueText);
 
     const leftMatch = /left:\s*calc\(([0-9.]+)%/.exec(style.cssText);
     const topMatch = /top:\s*calc\(([0-9.]+)%/.exec(style.cssText);
@@ -120,10 +120,10 @@ export function getRenderedItems(card: TreemapCard): RenderedItem[] {
     result.push({
       label,
       value,
-      x: leftMatch?.[1] ? parseFloat(leftMatch[1]) : 0,
-      y: topMatch?.[1] ? parseFloat(topMatch[1]) : 0,
-      width: widthMatch?.[1] ? parseFloat(widthMatch[1]) : 0,
-      height: heightMatch?.[1] ? parseFloat(heightMatch[1]) : 0,
+      x: leftMatch?.[1] ? Number.parseFloat(leftMatch[1]) : 0,
+      y: topMatch?.[1] ? Number.parseFloat(topMatch[1]) : 0,
+      width: widthMatch?.[1] ? Number.parseFloat(widthMatch[1]) : 0,
+      height: heightMatch?.[1] ? Number.parseFloat(heightMatch[1]) : 0,
       backgroundColor: bgMatch?.[1]?.trim(),
       labelColor: labelColorMatch?.[1]?.trim(),
       valueColor: valueColorMatch?.[1]?.trim(),

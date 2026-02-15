@@ -136,7 +136,7 @@ export function matchesPattern(entityId: string, pattern: string): boolean {
   if (!pattern.includes('*')) {
     return entityId === pattern;
   }
-  const regex = new RegExp('^' + pattern.replaceAll('*', '.*') + '$');
+  const regex = new RegExp(`^${pattern.replaceAll('*', '.*')}$`);
   return regex.test(entityId);
 }
 
@@ -146,11 +146,11 @@ export function matchesPattern(entityId: string, pattern: string): boolean {
  * - "unknown" - entity state is not known (just started, no data yet)
  * - "none" - null/missing value (template sensor returned null)
  */
-const UNAVAILABLE_STATES: readonly string[] = ['unavailable', 'unknown', 'none'];
+const UNAVAILABLE_STATES = new Set(['unavailable', 'unknown', 'none']);
 
 /**
  * Check if an entity state indicates it's unavailable/unreachable
  */
 export function isUnavailableState(state: string): boolean {
-  return UNAVAILABLE_STATES.includes(state.toLowerCase());
+  return UNAVAILABLE_STATES.has(state.toLowerCase());
 }
