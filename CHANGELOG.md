@@ -1,5 +1,15 @@
 # ha-treemap-card
 
+## 0.14.0
+
+### Minor Changes
+
+- 00f320b: Add customizable sorting to control item order independently from sizing. Items can now be sorted by value (default), entity_id, label, or config order. Perfect for battery monitoring grids and status dashboards where predictable positioning matters.
+
+### Patch Changes
+
+- adbc18e: Improved code quality checks for better reliability
+
 ## 0.13.1
 
 ### Patch Changes
