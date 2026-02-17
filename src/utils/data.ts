@@ -46,15 +46,17 @@ function calculateStats(data: TreemapItem[]): DataStats {
 }
 
 /**
- * Apply inverse sizing: low values get bigger rectangles
- * Returns the new max value after inversion
+ * Apply inverse sizing: low values get bigger rectangles.
+ * Inverts both sizeValue (for layout area) and sortValue (so sort order reflects inverted sizing).
+ * Returns the new max value after inversion.
  */
 function applyInverseSizing(data: TreemapItem[], sizeMin: number, sizeMax: number): number {
   const sizeSum = sizeMax + sizeMin;
 
-  // Invert all values
+  // Invert sizeValue and sortValue together so sort order matches the new sizing
   for (const item of data) {
     item.sizeValue = sizeSum - item.sizeValue;
+    item.sortValue = -item.sortValue; // negate so largest inverted item sorts first
   }
 
   // Calculate new max and apply floor (10% of max)
@@ -71,7 +73,9 @@ function applyInverseSizing(data: TreemapItem[], sizeMin: number, sizeMax: numbe
 }
 
 /**
- * Sort data by size value
+ * Sort data by sizeValue for limit slicing (largest area items first or last).
+ * Uses sizeValue (always positive, inverted when size.inverse) so "limit" always
+ * means "keep the N items with the biggest rectangles".
  */
 function sortBySize(data: TreemapItem[], inverse: boolean, ascending: boolean): TreemapItem[] {
   const effectiveAsc = inverse ? !ascending : ascending;

@@ -155,6 +155,41 @@ describe('Sensor Entities', () => {
     expect(items.find(i => i.label === 'Kitchen')?.value).toBeCloseTo(20.5, 1);
   });
 
+  it('sorts negative values by actual value, not absolute value', async () => {
+    // Bug: -400 was sorting between 1000 and 200 because Math.abs(-400)=400
+    // Expected: desc order should be 1000, 200, -400 (largest to smallest actual value)
+    const hass = mockHass([
+      mockEntity('sensor.power_fridge', '200', { friendly_name: 'Fridge' }),
+      mockEntity('sensor.power_microwave', '1000', { friendly_name: 'Microwave' }),
+      mockEntity('sensor.power_solar', '-400', { friendly_name: 'Solar' }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: ['sensor.power_*'],
+      order: 'desc',
+    });
+    card.hass = hass;
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    const fridge = items.find(i => i.label === 'Fridge');
+    const microwave = items.find(i => i.label === 'Microwave');
+    const solar = items.find(i => i.label === 'Solar');
+
+    expect(fridge).toBeDefined();
+    expect(microwave).toBeDefined();
+    expect(solar).toBeDefined();
+
+    // In desc order: Microwave(1000) first, Fridge(200) second, Solar(-400) last
+    const microwavePos = microwave!.y * 1000 + microwave!.x;
+    const fridgePos = fridge!.y * 1000 + fridge!.x;
+    const solarPos = solar!.y * 1000 + solar!.x;
+
+    expect(microwavePos).toBeLessThan(fridgePos);
+    expect(fridgePos).toBeLessThan(solarPos);
+  });
+
   it('boosts very small values with size.inverse', async () => {
     // Test the minFloor logic (line 521): when size.inverse produces tiny values,
     // they get boosted to at least 10% of max

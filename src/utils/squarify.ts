@@ -53,6 +53,7 @@ function layoutRow(
         label: entry.item.label,
         value: entry.item.value,
         sizeValue: entry.item.sizeValue,
+        sortValue: entry.item.sortValue,
         colorValue: entry.item.colorValue,
         entity_id: entry.item.entity_id,
         icon: entry.item.icon,
@@ -87,6 +88,7 @@ function layoutRow(
         label: entry.item.label,
         value: entry.item.value,
         sizeValue: entry.item.sizeValue,
+        sortValue: entry.item.sortValue,
         colorValue: entry.item.colorValue,
         entity_id: entry.item.entity_id,
         icon: entry.item.icon,
@@ -142,8 +144,8 @@ function sortItems<T extends TreemapItem>(items: T[], sortBy: SortBy, ascending:
     } else if (sortBy === 'label') {
       comparison = a.label.localeCompare(b.label);
     } else {
-      // sortBy === 'value'
-      comparison = a.value - b.value;
+      // sortBy === 'value': use sortValue (original signed, negated when size.inverse)
+      comparison = a.sortValue - b.sortValue;
     }
 
     return ascending ? comparison : -comparison;
@@ -187,6 +189,7 @@ function gridLayout(
     label: item.label,
     value: item.value,
     sizeValue: item.sizeValue,
+    sortValue: item.sortValue,
     colorValue: item.colorValue,
     entity_id: item.entity_id,
     icon: item.icon,
@@ -251,8 +254,10 @@ function normalizeAndSort(
   } else if (sortBy === 'label') {
     normalized.sort((a, b) => a.item.label.localeCompare(b.item.label));
   } else {
-    // sortBy === 'value': sort by normalizedValue descending for optimal squarify layout
-    normalized.sort((a, b) => b.normalizedValue - a.normalizedValue);
+    // sortBy === 'value': sort by sortValue descending (largest first).
+    // sortValue is the original signed value, negated when size.inverse is active,
+    // so this always places the "most significant" item first regardless of sign or inversion.
+    normalized.sort((a, b) => b.item.sortValue - a.item.sortValue);
   }
 
   return normalized;
