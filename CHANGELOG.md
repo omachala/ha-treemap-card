@@ -1,5 +1,12 @@
 # ha-treemap-card
 
+## 0.14.1
+
+### Patch Changes
+
+- 8fd9cf8: Fixed negative values producing incorrectly sized rectangles. Previously, a value like `-400W` would be sized the same as `+400W` (using absolute value), making it appear larger than `100W`. Now `-400W` correctly produces the smallest rectangle.
+- 8ed319e: Fixed negative values not sorting correctly. Previously, a value like `-400W` (e.g. solar generation) would sort between `1000W` and `200W` because sorting used the absolute value. Now `-400W` correctly sorts as the smallest value.
+
 ## 0.14.0
 
 ### Minor Changes
