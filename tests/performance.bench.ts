@@ -13,10 +13,12 @@ import { prepareTreemapData } from '../src/utils/data';
 function generateMockItems(count: number): TreemapItem[] {
   const items: TreemapItem[] = [];
   for (let i = 0; i < count; i++) {
+    const value = Math.random() * 100;
     items.push({
       label: `Entity ${i}`,
-      value: Math.random() * 100,
+      value,
       sizeValue: Math.random() * 100,
+      sortValue: value,
       colorValue: Math.random() * 100,
       entity_id: `sensor.entity_${i}`,
       unit: 'W',

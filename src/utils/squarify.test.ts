@@ -8,6 +8,7 @@ function makeItem(label: string, value: number, entityId?: string): TreemapItem 
     label,
     value,
     sizeValue: Math.abs(value),
+    sortValue: value,
     colorValue: value,
     entity_id: entityId,
   };

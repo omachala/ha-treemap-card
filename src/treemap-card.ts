@@ -340,6 +340,7 @@ export class TreemapCard extends LitElement {
             label,
             value: brightness, // Display brightness as percentage
             sizeValue,
+            sortValue: brightness,
             colorValue: brightness,
             entity_id: entityId,
             icon: icon ?? 'mdi:lightbulb',
@@ -412,6 +413,7 @@ export class TreemapCard extends LitElement {
             label,
             value: numberDisplayValue,
             sizeValue: numberSizeValue,
+            sortValue: numberDisplayValue,
             colorValue: numberColorValue,
             entity_id: entityId,
             icon: climateIcon,
@@ -444,6 +446,7 @@ export class TreemapCard extends LitElement {
             label,
             value: 0, // Placeholder value for sizing
             sizeValue: 1, // Minimal size
+            sortValue: 0,
             colorValue: 0,
             entity_id: entityId,
             icon,
@@ -460,6 +463,7 @@ export class TreemapCard extends LitElement {
           label,
           value,
           sizeValue: Math.abs(value),
+          sortValue: value,
           colorValue: value,
           entity_id: entityId,
           icon,
@@ -507,10 +511,12 @@ export class TreemapCard extends LitElement {
           }
         }
 
+        const itemValue = Number(item[valueAttribute] ?? 0);
         return {
           label: String(item[labelAttribute] ?? item['label'] ?? ''),
-          value: Number(item[valueAttribute] ?? 0),
+          value: itemValue,
           sizeValue: Math.abs(Number(item[sizeAttribute] ?? item[valueAttribute] ?? 0)),
+          sortValue: itemValue,
           colorValue: Number(item[colorAttribute] ?? item[valueAttribute] ?? 0),
           icon: getString(item[iconAttribute]),
           entity_id: getString(item['entity_id']),
@@ -624,13 +630,14 @@ export class TreemapCard extends LitElement {
     // We use entity_id as key (not label) because multiple entities can share the same friendly_name
     const originalValues = new Map<
       string,
-      { value: number; colorValue: number; sizeValue: number; unit?: string }
+      { value: number; sortValue: number; colorValue: number; sizeValue: number; unit?: string }
     >();
     for (const item of sortedData) {
       // Use entity_id as unique key, fall back to label for JSON mode (no entity_id)
       const key = item.entity_id ?? item.label;
       originalValues.set(key, {
         value: item.value,
+        sortValue: item.sortValue,
         colorValue: item.colorValue,
         sizeValue: item.sizeValue,
         unit: item.unit,
@@ -641,6 +648,8 @@ export class TreemapCard extends LitElement {
     const layoutInput = sortedData.map(item => ({ ...item, value: item.sizeValue }));
     const orderAsc = this._config?.order === 'asc';
     const sizeInverse = this._config?.size?.inverse === true;
+    // When size.inverse is active, sortValue is negated, so the ascending direction is flipped
+    // to keep the visual order consistent with the user's intent
     const isAsc = sizeInverse ? !orderAsc : orderAsc;
     const sortBy = this._config?.sort_by ?? 'value';
     const { rects, rows } = squarify(layoutInput, 100, 100, {
@@ -656,6 +665,7 @@ export class TreemapCard extends LitElement {
       const original = originalValues.get(key);
       if (original) {
         rect.value = original.value;
+        rect.sortValue = original.sortValue;
         rect.colorValue = original.colorValue;
         rect.sizeValue = original.sizeValue;
         rect.unit = original.unit;

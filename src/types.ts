@@ -211,7 +211,8 @@ export interface ClimateInfo {
 export interface TreemapItem {
   label: string;
   value: number; // Display value
-  sizeValue: number; // Value used for sizing
+  sizeValue: number; // Value used for sizing (always positive, may be inverted)
+  sortValue: number; // Value used for sorting (original signed value, inverted when size.inverse)
   colorValue: number; // Value used for coloring
   entity_id?: string;
   icon?: string;
@@ -229,7 +230,8 @@ export interface TreemapItem {
 export interface TreemapRect {
   label: string;
   value: number; // Display value
-  sizeValue: number; // Value used for sizing
+  sizeValue: number; // Value used for sizing (always positive, may be inverted)
+  sortValue: number; // Value used for sorting (original signed value, inverted when size.inverse)
   colorValue: number; // Value used for coloring
   entity_id?: string;
   icon?: string;
