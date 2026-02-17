@@ -76,6 +76,57 @@ describe('JSON Entity Mode', () => {
     expect(items.find(i => i.label === 'GOOG')?.value).toBeCloseTo(0.5, 1);
   });
 
+  it('sizes rectangles by size.param, not value.param', async () => {
+    // Regression: when sortValue (todayPct) differs from sizeValue (portfolio value),
+    // squarify was sorting by sortValue and producing bad single-row layouts.
+    // MU(£8155) must be largest rectangle regardless of todayPct=-2.9 (worst performer).
+    const holdings = [
+      { ticker: 'VRT', todayPct: 3.8, value: 1467 },
+      { ticker: 'MU', todayPct: -2.9, value: 8155 },
+      { ticker: 'TEL', todayPct: -0.1, value: 1062 },
+      { ticker: 'NVDA', todayPct: 1.2, value: 933 },
+      { ticker: 'AVGO', todayPct: 2.3, value: 1644 },
+      { ticker: 'GOOGL', todayPct: -1.2, value: 2408 },
+    ];
+
+    const hass = mockHass([
+      mockEntity('sensor.portfolio', '6', { holdings, friendly_name: 'Portfolio' }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entity: 'sensor.portfolio',
+      data_attribute: 'holdings',
+      label: { param: 'ticker' },
+      value: { param: 'todayPct' },
+      size: { param: 'value' },
+    });
+    card.hass = hass;
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    const mu = items.find(i => i.label === 'MU');
+    const googl = items.find(i => i.label === 'GOOGL');
+    const nvda = items.find(i => i.label === 'NVDA');
+
+    expect(mu).toBeDefined();
+    expect(googl).toBeDefined();
+    expect(nvda).toBeDefined();
+
+    const muArea = mu!.width * mu!.height;
+    const googlArea = googl!.width * googl!.height;
+    const nvdaArea = nvda!.width * nvda!.height;
+
+    // MU (£8155) > GOOGL (£2408) > NVDA (£933) regardless of todayPct
+    expect(muArea).toBeGreaterThan(googlArea);
+    expect(googlArea).toBeGreaterThan(nvdaArea);
+
+    // Squarify must produce multiple rows (not collapse to a single row).
+    // Single-row collapse was the visible symptom of sorting by sortValue instead of area.
+    const uniqueRows = new Set(items.map(i => Math.round(i.y)));
+    expect(uniqueRows.size).toBeGreaterThan(1);
+  });
+
   it('respects limit with order asc', async () => {
     const holdings = [
       { ticker: 'AAPL', todayPct: -2.5, value: 5000 },
