@@ -1,16 +1,7 @@
-/**
- * Performance regression tests for treemap card
- *
- * These tests ensure optimized implementations remain faster than baseline.
- * Run with: pnpm test:run tests/performance.test.ts
- */
-
-import { describe, it, expect } from 'vitest';
 import type { TreemapItem } from '../src/types';
-import { prepareTreemapData } from '../src/utils/data';
 
 // Generate mock data similar to what _resolveData returns
-function generateMockItems(count: number): TreemapItem[] {
+export function generateMockItems(count: number): TreemapItem[] {
   const items: TreemapItem[] = [];
   for (let i = 0; i < count; i++) {
     const value = Math.random() * 100;
@@ -31,7 +22,7 @@ function generateMockItems(count: number): TreemapItem[] {
  * Baseline: inefficient multi-pass implementation
  * Used to compare against the optimized version
  */
-function prepareDataMultiPass(
+export function prepareDataMultiPass(
   data: TreemapItem[],
   options: { inverse?: boolean; limit?: number; sizeMin?: number; sizeMax?: number }
 ): { items: TreemapItem[]; min: number; max: number } {
@@ -86,47 +77,3 @@ function prepareDataMultiPass(
 
   return { items: sortedData, min, max };
 }
-
-// Performance threshold: optimized must be at least this much faster
-// Measured: ~2x speedup. Set to 1.7x to allow for variance on slower machines.
-// Note: Only run locally (pnpm test:perf), not in CI.
-const MIN_SPEEDUP = 1.7;
-
-describe('Performance regression guard', () => {
-  it('prepareTreemapData should be faster than multi-pass baseline', () => {
-    const warmupIterations = 50;
-    const iterations = 500;
-    const testData = generateMockItems(200);
-
-    // Warmup both implementations (JIT compilation)
-    for (let i = 0; i < warmupIterations; i++) {
-      const items = testData.map(d => ({ ...d }));
-      prepareDataMultiPass(items, { inverse: true });
-      prepareTreemapData(items, { inverse: true });
-    }
-
-    // Measure baseline (multi-pass)
-    const baselineStart = performance.now();
-    for (let i = 0; i < iterations; i++) {
-      const items = testData.map(d => ({ ...d }));
-      prepareDataMultiPass(items, { inverse: true });
-    }
-    const baselineTime = performance.now() - baselineStart;
-
-    // Measure actual implementation
-    const actualStart = performance.now();
-    for (let i = 0; i < iterations; i++) {
-      const items = testData.map(d => ({ ...d }));
-      prepareTreemapData(items, { inverse: true });
-    }
-    const actualTime = performance.now() - actualStart;
-
-    const speedup = baselineTime / actualTime;
-    console.log(
-      `Performance: baseline=${baselineTime.toFixed(2)}ms, actual=${actualTime.toFixed(2)}ms, speedup=${speedup.toFixed(2)}x`
-    );
-
-    // Assert that actual implementation is faster
-    expect(speedup).toBeGreaterThanOrEqual(MIN_SPEEDUP);
-  });
-});
