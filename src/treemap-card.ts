@@ -462,7 +462,7 @@ export class TreemapCard extends LitElement {
         items.push({
           label,
           value,
-          sizeValue: Math.abs(value),
+          sizeValue: value,
           sortValue: value,
           colorValue: value,
           entity_id: entityId,
@@ -515,7 +515,7 @@ export class TreemapCard extends LitElement {
         return {
           label: String(item[labelAttribute] ?? item['label'] ?? ''),
           value: itemValue,
-          sizeValue: Math.abs(Number(item[sizeAttribute] ?? item[valueAttribute] ?? 0)),
+          sizeValue: Number(item[sizeAttribute] ?? item[valueAttribute] ?? 0),
           sortValue: itemValue,
           colorValue: Number(item[colorAttribute] ?? item[valueAttribute] ?? 0),
           icon: getString(item[iconAttribute]),
