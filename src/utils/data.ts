@@ -132,6 +132,16 @@ export function prepareTreemapData(
   // Calculate all stats in single pass
   const stats = calculateStats(data);
 
+  // Shift sizeValues into positive range if any are negative, preserving relative proportions
+  if (stats.sizeMin < 0) {
+    const shift = Math.abs(stats.sizeMin);
+    for (const item of data) {
+      item.sizeValue = item.sizeValue + shift;
+    }
+    stats.sizeMin = 0;
+    stats.sizeMax = stats.sizeMax + shift;
+  }
+
   // Apply inverse sizing if requested
   if (inverse) {
     applyInverseSizing(data, stats.sizeMin, stats.sizeMax);

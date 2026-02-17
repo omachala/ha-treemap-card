@@ -988,4 +988,37 @@ describe('Sensor Entities', () => {
       expect(valueEl?.textContent).toBe('22.57 C');
     });
   });
+
+  it('sizes rectangles by signed value: -400 is smallest, 100 is middle, 500 is largest', async () => {
+    // Bug: Math.abs would make -400 same size as +400 (bigger than 100), which is wrong.
+    // -400 should produce the smallest rectangle, 100 middle, 500 largest.
+    const hass = mockHass([
+      mockEntity('sensor.neg', '-400', { friendly_name: 'Neg' }),
+      mockEntity('sensor.mid', '100', { friendly_name: 'Mid' }),
+      mockEntity('sensor.big', '500', { friendly_name: 'Big' }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: ['sensor.neg', 'sensor.mid', 'sensor.big'],
+    });
+    card.hass = hass;
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    const neg = items.find(i => i.label === 'Neg');
+    const mid = items.find(i => i.label === 'Mid');
+    const big = items.find(i => i.label === 'Big');
+
+    expect(neg).toBeDefined();
+    expect(mid).toBeDefined();
+    expect(big).toBeDefined();
+
+    const negArea = neg!.width * neg!.height;
+    const midArea = mid!.width * mid!.height;
+    const bigArea = big!.width * big!.height;
+
+    expect(negArea).toBeLessThan(midArea);
+    expect(midArea).toBeLessThan(bigArea);
+  });
 });
