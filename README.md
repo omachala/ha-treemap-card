@@ -9,6 +9,7 @@
   <a href="https://github.com/omachala/ha-treemap-card/releases"><img src="https://img.shields.io/github/downloads/omachala/ha-treemap-card/total?style=for-the-badge" alt="Downloads"></a>
   <a href="https://github.com/omachala/ha-treemap-card/releases"><img src="https://img.shields.io/github/v/release/omachala/ha-treemap-card?style=for-the-badge&color=blue" alt="Version"></a>
   <a href="https://codecov.io/gh/omachala/ha-treemap-card"><img src="https://img.shields.io/codecov/c/github/omachala/ha-treemap-card?style=for-the-badge" alt="Coverage"></a>
+  <a href="https://sonarcloud.io/summary/new_code?id=omachala_ha-treemap-card"><img src="https://img.shields.io/sonar/quality_gate/omachala_ha-treemap-card?server=https%3A%2F%2Fsonarcloud.io&style=for-the-badge&logo=sonarcloud" alt="Quality Gate"></a>
 </p>
 
 <p align="center">
