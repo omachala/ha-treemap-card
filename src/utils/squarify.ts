@@ -254,10 +254,10 @@ function normalizeAndSort(
   } else if (sortBy === 'label') {
     normalized.sort((a, b) => a.item.label.localeCompare(b.item.label));
   } else {
-    // sortBy === 'value': sort by sortValue descending (largest first).
-    // sortValue is the original signed value, negated when size.inverse is active,
-    // so this always places the "most significant" item first regardless of sign or inversion.
-    normalized.sort((a, b) => b.item.sortValue - a.item.sortValue);
+    // sortBy === 'value': sort by normalizedValue (area) descending.
+    // Squarify requires largest items first to produce good aspect ratios.
+    // sortValue is for display order (grid layout), not layout order.
+    normalized.sort((a, b) => b.normalizedValue - a.normalizedValue);
   }
 
   return normalized;
