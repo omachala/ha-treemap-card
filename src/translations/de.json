@@ -80,6 +80,20 @@
       "issues": "Bug oder Idee?",
       "star": "Gefällt es? Stern geben!"
     },
+    "actions": {
+      "title": "Aktionen",
+      "tap_action": "Tipp-Aktion",
+      "hold_action": "Halten-Aktion",
+      "navigation_path": "Navigationspfad",
+      "url_path": "URL",
+      "service_note": "call-service über YAML konfigurieren",
+      "action_more_info": "Mehr Infos",
+      "action_navigate": "Navigieren",
+      "action_url": "URL",
+      "action_call_service": "Dienst aufrufen",
+      "action_toggle": "Umschalten",
+      "action_none": "Keine"
+    },
     "data": {
       "title": "Daten",
       "order": "Sortierung",

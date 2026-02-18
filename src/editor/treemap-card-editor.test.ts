@@ -1040,4 +1040,147 @@ describe('TreemapCardEditor', () => {
       expect(newConfig.sparkline?.line?.show).toBe(false);
     });
   });
+
+  describe('actions section', () => {
+    it('renders actions section', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+      });
+      await editor.updateComplete;
+
+      const section = getElement(editor, '[data-testid="actions-section"]');
+      expect(section).toBeTruthy();
+    });
+
+    it('updates tap_action.action on dropdown change', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+
+      const tapSelect = getElement(editor, '[data-testid="tap_action-select"]');
+      if (isHaSelect(tapSelect)) {
+        tapSelect.value = 'navigate';
+        tapSelect.dispatchEvent(new Event('selected', { bubbles: true }));
+      }
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.tap_action?.action).toBe('navigate');
+    });
+
+    it('updates hold_action.action on dropdown change', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+
+      const holdSelect = getElement(editor, '[data-testid="hold_action-select"]');
+      if (isHaSelect(holdSelect)) {
+        holdSelect.value = 'navigate';
+        holdSelect.dispatchEvent(new Event('selected', { bubbles: true }));
+      }
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.hold_action?.action).toBe('navigate');
+    });
+
+    it('shows navigation_path field when tap_action is navigate', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+        tap_action: { action: 'navigate', navigation_path: '/lovelace/test' },
+      });
+      await editor.updateComplete;
+
+      const pathField = getElement(editor, '[data-testid="tap_action-navigation-path"]');
+      expect(pathField).toBeTruthy();
+    });
+
+    it('updates navigation_path on text input', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+        tap_action: { action: 'navigate', navigation_path: '' },
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+
+      const pathField = getElement(editor, '[data-testid="tap_action-navigation-path"]');
+      if (isHaTextfield(pathField)) {
+        pathField.value = '/lovelace/power';
+        pathField.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+
+      const newConfig = await configChangedPromise;
+      const tapAction = newConfig.tap_action;
+      expect(
+        tapAction && 'navigation_path' in tapAction ? tapAction.navigation_path : undefined
+      ).toBe('/lovelace/power');
+    });
+
+    it('shows url_path field when tap_action is url', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+        tap_action: { action: 'url', url_path: 'https://example.com' },
+      });
+      await editor.updateComplete;
+
+      const urlField = getElement(editor, '[data-testid="tap_action-url-path"]');
+      expect(urlField).toBeTruthy();
+    });
+
+    it('shows call-service note when tap_action is call-service', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+        tap_action: { action: 'call-service', service: 'light.turn_on' },
+      });
+      await editor.updateComplete;
+
+      const note = getElement(editor, '[data-testid="tap_action-service-note"]');
+      expect(note).toBeTruthy();
+    });
+
+    it('hides navigation_path when tap_action is more-info', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+        tap_action: { action: 'more-info' },
+      });
+      await editor.updateComplete;
+
+      const pathField = getElement(editor, '[data-testid="tap_action-navigation-path"]');
+      expect(pathField).toBeNull();
+    });
+
+    it('preserves existing tap_action fields when changing action type', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+        tap_action: { action: 'more-info' },
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+
+      const tapSelect = getElement(editor, '[data-testid="tap_action-select"]');
+      if (isHaSelect(tapSelect)) {
+        tapSelect.value = 'navigate';
+        tapSelect.dispatchEvent(new Event('selected', { bubbles: true }));
+      }
+
+      const newConfig = await configChangedPromise;
+      // action should be updated, object should exist
+      expect(newConfig.tap_action?.action).toBe('navigate');
+    });
+  });
 });

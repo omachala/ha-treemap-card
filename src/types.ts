@@ -31,6 +31,7 @@ export interface HomeAssistant {
   callService: (domain: string, service: string, data?: Record<string, unknown>) => Promise<void>;
   callWS: <T>(message: Record<string, unknown>) => Promise<T>;
   language?: string; // User's language setting (e.g., 'en', 'de', 'fr')
+  user?: { id: string }; // Used by handleActionConfig for confirmation exemptions
 }
 
 /**
@@ -38,13 +39,18 @@ export interface HomeAssistant {
  */
 export type ColorApplyTarget = 'background' | 'foreground';
 
-import type { EntityConfig } from 'custom-card-helpers';
+import type { EntityConfig, ActionConfig } from 'custom-card-helpers';
+
+export type { ActionConfig };
 
 /**
- * Treemap entity config - currently same as HA EntityConfig
- * Can be extended with treemap-specific options in the future (color, size_value, etc.)
+ * Treemap entity config - extends HA EntityConfig with per-entity action overrides
  */
-export type TreemapEntityConfig = EntityConfig;
+export interface TreemapEntityConfig extends EntityConfig {
+  tap_action?: ActionConfig;
+  hold_action?: ActionConfig;
+  double_tap_action?: ActionConfig;
+}
 
 /**
  * Entity input: string (with wildcard support) or object config
@@ -162,6 +168,10 @@ export interface TreemapCardConfig {
   };
   // Custom CSS for the entire card
   card_style?: string;
+  // Action configuration (standard HA action pattern)
+  tap_action?: ActionConfig;
+  hold_action?: ActionConfig;
+  double_tap_action?: ActionConfig;
   // Sparkline configuration
   sparkline?: {
     show?: boolean; // Show sparklines (default: true)

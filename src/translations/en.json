@@ -80,6 +80,20 @@
       "issues": "Bug or idea?",
       "star": "Like it? Star it!"
     },
+    "actions": {
+      "title": "Actions",
+      "tap_action": "Tap action",
+      "hold_action": "Hold action",
+      "navigation_path": "Navigation path",
+      "url_path": "URL",
+      "service_note": "Configure call-service via YAML",
+      "action_more_info": "More info",
+      "action_navigate": "Navigate",
+      "action_url": "URL",
+      "action_call_service": "Call service",
+      "action_toggle": "Toggle",
+      "action_none": "None"
+    },
     "data": {
       "title": "Data",
       "order": "Order",

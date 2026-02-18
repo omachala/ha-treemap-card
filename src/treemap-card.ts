@@ -1,6 +1,6 @@
 import { LitElement, html, nothing, type TemplateResult, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { fireEvent, debounce } from 'custom-card-helpers';
+import { fireEvent, debounce, navigate } from 'custom-card-helpers';
 import {
   isEntityConfig,
   type HomeAssistant,
@@ -8,7 +8,9 @@ import {
   type TreemapItem,
   type TreemapRect,
   type TreemapEntityConfig,
+  type ActionConfig,
 } from './types';
+
 import { getNumber, getString, matchesPattern, isUnavailableState } from './utils/predicates';
 import { isLightEntity, extractLightInfo, getLightBackgroundColor } from './utils/lights';
 import { isClimateEntity, extractClimateInfo, getClimateValue } from './utils/climate';
@@ -74,6 +76,12 @@ export class TreemapCard extends LitElement {
   private _cachedData: TreemapItem[] | undefined;
   private _cachedDataHash: string | undefined;
   private readonly _debouncedFetchSparklines = debounce(() => void this._fetchSparklineData(), 100);
+  // Map from entity_id to its config object, for per-entity action overrides
+  private _entityConfigMap = new Map<string, TreemapEntityConfig>();
+  // Hold action detection
+  private _holdTimer: ReturnType<typeof setTimeout> | null = null;
+  private _holdFired = false;
+  private static readonly _HOLD_THRESHOLD_MS = 500;
 
   /**
    * Optimize re-renders: only update when relevant entity states change
@@ -162,6 +170,18 @@ export class TreemapCard extends LitElement {
       gap: 4, // smaller gap
       ...config,
     };
+
+    // Rebuild entity config map for per-entity action lookups
+    this._entityConfigMap = new Map();
+    if (config.entities) {
+      for (const input of config.entities) {
+        const cfg = this._normalizeEntity(input);
+        // Store configs that have action overrides (may include wildcards; resolved at action time)
+        if (cfg.tap_action || cfg.hold_action || cfg.double_tap_action) {
+          this._entityConfigMap.set(cfg.entity, cfg);
+        }
+      }
+    }
   }
 
   /**
@@ -860,7 +880,9 @@ export class TreemapCard extends LitElement {
           height: calc(${rect.height}% - ${gap}px);
           background-color: ${backgroundColor};
         "
-        @click="${() => this._handleClick(rect)}"
+        @pointerdown="${(e: PointerEvent) => this._onPointerDown(e, rect)}"
+        @pointerup="${(e: PointerEvent) => this._onPointerUp(e, rect)}"
+        @pointercancel="${() => this._clearHoldTimer()}"
         title="${rect.label}: ${rect.value}"
       >
         ${showIcon && (rect.icon || this._config?.icon?.icon)
@@ -896,9 +918,102 @@ export class TreemapCard extends LitElement {
     `;
   }
 
-  private _handleClick(rect: TreemapRect): void {
-    if (!rect.entity_id) return;
-    fireEvent(this, 'hass-more-info', { entityId: rect.entity_id });
+  /**
+   * Get the effective action config for a rect, with per-entity override support.
+   */
+  private _getActionConfig(
+    rect: TreemapRect,
+    actionKey: 'tap_action' | 'hold_action' | 'double_tap_action'
+  ): ActionConfig {
+    // Per-entity config takes precedence: check exact match, then wildcard patterns
+    if (this._entityConfigMap.size > 0 && rect.entity_id) {
+      // First try exact match
+      const exactMatch = this._entityConfigMap.get(rect.entity_id);
+      if (exactMatch?.[actionKey]) return exactMatch[actionKey];
+
+      // Then try wildcard patterns
+      for (const [pattern, cfg] of this._entityConfigMap) {
+        if (cfg[actionKey] && matchesPattern(rect.entity_id, pattern)) {
+          return cfg[actionKey];
+        }
+      }
+    }
+
+    // Fall back to global card-level config
+    const globalAction = this._config?.[actionKey];
+    if (globalAction) return globalAction;
+
+    // Defaults: tap → more-info, hold/double_tap → none
+    return { action: actionKey === 'tap_action' ? 'more-info' : 'none' };
+  }
+
+  private _executeAction(action: ActionConfig, entityId: string | undefined): void {
+    switch (action.action) {
+      case 'more-info':
+        if (entityId) {
+          fireEvent(this, 'hass-more-info', { entityId });
+        }
+        break;
+      case 'navigate':
+        if ('navigation_path' in action && action.navigation_path) {
+          navigate(this, action.navigation_path);
+        }
+        break;
+      case 'url':
+        if ('url_path' in action && action.url_path) {
+          window.open(action.url_path);
+        }
+        break;
+      case 'toggle':
+        if (entityId && this.hass) {
+          const domain = entityId.split('.')[0] ?? 'homeassistant';
+          void this.hass.callService(domain, 'toggle', { entity_id: entityId });
+        }
+        break;
+      case 'call-service':
+        if ('service' in action && action.service && this.hass) {
+          const parts = action.service.split('.');
+          const domain = parts[0] ?? '';
+          const service = parts[1] ?? '';
+          void this.hass.callService(domain, service, action.service_data);
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  private _onPointerDown(e: PointerEvent, rect: TreemapRect): void {
+    // Only main button (touch or left mouse)
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    this._holdFired = false;
+    this._clearHoldTimer();
+
+    const holdAction = this._getActionConfig(rect, 'hold_action');
+    if (holdAction.action === 'none') return;
+
+    this._holdTimer = setTimeout(() => {
+      this._holdFired = true;
+      this._clearHoldTimer();
+      this._executeAction(holdAction, rect.entity_id);
+    }, TreemapCard._HOLD_THRESHOLD_MS);
+  }
+
+  private _onPointerUp(e: PointerEvent, rect: TreemapRect): void {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    this._clearHoldTimer();
+    if (this._holdFired) return; // hold already handled
+
+    const tapAction = this._getActionConfig(rect, 'tap_action');
+    if (tapAction.action === 'none') return;
+    this._executeAction(tapAction, rect.entity_id);
+  }
+
+  private _clearHoldTimer(): void {
+    if (this._holdTimer !== null) {
+      clearTimeout(this._holdTimer);
+      this._holdTimer = null;
+    }
   }
 }
 
