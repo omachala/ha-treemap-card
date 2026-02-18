@@ -297,6 +297,206 @@ describe('User Interactions', () => {
     });
   });
 
+  describe('tap_action: url', () => {
+    it('opens url in new window on tap', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.temperature', '22.5', { friendly_name: 'Temperature' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.temperature'],
+        tap_action: { action: 'url', url_path: 'https://example.com' },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+      const item = card.shadowRoot?.querySelector('.treemap-item') as HTMLElement;
+      item.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      item.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+
+      expect(openSpy).toHaveBeenCalledWith('https://example.com');
+
+      openSpy.mockRestore();
+    });
+  });
+
+  describe('tap_action: toggle', () => {
+    it('calls callService with entity domain and toggle on tap', async () => {
+      const hass = mockHass([
+        mockEntity('light.living_room', 'on', { friendly_name: 'Living Room' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['light.living_room'],
+        tap_action: { action: 'toggle' },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const callServiceSpy = vi.spyOn(hass, 'callService').mockResolvedValue();
+
+      const item = card.shadowRoot?.querySelector('.treemap-item') as HTMLElement;
+      item.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      item.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+
+      expect(callServiceSpy).toHaveBeenCalledWith('light', 'toggle', {
+        entity_id: 'light.living_room',
+      });
+
+      callServiceSpy.mockRestore();
+    });
+
+    it('uses correct entity_id for toggle — not another entity', async () => {
+      const hass = mockHass([
+        mockEntity('light.kitchen', 'off', { friendly_name: 'Kitchen' }),
+        mockEntity('light.bedroom', 'on', { friendly_name: 'Bedroom' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['light.kitchen', 'light.bedroom'],
+        tap_action: { action: 'toggle' },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const callServiceSpy = vi.spyOn(hass, 'callService').mockResolvedValue();
+
+      const items = card.shadowRoot?.querySelectorAll('.treemap-item') as NodeListOf<HTMLElement>;
+      const kitchenItem = Array.from(items).find(el =>
+        el.querySelector('.treemap-label')?.textContent?.includes('Kitchen')
+      ) as HTMLElement;
+
+      expect(kitchenItem).toBeDefined();
+      kitchenItem.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      kitchenItem.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+
+      expect(callServiceSpy).toHaveBeenCalledWith('light', 'toggle', {
+        entity_id: 'light.kitchen',
+      });
+      expect(callServiceSpy).toHaveBeenCalledTimes(1);
+
+      callServiceSpy.mockRestore();
+    });
+  });
+
+  describe('tap_action: call-service', () => {
+    it('calls the configured service with service_data on tap', async () => {
+      const hass = mockHass([
+        mockEntity('light.living_room', 'off', { friendly_name: 'Living Room' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['light.living_room'],
+        tap_action: {
+          action: 'call-service',
+          service: 'light.turn_on',
+          service_data: { brightness_pct: 80 },
+        },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const callServiceSpy = vi.spyOn(hass, 'callService').mockResolvedValue();
+
+      const item = card.shadowRoot?.querySelector('.treemap-item') as HTMLElement;
+      item.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      item.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+
+      expect(callServiceSpy).toHaveBeenCalledWith('light', 'turn_on', { brightness_pct: 80 });
+
+      callServiceSpy.mockRestore();
+    });
+  });
+
+  describe('tap_action: assist', () => {
+    it('fires hass-launch-voice-assistant event on tap', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.temperature', '22.5', { friendly_name: 'Temperature' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.temperature'],
+        tap_action: { action: 'assist' },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const eventPromise = new Promise<Event>(resolve => {
+        card.addEventListener('hass-launch-voice-assistant', resolve);
+      });
+
+      const item = card.shadowRoot?.querySelector('.treemap-item') as HTMLElement;
+      item.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      item.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+
+      await expect(eventPromise).resolves.toBeDefined();
+    });
+  });
+
+  describe('hold_action: toggle', () => {
+    it('calls toggle on hold with correct entity_id', async () => {
+      const hass = mockHass([
+        mockEntity('light.living_room', 'on', { friendly_name: 'Living Room' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['light.living_room'],
+        tap_action: { action: 'more-info' },
+        hold_action: { action: 'toggle' },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const callServiceSpy = vi.spyOn(hass, 'callService').mockResolvedValue();
+      const moreInfoSpy = vi.fn();
+      card.addEventListener('hass-more-info', moreInfoSpy);
+
+      const item = card.shadowRoot?.querySelector('.treemap-item') as HTMLElement;
+      item.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      vi.advanceTimersByTime(600);
+      item.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+
+      expect(callServiceSpy).toHaveBeenCalledWith('light', 'toggle', {
+        entity_id: 'light.living_room',
+      });
+      expect(moreInfoSpy).not.toHaveBeenCalled();
+
+      callServiceSpy.mockRestore();
+    });
+  });
+
   describe('per-entity action overrides', () => {
     it('uses per-entity tap_action override over global config', async () => {
       const hass = mockHass([
