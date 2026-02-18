@@ -86,6 +86,15 @@ class MockHaIcon extends HTMLElement {}
  */
 class MockHaIconPicker extends HTMLElement {}
 
+/**
+ * Mock ha-form component for tests
+ */
+class MockHaForm extends HTMLElement {
+  schema: unknown = [];
+  data: unknown = {};
+  computeLabel: unknown = undefined;
+}
+
 // Register mock HA components before importing the editor
 if (!customElements.get('ha-textfield')) {
   customElements.define('ha-textfield', MockHaTextfield);
@@ -101,6 +110,9 @@ if (!customElements.get('ha-icon')) {
 }
 if (!customElements.get('ha-icon-picker')) {
   customElements.define('ha-icon-picker', MockHaIconPicker);
+}
+if (!customElements.get('ha-form')) {
+  customElements.define('ha-form', MockHaForm);
 }
 
 // Import editor after mocks are registered
@@ -1038,6 +1050,98 @@ describe('TreemapCardEditor', () => {
 
       const newConfig = await configChangedPromise;
       expect(newConfig.sparkline?.line?.show).toBe(false);
+    });
+  });
+
+  describe('actions section', () => {
+    it('renders actions section with ha-form', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+      });
+      await editor.updateComplete;
+
+      const section = getElement(editor, '[data-testid="actions-section"]');
+      expect(section).toBeTruthy();
+
+      const form = getElement(editor, '[data-testid="actions-form"]');
+      expect(form).toBeTruthy();
+    });
+
+    it('updates tap_action via ha-form value-changed', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+
+      const form = getElement(editor, '[data-testid="actions-form"]');
+      form?.dispatchEvent(
+        new CustomEvent('value-changed', {
+          detail: {
+            value: { tap_action: { action: 'navigate', navigation_path: '/lovelace/test' } },
+          },
+          bubbles: true,
+        })
+      );
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.tap_action?.action).toBe('navigate');
+    });
+
+    it('updates hold_action via ha-form value-changed', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+
+      const form = getElement(editor, '[data-testid="actions-form"]');
+      form?.dispatchEvent(
+        new CustomEvent('value-changed', {
+          detail: {
+            value: { hold_action: { action: 'navigate', navigation_path: '/lovelace/power' } },
+          },
+          bubbles: true,
+        })
+      );
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.hold_action?.action).toBe('navigate');
+    });
+
+    it('merges action changes without losing other config fields', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+        height: 300,
+        tap_action: { action: 'more-info' },
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+
+      const form = getElement(editor, '[data-testid="actions-form"]');
+      form?.dispatchEvent(
+        new CustomEvent('value-changed', {
+          detail: {
+            value: {
+              tap_action: { action: 'navigate', navigation_path: '/lovelace/test' },
+              hold_action: { action: 'none' },
+            },
+          },
+          bubbles: true,
+        })
+      );
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.tap_action?.action).toBe('navigate');
+      expect(newConfig.hold_action?.action).toBe('none');
+      expect(newConfig.height).toBe(300);
     });
   });
 });

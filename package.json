@@ -24,7 +24,8 @@
     "prepare": "simple-git-hooks"
   },
   "simple-git-hooks": {
-    "pre-commit": "pnpm check"
+    "pre-commit": "pnpm check",
+    "commit-msg": "perl -i -ne 'next if /^Co-Authored-By:/i; next if /^Co-Author:/i; next if /^Generated with \\[Claude/; next if /^via \\[Happy\\]/; print' $1 && perl -i -0pe 's/\\n+$/\\n/' $1"
   },
   "keywords": [
     "home-assistant",

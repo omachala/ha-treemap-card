@@ -80,6 +80,11 @@
       "issues": "Bug oder Idee?",
       "star": "Gefällt es? Stern geben!"
     },
+    "actions": {
+      "title": "Aktionen",
+      "tap_action": "Tipp-Aktion",
+      "hold_action": "Halten-Aktion"
+    },
     "data": {
       "title": "Daten",
       "order": "Sortierung",

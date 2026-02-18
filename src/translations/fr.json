@@ -80,6 +80,11 @@
       "issues": "Bug ou idée?",
       "star": "Vous aimez? Étoile!"
     },
+    "actions": {
+      "title": "Actions",
+      "tap_action": "Action au tap",
+      "hold_action": "Action au maintien"
+    },
     "data": {
       "title": "Données",
       "order": "Ordre",

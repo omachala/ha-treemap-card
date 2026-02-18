@@ -24,7 +24,7 @@ A custom Lovelace card that dynamically visualizes entities as a treemap. Rectan
 
 - Optimized for thousands of entities without breaking a sweat
 - Works beautifully with [sensors](#sensors), [lights](#lights), [thermostats](#climate), and [custom data](#json-attribute-mode)
-- Smart defaults, fully customizable - including [per-tile CSS](#styling-guide) when you need pixel-perfect control
+- Smart defaults, fully customizable - including [tap/hold actions](#tap--hold-actions) and [per-tile CSS](#styling-guide)
 - Works with [auto-entities](#auto-entities-guide) for advanced filtering (area, device, label)
 - 18 KB gzipped, 90%+ test coverage
 
@@ -432,6 +432,130 @@ For alphabetical sorting by friendly name, use `sort_by: label`. For exact confi
 | -------- | ------- | --------------------------------------------------------------------------- |
 | `height` | auto    | Card height in pixels. Auto-calculates based on row count (~100px per row). |
 | `gap`    | `6`     | Space between rectangles in pixels.                                         |
+
+## Tap & Hold Actions
+
+Clicking or long-pressing a tile triggers an action. By default, tapping opens the entity's more-info dialog. Hold actions are disabled by default.
+
+| Option        | Default     | Description                                    |
+| ------------- | ----------- | ---------------------------------------------- |
+| `tap_action`  | `more-info` | Action when tapping a tile.                    |
+| `hold_action` | `none`      | Action when long-pressing a tile (500ms hold). |
+
+### Action Types
+
+| Action         | Description                                                                       |
+| -------------- | --------------------------------------------------------------------------------- |
+| `more-info`    | Opens the entity's more-info dialog (default).                                    |
+| `navigate`     | Navigates to a dashboard or view. Requires `navigation_path`.                     |
+| `url`          | Opens a URL in a new tab. Requires `url_path`.                                    |
+| `toggle`       | Toggles the entity (lights, switches, etc.).                                      |
+| `call-service` | Calls a Home Assistant service. Requires `service` and optionally `service_data`. |
+| `assist`       | Opens the voice assistant dialog.                                                 |
+| `none`         | Disables the action entirely.                                                     |
+
+### Examples
+
+**More info (default — no config needed):**
+
+```yaml
+type: custom:treemap-card
+entities:
+  - sensor.temperature_*
+tap_action:
+  action: more-info
+```
+
+**Navigate to a dashboard view on tap:**
+
+```yaml
+type: custom:treemap-card
+entities:
+  - light.*
+tap_action:
+  action: navigate
+  navigation_path: /lovelace/lights
+```
+
+**Open a URL on tap:**
+
+```yaml
+type: custom:treemap-card
+entities:
+  - sensor.power_*
+tap_action:
+  action: url
+  url_path: https://my.home-assistant.io
+```
+
+**Toggle lights on tap, open more-info on hold:**
+
+```yaml
+type: custom:treemap-card
+entities:
+  - light.*
+tap_action:
+  action: toggle
+hold_action:
+  action: more-info
+```
+
+**Call a service on tap:**
+
+```yaml
+type: custom:treemap-card
+entities:
+  - light.*
+tap_action:
+  action: call-service
+  service: light.turn_on
+  service_data:
+    brightness_pct: 80
+```
+
+**Open voice assistant on tap:**
+
+```yaml
+type: custom:treemap-card
+entities:
+  - sensor.temperature_*
+tap_action:
+  action: assist
+```
+
+**Disable tap, navigate on hold:**
+
+```yaml
+type: custom:treemap-card
+entities:
+  - sensor.*
+tap_action:
+  action: none
+hold_action:
+  action: navigate
+  navigation_path: /lovelace/sensors
+```
+
+### Per-Entity Action Overrides
+
+Individual entities can have their own tap/hold actions, overriding the card-level defaults:
+
+```yaml
+type: custom:treemap-card
+entities:
+  - light.*
+  - entity: light.living_room
+    tap_action:
+      action: navigate
+      navigation_path: /lovelace/living-room
+  - entity: light.kitchen
+    tap_action:
+      action: toggle
+    hold_action:
+      action: more-info
+tap_action:
+  action: more-info # Default for all other lights
+```
 
 ### Title & Header guide
 

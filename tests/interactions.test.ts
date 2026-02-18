@@ -1,8 +1,8 @@
 /**
- * Integration tests for user interactions (click, etc.)
+ * Integration tests for user interactions (tap, hold actions)
  */
 
-import { describe, expect, it, beforeEach, vi } from 'vitest';
+import { describe, expect, it, beforeEach, vi, afterEach } from 'vitest';
 import { createCard, mockEntity, mockHass } from './helpers';
 import type { TreemapCard } from '../src';
 
@@ -10,11 +10,16 @@ describe('User Interactions', () => {
   let card: TreemapCard;
 
   beforeEach(() => {
+    vi.useFakeTimers();
     card = createCard();
   });
 
-  describe('click handler', () => {
-    it('dispatches hass-more-info event on click', async () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  describe('default tap action (more-info)', () => {
+    it('dispatches hass-more-info event on tap with no config', async () => {
       const hass = mockHass([
         mockEntity('sensor.temperature', '22.5', { friendly_name: 'Temperature' }),
       ]);
@@ -26,17 +31,19 @@ describe('User Interactions', () => {
       card.hass = hass;
       await card.updateComplete;
 
-      // Listen for the hass-more-info event
       const eventPromise = new Promise<CustomEvent>(resolve => {
         card.addEventListener('hass-more-info', resolve as EventListener);
       });
 
-      // Click on the treemap item
       const item = card.shadowRoot?.querySelector('.treemap-item') as HTMLElement;
       expect(item).toBeDefined();
-      item?.click();
+      item.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      item.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
 
-      // Verify event was dispatched with correct entity
       const event = await eventPromise;
       expect(event.detail.entityId).toBe('sensor.temperature');
     });
@@ -59,21 +66,23 @@ describe('User Interactions', () => {
         events.push(e.detail.entityId);
       }) as EventListener);
 
-      // Click on each item
       const items = card.shadowRoot?.querySelectorAll('.treemap-item') as NodeListOf<HTMLElement>;
       expect(items.length).toBe(2);
 
       for (const item of items) {
-        item.click();
+        item.dispatchEvent(
+          new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+        );
+        item.dispatchEvent(
+          new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+        );
       }
 
-      // Should have dispatched events for both entities
       expect(events).toContain('sensor.temp_a');
       expect(events).toContain('sensor.temp_b');
     });
 
-    it('does not dispatch event for items without entity_id', async () => {
-      // JSON mode: data comes from entity's 'items' attribute
+    it('does not dispatch event for items without entity_id (JSON mode)', async () => {
       const hass = mockHass([
         mockEntity('sensor.json_source', 'ok', {
           items: [{ label: 'No Entity', value: 50 }],
@@ -90,12 +99,463 @@ describe('User Interactions', () => {
       const eventSpy = vi.fn();
       card.addEventListener('hass-more-info', eventSpy);
 
-      // Click on the item (which has no entity_id)
       const item = card.shadowRoot?.querySelector('.treemap-item') as HTMLElement;
-      item?.click();
+      item.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      item.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
 
-      // No event should be dispatched
       expect(eventSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('tap_action: none', () => {
+    it('does not dispatch any event when tap_action is none', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.temperature', '22.5', { friendly_name: 'Temperature' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.temperature'],
+        tap_action: { action: 'none' },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const eventSpy = vi.fn();
+      card.addEventListener('hass-more-info', eventSpy);
+
+      const item = card.shadowRoot?.querySelector('.treemap-item') as HTMLElement;
+      item.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      item.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+
+      expect(eventSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('tap_action: navigate', () => {
+    it('calls navigate on tap with navigate action', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.temperature', '22.5', { friendly_name: 'Temperature' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.temperature'],
+        tap_action: { action: 'navigate', navigation_path: '/lovelace/power' },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const pushStateSpy = vi.spyOn(window.history, 'pushState').mockImplementation(() => {});
+
+      const item = card.shadowRoot?.querySelector('.treemap-item') as HTMLElement;
+      item.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      item.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+
+      expect(pushStateSpy).toHaveBeenCalledWith(null, '', '/lovelace/power');
+
+      pushStateSpy.mockRestore();
+    });
+  });
+
+  describe('hold_action', () => {
+    it('fires hold_action after hold threshold, not tap_action', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.temperature', '22.5', { friendly_name: 'Temperature' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.temperature'],
+        tap_action: { action: 'more-info' },
+        hold_action: { action: 'navigate', navigation_path: '/lovelace/detail' },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const pushStateSpy = vi.spyOn(window.history, 'pushState').mockImplementation(() => {});
+      const moreInfoSpy = vi.fn();
+      card.addEventListener('hass-more-info', moreInfoSpy);
+
+      const item = card.shadowRoot?.querySelector('.treemap-item') as HTMLElement;
+      item.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      vi.advanceTimersByTime(600); // past 500ms threshold
+      item.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+
+      expect(pushStateSpy).toHaveBeenCalledWith(null, '', '/lovelace/detail');
+      expect(moreInfoSpy).not.toHaveBeenCalled();
+
+      pushStateSpy.mockRestore();
+    });
+
+    it('fires tap_action when released before hold threshold', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.temperature', '22.5', { friendly_name: 'Temperature' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.temperature'],
+        tap_action: { action: 'more-info' },
+        hold_action: { action: 'navigate', navigation_path: '/lovelace/detail' },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const pushStateSpy = vi.spyOn(window.history, 'pushState').mockImplementation(() => {});
+      const moreInfoPromise = new Promise<CustomEvent>(resolve => {
+        card.addEventListener('hass-more-info', resolve as EventListener);
+      });
+
+      const item = card.shadowRoot?.querySelector('.treemap-item') as HTMLElement;
+      item.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      vi.advanceTimersByTime(100); // before 500ms threshold
+      item.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+
+      const event = await moreInfoPromise;
+      expect(event.detail.entityId).toBe('sensor.temperature');
+      expect(pushStateSpy).not.toHaveBeenCalled();
+
+      pushStateSpy.mockRestore();
+    });
+
+    it('does not fire hold_action when hold_action is none', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.temperature', '22.5', { friendly_name: 'Temperature' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.temperature'],
+        tap_action: { action: 'more-info' },
+        hold_action: { action: 'none' },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const pushStateSpy = vi.spyOn(window.history, 'pushState').mockImplementation(() => {});
+
+      const item = card.shadowRoot?.querySelector('.treemap-item') as HTMLElement;
+      item.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      vi.advanceTimersByTime(600);
+      item.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+
+      expect(pushStateSpy).not.toHaveBeenCalled();
+
+      pushStateSpy.mockRestore();
+    });
+
+    it('cancels hold timer on pointercancel', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.temperature', '22.5', { friendly_name: 'Temperature' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.temperature'],
+        hold_action: { action: 'navigate', navigation_path: '/lovelace/detail' },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const pushStateSpy = vi.spyOn(window.history, 'pushState').mockImplementation(() => {});
+
+      const item = card.shadowRoot?.querySelector('.treemap-item') as HTMLElement;
+      item.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      item.dispatchEvent(new PointerEvent('pointercancel', { bubbles: true }));
+      vi.advanceTimersByTime(600);
+
+      expect(pushStateSpy).not.toHaveBeenCalled();
+
+      pushStateSpy.mockRestore();
+    });
+  });
+
+  describe('tap_action: url', () => {
+    it('opens url in new window on tap', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.temperature', '22.5', { friendly_name: 'Temperature' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.temperature'],
+        tap_action: { action: 'url', url_path: 'https://example.com' },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+      const item = card.shadowRoot?.querySelector('.treemap-item') as HTMLElement;
+      item.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      item.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+
+      expect(openSpy).toHaveBeenCalledWith('https://example.com');
+
+      openSpy.mockRestore();
+    });
+  });
+
+  describe('tap_action: toggle', () => {
+    it('calls callService with entity domain and toggle on tap', async () => {
+      const hass = mockHass([
+        mockEntity('light.living_room', 'on', { friendly_name: 'Living Room' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['light.living_room'],
+        tap_action: { action: 'toggle' },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const callServiceSpy = vi.spyOn(hass, 'callService').mockResolvedValue();
+
+      const item = card.shadowRoot?.querySelector('.treemap-item') as HTMLElement;
+      item.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      item.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+
+      expect(callServiceSpy).toHaveBeenCalledWith('light', 'toggle', {
+        entity_id: 'light.living_room',
+      });
+
+      callServiceSpy.mockRestore();
+    });
+
+    it('uses correct entity_id for toggle — not another entity', async () => {
+      const hass = mockHass([
+        mockEntity('light.kitchen', 'off', { friendly_name: 'Kitchen' }),
+        mockEntity('light.bedroom', 'on', { friendly_name: 'Bedroom' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['light.kitchen', 'light.bedroom'],
+        tap_action: { action: 'toggle' },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const callServiceSpy = vi.spyOn(hass, 'callService').mockResolvedValue();
+
+      const items = card.shadowRoot?.querySelectorAll('.treemap-item') as NodeListOf<HTMLElement>;
+      const kitchenItem = Array.from(items).find(el =>
+        el.querySelector('.treemap-label')?.textContent?.includes('Kitchen')
+      ) as HTMLElement;
+
+      expect(kitchenItem).toBeDefined();
+      kitchenItem.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      kitchenItem.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+
+      expect(callServiceSpy).toHaveBeenCalledWith('light', 'toggle', {
+        entity_id: 'light.kitchen',
+      });
+      expect(callServiceSpy).toHaveBeenCalledTimes(1);
+
+      callServiceSpy.mockRestore();
+    });
+  });
+
+  describe('tap_action: call-service', () => {
+    it('calls the configured service with service_data on tap', async () => {
+      const hass = mockHass([
+        mockEntity('light.living_room', 'off', { friendly_name: 'Living Room' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['light.living_room'],
+        tap_action: {
+          action: 'call-service',
+          service: 'light.turn_on',
+          service_data: { brightness_pct: 80 },
+        },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const callServiceSpy = vi.spyOn(hass, 'callService').mockResolvedValue();
+
+      const item = card.shadowRoot?.querySelector('.treemap-item') as HTMLElement;
+      item.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      item.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+
+      expect(callServiceSpy).toHaveBeenCalledWith('light', 'turn_on', { brightness_pct: 80 });
+
+      callServiceSpy.mockRestore();
+    });
+  });
+
+  describe('tap_action: assist', () => {
+    it('fires hass-launch-voice-assistant event on tap', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.temperature', '22.5', { friendly_name: 'Temperature' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.temperature'],
+        tap_action: { action: 'assist' },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const eventPromise = new Promise<Event>(resolve => {
+        card.addEventListener('hass-launch-voice-assistant', resolve);
+      });
+
+      const item = card.shadowRoot?.querySelector('.treemap-item') as HTMLElement;
+      item.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      item.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+
+      await expect(eventPromise).resolves.toBeDefined();
+    });
+  });
+
+  describe('hold_action: toggle', () => {
+    it('calls toggle on hold with correct entity_id', async () => {
+      const hass = mockHass([
+        mockEntity('light.living_room', 'on', { friendly_name: 'Living Room' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['light.living_room'],
+        tap_action: { action: 'more-info' },
+        hold_action: { action: 'toggle' },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const callServiceSpy = vi.spyOn(hass, 'callService').mockResolvedValue();
+      const moreInfoSpy = vi.fn();
+      card.addEventListener('hass-more-info', moreInfoSpy);
+
+      const item = card.shadowRoot?.querySelector('.treemap-item') as HTMLElement;
+      item.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      vi.advanceTimersByTime(600);
+      item.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+
+      expect(callServiceSpy).toHaveBeenCalledWith('light', 'toggle', {
+        entity_id: 'light.living_room',
+      });
+      expect(moreInfoSpy).not.toHaveBeenCalled();
+
+      callServiceSpy.mockRestore();
+    });
+  });
+
+  describe('per-entity action overrides', () => {
+    it('uses per-entity tap_action override over global config', async () => {
+      const hass = mockHass([
+        mockEntity('sensor.temp_a', '20', { friendly_name: 'Temp A' }),
+        mockEntity('sensor.temp_b', '25', { friendly_name: 'Temp B' }),
+      ]);
+
+      card.setConfig({
+        type: 'custom:treemap-card',
+        entities: [
+          {
+            entity: 'sensor.temp_a',
+            tap_action: { action: 'navigate', navigation_path: '/lovelace/temp-a' },
+          },
+          'sensor.temp_b',
+        ],
+        tap_action: { action: 'more-info' },
+      });
+      card.hass = hass;
+      await card.updateComplete;
+
+      const pushStateSpy = vi.spyOn(window.history, 'pushState').mockImplementation(() => {});
+      const moreInfoSpy = vi.fn();
+      card.addEventListener('hass-more-info', moreInfoSpy);
+
+      const items = card.shadowRoot?.querySelectorAll('.treemap-item') as NodeListOf<HTMLElement>;
+      expect(items.length).toBe(2);
+
+      const itemA = Array.from(items).find(el =>
+        el.querySelector('.treemap-label')?.textContent?.includes('Temp A')
+      ) as HTMLElement;
+      const itemB = Array.from(items).find(el =>
+        el.querySelector('.treemap-label')?.textContent?.includes('Temp B')
+      ) as HTMLElement;
+
+      expect(itemA).toBeDefined();
+      expect(itemB).toBeDefined();
+
+      // Tap temp_a → per-entity navigate
+      itemA.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      itemA.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      expect(pushStateSpy).toHaveBeenCalledWith(null, '', '/lovelace/temp-a');
+
+      // Tap temp_b → global more-info
+      pushStateSpy.mockClear();
+      itemB.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      itemB.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, button: 0, pointerType: 'mouse' })
+      );
+      expect(pushStateSpy).not.toHaveBeenCalled();
+      expect(moreInfoSpy).toHaveBeenCalledTimes(1);
+
+      pushStateSpy.mockRestore();
     });
   });
 });
