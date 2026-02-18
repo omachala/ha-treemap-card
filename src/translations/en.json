@@ -80,6 +80,11 @@
       "issues": "Bug or idea?",
       "star": "Like it? Star it!"
     },
+    "actions": {
+      "title": "Actions",
+      "tap_action": "Tap action",
+      "hold_action": "Hold action"
+    },
     "data": {
       "title": "Data",
       "order": "Order",

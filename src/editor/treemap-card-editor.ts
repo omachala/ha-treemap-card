@@ -8,7 +8,12 @@
 import { LitElement, html, type TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { set } from 'es-toolkit/compat';
-import { isEntityConfig, type HomeAssistant, type TreemapCardConfig } from '../types';
+import {
+  isEntityConfig,
+  type HomeAssistant,
+  type TreemapCardConfig,
+  type TreemapActionConfig,
+} from '../types';
 import type { LovelaceCardEditor } from './types';
 import { editorStyles } from './styles';
 import { localize } from '../localize';
@@ -152,6 +157,26 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
       .map(s => s.trim())
       .filter(s => s.length > 0);
     this._config = set({ ...this._config }, 'exclude', exclude.length > 0 ? exclude : undefined);
+    this._fireConfigChanged();
+  }
+
+  private readonly _actionsSchema = [
+    { name: 'tap_action', selector: { ui_action: { default_action: 'more-info' } } },
+    { name: 'hold_action', selector: { ui_action: { default_action: 'none' } } },
+  ];
+
+  private _handleActionsChanged(e: CustomEvent): void {
+    if (!this._config) return;
+    // ha-form fires value-changed with detail.value = { tap_action, hold_action }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const tap: TreemapActionConfig | undefined = e.detail?.value?.tap_action;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const hold: TreemapActionConfig | undefined = e.detail?.value?.hold_action;
+    this._config = {
+      ...this._config,
+      ...(tap !== undefined && { tap_action: tap }),
+      ...(hold !== undefined && { hold_action: hold }),
+    };
     this._fireConfigChanged();
   }
 
@@ -626,6 +651,25 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
           </div>
         </ha-expansion-panel>
 
+        <!-- Actions section -->
+        <ha-expansion-panel outlined data-testid="actions-section">
+          <span slot="header">${this._t('editor.actions.title')}</span>
+          <div class="content">
+            <ha-form
+              .hass=${this.hass}
+              .data=${{
+                tap_action: this._config.tap_action,
+                hold_action: this._config.hold_action,
+              }}
+              .schema=${this._actionsSchema}
+              .computeLabel=${(s: { name: string }) => this._t(`editor.actions.${s.name}`)}
+              @value-changed=${this._handleActionsChanged}
+              data-testid="actions-form"
+            ></ha-form>
+            ${this._renderDocsLink('tap--hold-actions')}
+          </div>
+        </ha-expansion-panel>
+
         <!-- Footer banner -->
         <div class="footer-banner">
           <a href=${REPO_URL} target="_blank" rel="noopener">
@@ -651,5 +695,11 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
 declare global {
   interface HTMLElementTagNameMap {
     'treemap-card-editor': TreemapCardEditor;
+    'ha-form': HTMLElement & {
+      hass: unknown;
+      data: unknown;
+      schema: unknown;
+      computeLabel: unknown;
+    };
   }
 }
