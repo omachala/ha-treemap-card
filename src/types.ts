@@ -1,4 +1,13 @@
 /**
+ * Extend HA DOM events to include assist/voice assistant event
+ */
+declare global {
+  interface HASSDomEvents {
+    'hass-launch-voice-assistant': Record<string, never>;
+  }
+}
+
+/**
  * Home Assistant types (minimal subset needed)
  */
 export interface HassEntity {
@@ -41,15 +50,16 @@ export type ColorApplyTarget = 'background' | 'foreground';
 
 import type { EntityConfig, ActionConfig } from 'custom-card-helpers';
 
-export type { ActionConfig };
+/** Extended action config including assist (not yet in custom-card-helpers) */
+export type TreemapActionConfig = ActionConfig | { action: 'assist' };
 
 /**
  * Treemap entity config - extends HA EntityConfig with per-entity action overrides
  */
 export interface TreemapEntityConfig extends EntityConfig {
-  tap_action?: ActionConfig;
-  hold_action?: ActionConfig;
-  double_tap_action?: ActionConfig;
+  tap_action?: TreemapActionConfig;
+  hold_action?: TreemapActionConfig;
+  double_tap_action?: TreemapActionConfig;
 }
 
 /**
@@ -169,9 +179,9 @@ export interface TreemapCardConfig {
   // Custom CSS for the entire card
   card_style?: string;
   // Action configuration (standard HA action pattern)
-  tap_action?: ActionConfig;
-  hold_action?: ActionConfig;
-  double_tap_action?: ActionConfig;
+  tap_action?: TreemapActionConfig;
+  hold_action?: TreemapActionConfig;
+  double_tap_action?: TreemapActionConfig;
   // Sparkline configuration
   sparkline?: {
     show?: boolean; // Show sparklines (default: true)

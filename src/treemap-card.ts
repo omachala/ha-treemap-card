@@ -8,7 +8,7 @@ import {
   type TreemapItem,
   type TreemapRect,
   type TreemapEntityConfig,
-  type ActionConfig,
+  type TreemapActionConfig,
 } from './types';
 
 import { getNumber, getString, matchesPattern, isUnavailableState } from './utils/predicates';
@@ -924,7 +924,7 @@ export class TreemapCard extends LitElement {
   private _getActionConfig(
     rect: TreemapRect,
     actionKey: 'tap_action' | 'hold_action' | 'double_tap_action'
-  ): ActionConfig {
+  ): TreemapActionConfig {
     // Per-entity config takes precedence: check exact match, then wildcard patterns
     if (this._entityConfigMap.size > 0 && rect.entity_id) {
       // First try exact match
@@ -947,7 +947,7 @@ export class TreemapCard extends LitElement {
     return { action: actionKey === 'tap_action' ? 'more-info' : 'none' };
   }
 
-  private _executeAction(action: ActionConfig, entityId: string | undefined): void {
+  private _executeAction(action: TreemapActionConfig, entityId: string | undefined): void {
     switch (action.action) {
       case 'more-info':
         if (entityId) {
@@ -977,6 +977,9 @@ export class TreemapCard extends LitElement {
           const service = parts[1] ?? '';
           void this.hass.callService(domain, service, action.service_data);
         }
+        break;
+      case 'assist':
+        fireEvent(this, 'hass-launch-voice-assistant', {});
         break;
       default:
         break;

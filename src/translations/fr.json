@@ -83,16 +83,7 @@
     "actions": {
       "title": "Actions",
       "tap_action": "Action au tap",
-      "hold_action": "Action au maintien",
-      "navigation_path": "Chemin de navigation",
-      "url_path": "URL",
-      "service_note": "Configurer call-service via YAML",
-      "action_more_info": "Plus d'infos",
-      "action_navigate": "Naviguer",
-      "action_url": "URL",
-      "action_call_service": "Appeler un service",
-      "action_toggle": "Basculer",
-      "action_none": "Aucune"
+      "hold_action": "Action au maintien"
     },
     "data": {
       "title": "Données",

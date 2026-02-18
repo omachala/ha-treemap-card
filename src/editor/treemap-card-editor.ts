@@ -5,10 +5,15 @@
  * Uses Home Assistant's official form components for consistent UI.
  */
 
-import { LitElement, html, nothing, type TemplateResult } from 'lit';
+import { LitElement, html, type TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { set } from 'es-toolkit/compat';
-import { isEntityConfig, type HomeAssistant, type TreemapCardConfig } from '../types';
+import {
+  isEntityConfig,
+  type HomeAssistant,
+  type TreemapCardConfig,
+  type TreemapActionConfig,
+} from '../types';
 import type { LovelaceCardEditor } from './types';
 import { editorStyles } from './styles';
 import { localize } from '../localize';
@@ -155,88 +160,24 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
     this._fireConfigChanged();
   }
 
-  /**
-   * Handler for action type dropdown changes (tap_action.action / hold_action.action)
-   */
-  private _handleActionTypeChange(actionKey: 'tap_action' | 'hold_action', e: Event): void {
+  private readonly _actionsSchema = [
+    { name: 'tap_action', selector: { ui_action: { default_action: 'more-info' } } },
+    { name: 'hold_action', selector: { ui_action: { default_action: 'none' } } },
+  ];
+
+  private _handleActionsChanged(e: CustomEvent): void {
     if (!this._config) return;
-    const value = getEventValue(e);
-    if (!value) return;
-    const current = this._config[actionKey] ?? {};
-    this._config = set({ ...this._config }, actionKey, { ...current, action: value });
+    // ha-form fires value-changed with detail.value = { tap_action, hold_action }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const tap: TreemapActionConfig | undefined = e.detail?.value?.tap_action;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const hold: TreemapActionConfig | undefined = e.detail?.value?.hold_action;
+    this._config = {
+      ...this._config,
+      ...(tap !== undefined && { tap_action: tap }),
+      ...(hold !== undefined && { hold_action: hold }),
+    };
     this._fireConfigChanged();
-  }
-
-  /**
-   * Handler for action navigation_path / url_path text inputs
-   */
-  private _handleActionPathChange(
-    actionKey: 'tap_action' | 'hold_action',
-    pathKey: 'navigation_path' | 'url_path',
-    e: Event
-  ): void {
-    if (!this._config) return;
-    const value = getEventValue(e) || undefined;
-    const current = this._config[actionKey] ?? { action: 'navigate' };
-    this._config = set({ ...this._config }, actionKey, { ...current, [pathKey]: value });
-    this._fireConfigChanged();
-  }
-
-  private _renderActionSelect(actionKey: 'tap_action' | 'hold_action'): TemplateResult {
-    const current = this._config?.[actionKey];
-    const actionType = current?.action ?? (actionKey === 'tap_action' ? 'more-info' : 'none');
-    const label =
-      actionKey === 'tap_action'
-        ? this._t('editor.actions.tap_action')
-        : this._t('editor.actions.hold_action');
-
-    return html`
-      <div class="action-block" data-testid="${actionKey}-block">
-        <ha-select
-          label=${label}
-          .value=${actionType}
-          @selected=${(e: Event) => this._handleActionTypeChange(actionKey, e)}
-          @closed=${(e: Event) => e.stopPropagation()}
-          data-testid="${actionKey}-select"
-        >
-          <ha-list-item value="more-info"
-            >${this._t('editor.actions.action_more_info')}</ha-list-item
-          >
-          <ha-list-item value="navigate">${this._t('editor.actions.action_navigate')}</ha-list-item>
-          <ha-list-item value="url">${this._t('editor.actions.action_url')}</ha-list-item>
-          <ha-list-item value="toggle">${this._t('editor.actions.action_toggle')}</ha-list-item>
-          <ha-list-item value="call-service"
-            >${this._t('editor.actions.action_call_service')}</ha-list-item
-          >
-          <ha-list-item value="none">${this._t('editor.actions.action_none')}</ha-list-item>
-        </ha-select>
-        ${actionType === 'navigate'
-          ? html`<ha-textfield
-              label=${this._t('editor.actions.navigation_path')}
-              .value=${current && 'navigation_path' in current
-                ? (current.navigation_path ?? '')
-                : ''}
-              @input=${(e: Event) => this._handleActionPathChange(actionKey, 'navigation_path', e)}
-              placeholder="/lovelace/my-view"
-              data-testid="${actionKey}-navigation-path"
-            ></ha-textfield>`
-          : nothing}
-        ${actionType === 'url'
-          ? html`<ha-textfield
-              label=${this._t('editor.actions.url_path')}
-              .value=${current && 'url_path' in current ? (current.url_path ?? '') : ''}
-              @input=${(e: Event) => this._handleActionPathChange(actionKey, 'url_path', e)}
-              placeholder="https://example.com"
-              data-testid="${actionKey}-url-path"
-            ></ha-textfield>`
-          : nothing}
-        ${actionType === 'call-service'
-          ? html`<ha-alert alert-type="info" data-testid="${actionKey}-service-note"
-              >${this._t('editor.actions.service_note')}</ha-alert
-            >`
-          : nothing}
-      </div>
-    `;
   }
 
   private _docsUrl(anchor: string): string {
@@ -714,7 +655,17 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
         <ha-expansion-panel outlined data-testid="actions-section">
           <span slot="header">${this._t('editor.actions.title')}</span>
           <div class="content">
-            ${this._renderActionSelect('tap_action')} ${this._renderActionSelect('hold_action')}
+            <ha-form
+              .hass=${this.hass}
+              .data=${{
+                tap_action: this._config.tap_action,
+                hold_action: this._config.hold_action,
+              }}
+              .schema=${this._actionsSchema}
+              .computeLabel=${(s: { name: string }) => this._t(`editor.actions.${s.name}`)}
+              @value-changed=${this._handleActionsChanged}
+              data-testid="actions-form"
+            ></ha-form>
             ${this._renderDocsLink('tap--hold-actions')}
           </div>
         </ha-expansion-panel>
@@ -744,5 +695,11 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
 declare global {
   interface HTMLElementTagNameMap {
     'treemap-card-editor': TreemapCardEditor;
+    'ha-form': HTMLElement & {
+      hass: unknown;
+      data: unknown;
+      schema: unknown;
+      computeLabel: unknown;
+    };
   }
 }
