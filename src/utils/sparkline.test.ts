@@ -84,6 +84,56 @@ describe('getSparklinePoints', () => {
     // Spacing should be even (10 intervals for 11 points)
     expect(xValues[1]).toBeCloseTo(10, 0);
   });
+
+  it('uses fixed min when provided', () => {
+    const data = [10, 50, 90];
+    // With min=0, the value 10 should NOT appear at the bottom of the chart
+    const { linePoints: autoPoints } = getSparklinePoints(data, { width: 100, height: 20 });
+    const { linePoints: fixedPoints } = getSparklinePoints(data, {
+      width: 100,
+      height: 20,
+      min: 0,
+    });
+
+    const getY = (pts: string, idx: number) =>
+      Number.parseFloat(pts.split(' ')[idx]?.split(',')[1] ?? '0');
+
+    // With fixed min=0 (lower than data min=10), value 10 is no longer at the bottom,
+    // so it appears visually higher — smaller y in SVG coords
+    expect(getY(fixedPoints, 0)).toBeLessThan(getY(autoPoints, 0));
+  });
+
+  it('uses fixed max when provided', () => {
+    const data = [10, 50, 90];
+    // With max=100, the value 90 should NOT appear at the top of the chart
+    const { linePoints: autoPoints } = getSparklinePoints(data, { width: 100, height: 20 });
+    const { linePoints: fixedPoints } = getSparklinePoints(data, {
+      width: 100,
+      height: 20,
+      max: 100,
+    });
+
+    const getY = (pts: string, idx: number) =>
+      Number.parseFloat(pts.split(' ')[idx]?.split(',')[1] ?? '0');
+
+    // With fixed max=100 (higher than data max=90), last point y should be lower (not at top)
+    expect(getY(fixedPoints, 2)).toBeGreaterThan(getY(autoPoints, 2));
+  });
+
+  it('fixed min/max produces flat line when data is within narrow range', () => {
+    // Sensor stuck at 21°C, but chart shows 0-30 range — should show near-flat line in middle
+    const data = [21, 21, 21, 21];
+    const { linePoints } = getSparklinePoints(data, { width: 100, height: 20, min: 0, max: 30 });
+
+    const points = linePoints.split(' ');
+    const yValues = points.map(point => Number.parseFloat(point.split(',')[1] ?? '0'));
+    // All y values should be the same (flat line)
+    expect(new Set(yValues.map(y => y.toFixed(1))).size).toBe(1);
+    // And NOT at top or bottom (should be around 70% down: 21/30 = 0.7)
+    const y = yValues[0] ?? 0;
+    expect(y).toBeGreaterThan(5);
+    expect(y).toBeLessThan(15);
+  });
 });
 
 describe('renderSparkline', () => {

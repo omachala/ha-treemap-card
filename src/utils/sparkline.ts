@@ -25,6 +25,8 @@ export interface SparklineOptions {
   fill?: SparklineFillOptions;
   hvac?: SparklineHvacOptions;
   periodHours?: number; // For HVAC quantization (default: 24)
+  min?: number; // Fixed Y-axis minimum (default: auto from data)
+  max?: number; // Fixed Y-axis maximum (default: auto from data)
 }
 
 /**
@@ -39,8 +41,8 @@ export function getSparklinePoints(
   const verticalPadding = 1; // Small padding top/bottom for line visibility
   const effectiveHeight = height - bottomPadding;
 
-  const minValue = Math.min(...data);
-  const maxValue = Math.max(...data);
+  const minValue = options.min ?? Math.min(...data);
+  const maxValue = options.max ?? Math.max(...data);
   const range = maxValue - minValue || 1;
 
   const linePoints = data
@@ -143,6 +145,8 @@ interface HvacFillOptions {
   height: number;
   colors: { heating: string; cooling: string };
   periodHours: number;
+  min?: number;
+  max?: number;
 }
 
 /**
@@ -156,8 +160,8 @@ function renderHvacFill(options: HvacFillOptions): SVGTemplateResult {
   const totalBlocks = blocks.length;
 
   // Calculate min/max for y-scaling
-  const minValue = Math.min(...data);
-  const maxValue = Math.max(...data);
+  const minValue = options.min ?? Math.min(...data);
+  const maxValue = options.max ?? Math.max(...data);
   const range = maxValue - minValue || 1;
   const verticalPadding = 1;
 
@@ -267,7 +271,7 @@ export function renderSparkline(
       `
           : nothing
       }
-      ${showHvac && hasData ? renderHvacFill({ segments: hvacActions, data, width, height, colors: hvacColors, periodHours }) : nothing}
+      ${showHvac && hasData ? renderHvacFill({ segments: hvacActions, data, width, height, colors: hvacColors, periodHours, min: options.min, max: options.max }) : nothing}
       ${showFill && !hvacActions ? svg`<polygon points="${fillPoints}" style="${fillStyle}" />` : nothing}
       ${showLine ? svg`<polyline points="${linePoints}" style="fill: none; stroke-linecap: round; stroke-linejoin: round; ${lineStyle}" />` : nothing}
     </svg>

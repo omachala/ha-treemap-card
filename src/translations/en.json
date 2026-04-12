@@ -44,7 +44,9 @@
       "mode_light": "Light",
       "show_line": "Show line",
       "show_fill": "Show fill",
-      "show_hvac": "Show HVAC bars (climate entities)"
+      "show_hvac": "Show HVAC bars (climate entities)",
+      "min": "Y-axis min",
+      "max": "Y-axis max"
     },
     "colors": {
       "title": "Colors",
