@@ -713,7 +713,7 @@ export class TreemapCard extends LitElement {
 
     // Dynamic height based on actual row count from squarify algorithm
     const numberRows = Math.max(1, rows);
-    const baseHeight = Math.max(150, numberRows * 100); // 100px per row, min 150px
+    const baseHeight = Math.max(100, numberRows * 100); // 100px per row, min 100px
     const height = this._config.height ?? baseHeight;
     const gap = this._config.gap ?? 6;
 
