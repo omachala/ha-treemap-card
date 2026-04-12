@@ -1,5 +1,25 @@
 # ha-treemap-card
 
+## 0.15.1
+
+### Patch Changes
+
+- b6d3c17: Fixed auto height adding an extra empty row when displaying only a few entities. Cards with a single entity or a small number of entities now size correctly without phantom whitespace at the bottom.
+- 64e796f: Switch, input_boolean, and binary_sensor entities now appear in the treemap. They display On/Off and use your configured high/low colors.
+- ebc0047: Each entity can now have its own fixed color. Useful for category dashboards where you want consistent colors across multiple cards.
+
+  ```yaml
+  entities:
+    - entity: sensor.cost_lights
+      color: '#F68C00'
+      name: Lighting
+    - entity: sensor.cost_heating
+      color: '#B40404'
+      name: Heating
+  ```
+
+- a9d59fd: Sparklines now support fixed Y-axis bounds via `sparkline.min` and `sparkline.max`. Useful when sensor values change only slightly — instead of a flat line filling the full chart, you can set `min: 0` and `max: 100` to show the actual position within a meaningful range.
+
 ## 0.15.0
 
 ### Minor Changes
