@@ -21,6 +21,7 @@
     "knip": "knip",
     "check": "pnpm typecheck && pnpm format:check && pnpm lint && pnpm knip && pnpm test:run",
     "fix": "pnpm format && pnpm lint:fix",
+    "deploy:ha": "pnpm build && cp dist/treemap-card.js ~/dockers/homeassistant/config/www/ && echo p12KIM3 | sudo -S sed -i \"s/treemap-card\\.js?v=[^\\\"']*/treemap-card.js?v=$(date +%s)/\" ~/dockers/homeassistant/config/.storage/lovelace_resources && cd ~/dockers/homeassistant && echo p12KIM3 | sudo -S docker compose restart homeassistant",
     "prepare": "simple-git-hooks"
   },
   "simple-git-hooks": {
