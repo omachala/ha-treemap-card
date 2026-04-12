@@ -60,6 +60,7 @@ export interface TreemapEntityConfig extends EntityConfig {
   tap_action?: TreemapActionConfig;
   hold_action?: TreemapActionConfig;
   double_tap_action?: TreemapActionConfig;
+  color?: string; // Direct color override for this entity (e.g. '#F68C00')
 }
 
 /**
@@ -242,6 +243,7 @@ export interface TreemapItem {
   light?: LightColorInfo; // Light-specific color info (only for light.* entities)
   climate?: ClimateInfo; // Climate-specific info (only for climate.* entities)
   binary?: { isOn: boolean }; // Binary state info (only for switch.*, input_boolean.*, binary_sensor.*)
+  color?: string; // Per-entity color override (bypasses gradient)
   sparklineData?: number[]; // Inline sparkline data (JSON mode)
   unavailable?: boolean; // True if entity state is unavailable/unknown/none
   rawState?: string; // Original state string (for unavailable entities)
@@ -262,6 +264,7 @@ export interface TreemapRect {
   light?: LightColorInfo; // Light-specific color info (only for light.* entities)
   climate?: ClimateInfo; // Climate-specific info (only for climate.* entities)
   binary?: { isOn: boolean }; // Binary state info (only for switch.*, input_boolean.*, binary_sensor.*)
+  color?: string; // Per-entity color override (bypasses gradient)
   sparklineData?: number[]; // Inline sparkline data (JSON mode)
   unavailable?: boolean; // True if entity state is unavailable/unknown/none
   rawState?: string; // Original state string (for unavailable entities)

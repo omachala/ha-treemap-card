@@ -1022,3 +1022,79 @@ describe('Sensor Entities', () => {
     expect(midArea).toBeLessThan(bigArea);
   });
 });
+
+describe('Per-entity color override', () => {
+  let card: TreemapCard;
+
+  beforeEach(() => {
+    card = createCard();
+  });
+
+  it('applies per-entity color as background', async () => {
+    const hass = mockHass([
+      mockEntity('sensor.cost_lights', '45', { friendly_name: 'Lights' }),
+      mockEntity('sensor.cost_heating', '120', { friendly_name: 'Heating' }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: [
+        { entity: 'sensor.cost_lights', color: '#F68C00' },
+        { entity: 'sensor.cost_heating', color: '#B40404' },
+      ],
+    });
+    card.hass = hass;
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    const lights = items.find(i => i.label === 'Lights');
+    const heating = items.find(i => i.label === 'Heating');
+
+    expect(lights?.backgroundColor).toBe('rgb(246, 140, 0)');
+    expect(heating?.backgroundColor).toBe('rgb(180, 4, 4)');
+  });
+
+  it('per-entity color overrides gradient', async () => {
+    const hass = mockHass([
+      mockEntity('sensor.cost_a', '100', { friendly_name: 'A' }),
+      mockEntity('sensor.cost_b', '50', { friendly_name: 'B' }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: [{ entity: 'sensor.cost_a', color: '#5F04B4' }],
+      color: { low: '#ff0000', high: '#00ff00' },
+    });
+    card.hass = hass;
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    const a = items.find(i => i.label === 'A');
+
+    // Should use per-entity color, not gradient
+    expect(a?.backgroundColor).toBe('rgb(95, 4, 180)');
+  });
+
+  it('entities without color use gradient', async () => {
+    const hass = mockHass([
+      mockEntity('sensor.cost_a', '100', { friendly_name: 'A' }),
+      mockEntity('sensor.cost_b', '50', { friendly_name: 'B' }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: [{ entity: 'sensor.cost_a', color: '#5F04B4' }, 'sensor.cost_b'],
+    });
+    card.hass = hass;
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    const a = items.find(i => i.label === 'A');
+    const b = items.find(i => i.label === 'B');
+
+    expect(a?.backgroundColor).toBe('rgb(95, 4, 180)');
+    // B has no override — should have a gradient color (not the override color)
+    expect(b?.backgroundColor).not.toBe('rgb(95, 4, 180)');
+    expect(b?.backgroundColor).toBeDefined();
+  });
+});
