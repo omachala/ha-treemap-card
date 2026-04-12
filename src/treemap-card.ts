@@ -320,6 +320,7 @@ export class TreemapCard extends LitElement {
         entity: pattern,
         name: nameOverride,
         icon: iconOverride,
+        color: colorOverride,
       } = this._normalizeEntity(input);
 
       const matchingIds = allEntityIds.filter(
@@ -367,6 +368,7 @@ export class TreemapCard extends LitElement {
             icon: icon ?? 'mdi:lightbulb',
             unit: '%',
             light: lightInfo,
+            color: colorOverride,
           });
           continue;
         }
@@ -440,6 +442,7 @@ export class TreemapCard extends LitElement {
             icon: climateIcon,
             unit: getString(entity.attributes['unit_of_measurement']),
             climate: climateInfo,
+            color: colorOverride,
           });
           continue;
         }
@@ -458,6 +461,7 @@ export class TreemapCard extends LitElement {
             entity_id: entityId,
             icon,
             binary: binaryInfo,
+            color: colorOverride,
           });
           continue;
         }
@@ -492,6 +496,7 @@ export class TreemapCard extends LitElement {
             unit,
             unavailable: true,
             rawState: entity.state,
+            color: colorOverride,
           });
           continue;
         }
@@ -507,6 +512,7 @@ export class TreemapCard extends LitElement {
           entity_id: entityId,
           icon,
           unit,
+          color: colorOverride,
         });
       }
     }
@@ -737,6 +743,11 @@ export class TreemapCard extends LitElement {
    */
   private _getRectColor(rect: TreemapRect, min: number, max: number): string {
     const opacity = this._config?.color?.opacity;
+
+    // Per-entity color override takes highest precedence
+    if (rect.color) {
+      return opacity === undefined ? rect.color : applyOpacity(rect.color, opacity);
+    }
 
     // Unavailable entities always get gray color
     if (rect.unavailable) {
