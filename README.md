@@ -23,7 +23,7 @@ A custom Lovelace card that dynamically visualizes entities as a treemap. Rectan
 ### Why Treemap Card?
 
 - Optimized for thousands of entities without breaking a sweat
-- Works beautifully with [sensors](#sensors), [lights](#lights), [thermostats](#climate), and [custom data](#json-attribute-mode)
+- Works beautifully with [sensors](#sensors), [lights](#lights), [thermostats](#climate), [switches & binary sensors](#binary-sensors--switches), and [custom data](#json-attribute-mode)
 - Smart defaults, fully customizable - including [tap/hold actions](#tap--hold-actions) and [per-tile CSS](#styling-guide)
 - Works with [auto-entities](#auto-entities-guide) for advanced filtering (area, device, label)
 - 18 KB gzipped, 90%+ test coverage
@@ -264,13 +264,36 @@ Climate entities show temperature history with HVAC activity highlighted. The fi
   <br><br>
 </p>
 
+### Binary Sensors & Switches
+
+`switch.*`, `input_boolean.*`, and `binary_sensor.*` entities display **On** / **Off** and use your configured `color.high` and `color.low` colors.
+
+| State     | Color behavior                       |
+| --------- | ------------------------------------ |
+| On        | Uses `color.high` (default: green)   |
+| Off       | Uses `color.low` (default: red)      |
+
+```yaml
+type: custom:treemap-card
+header:
+  title: Switches & Devices
+entities:
+  - switch.*
+  - input_boolean.*
+size:
+  equal: true
+color:
+  high: '#16a34a' # Green for On
+  low: '#6c757d'  # Gray for Off
+```
+
 ## Configuration Reference
 
 ### Data Source
 
 | Option           | Default | Description                                                                                                   |
 | ---------------- | ------- | ------------------------------------------------------------------------------------------------------------- |
-| `entities`       |         | List of entity IDs or patterns. Supports wildcards (`sensor.*`) and object format (`{ entity, name, icon }`). |
+| `entities`       |         | List of entity IDs or patterns. Supports wildcards (`sensor.*`) and object format (`{ entity, name, icon, color, tap_action, hold_action }`). |
 | `exclude`        |         | List of entity patterns to exclude. Supports `*` wildcards.                                                   |
 | `entity`         |         | Single entity ID with array data in attributes (JSON mode).                                                   |
 | `data_attribute` | `items` | Which attribute contains the array (JSON mode).                                                               |
@@ -374,6 +397,26 @@ color:
 ```
 
 > **Note:** Custom styles (`label.style`, `value.style`, `icon.style`) always take priority over `color.target`.
+
+**Per-entity color overrides:**
+
+Individual entities can have a fixed color that bypasses the gradient entirely. Useful for category dashboards where you want consistent, meaningful colors regardless of value:
+
+```yaml
+type: custom:treemap-card
+entities:
+  - entity: sensor.cost_lights
+    color: '#F68C00'
+    name: Lighting
+  - entity: sensor.cost_heating
+    color: '#B40404'
+    name: Heating
+  - entity: sensor.cost_appliances
+    color: '#1B5E20'
+    name: Appliances
+```
+
+The `color` field accepts any valid CSS color: hex (`#F68C00`), `rgb(...)`, or named colors. It takes the highest priority — it overrides the gradient, light color, HVAC coloring, and everything else.
 
 ### Icon
 
@@ -665,6 +708,9 @@ sparkline:
 | `sparkline.attribute`  |         | Field containing sparkline data array (JSON mode).                |
 | `sparkline.period`     | `24h`   | Time period for entity history: `12h`, `24h`, `7d`, or `30d`.     |
 | `sparkline.mode`       | `dark`  | Color mode: `dark` (dark line/fill) or `light` (light line/fill). |
+| `sparkline.min`        | auto    | Fixed Y-axis minimum. Useful for sensors with a known range (e.g., `0` for humidity) so small changes aren't exaggerated. |
+| `sparkline.max`        | auto    | Fixed Y-axis maximum. Pair with `sparkline.min` to pin both bounds. |
+| `sparkline.hvac.show`  | `true`  | Show HVAC activity bars for climate entities.                     |
 | `sparkline.line.show`  | `true`  | Show/hide the line.                                               |
 | `sparkline.line.style` |         | Custom CSS for line (SVG properties).                             |
 | `sparkline.fill.show`  | `true`  | Show/hide the filled area under the line.                         |
@@ -716,6 +762,16 @@ sparkline:
   fill:
     style: |
       fill: rgba(0, 0, 0, 0.3);
+```
+
+**Fixed Y-axis bounds:**
+
+Prevents a nearly flat line from filling the full chart height when values change only slightly. Set both bounds to the sensor's meaningful range:
+
+```yaml
+sparkline:
+  min: 0
+  max: 100
 ```
 
 > **Note:** Sparklines use Home Assistant's long-term statistics. Most numeric sensors and climate entities (temperature) have statistics enabled by default.
