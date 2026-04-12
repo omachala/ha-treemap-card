@@ -414,6 +414,22 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
               />
               <span>${this._t('editor.sparkline.show_hvac')}</span>
             </label>
+            <div class="field-row">
+              <ha-textfield
+                type="number"
+                label=${this._t('editor.sparkline.min')}
+                .value=${this._config.sparkline?.min ?? ''}
+                @input=${(e: Event) => this._handleNumberChange('sparkline.min', e)}
+                placeholder=${this._t('editor.colors.auto')}
+              ></ha-textfield>
+              <ha-textfield
+                type="number"
+                label=${this._t('editor.sparkline.max')}
+                .value=${this._config.sparkline?.max ?? ''}
+                @input=${(e: Event) => this._handleNumberChange('sparkline.max', e)}
+                placeholder=${this._t('editor.colors.auto')}
+              ></ha-textfield>
+            </div>
             ${this._renderDocsLink('sparkline')}
           </div>
         </ha-expansion-panel>

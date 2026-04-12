@@ -44,7 +44,9 @@
       "mode_light": "Hell",
       "show_line": "Linie anzeigen",
       "show_fill": "Füllung anzeigen",
-      "show_hvac": "HVAC-Balken anzeigen (Klimaentitäten)"
+      "show_hvac": "HVAC-Balken anzeigen (Klimaentitäten)",
+      "min": "Y-Achse Min",
+      "max": "Y-Achse Max"
     },
     "colors": {
       "title": "Farben",
