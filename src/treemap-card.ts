@@ -941,6 +941,8 @@ export class TreemapCard extends LitElement {
                   fill: this._config?.sparkline?.fill,
                   hvac: this._config?.sparkline?.hvac,
                   periodHours: this._getPeriodHours(),
+                  min: this._config?.sparkline?.min,
+                  max: this._config?.sparkline?.max,
                 })}
               </div>`;
             })()

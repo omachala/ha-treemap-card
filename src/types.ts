@@ -188,6 +188,8 @@ export interface TreemapCardConfig {
     attribute?: string; // Field/attribute containing sparkline data array (JSON mode)
     period?: '12h' | '24h' | '7d' | '30d'; // Time period for entity history (default: '24h')
     mode?: 'light' | 'dark'; // Color mode (default: 'dark')
+    min?: number; // Fixed Y-axis minimum (default: auto from data)
+    max?: number; // Fixed Y-axis maximum (default: auto from data)
     line?: {
       show?: boolean; // Show line (default: true)
       style?: string; // Custom CSS for line (stroke, stroke-width, etc.)

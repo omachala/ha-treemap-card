@@ -44,7 +44,9 @@
       "mode_light": "Clair",
       "show_line": "Afficher la ligne",
       "show_fill": "Afficher le remplissage",
-      "show_hvac": "Afficher les barres HVAC (entités climatiques)"
+      "show_hvac": "Afficher les barres HVAC (entités climatiques)",
+      "min": "Min axe Y",
+      "max": "Max axe Y"
     },
     "colors": {
       "title": "Couleurs",
