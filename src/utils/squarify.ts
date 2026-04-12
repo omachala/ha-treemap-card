@@ -197,6 +197,7 @@ function gridLayout(
     icon: item.icon,
     light: item.light,
     climate: item.climate,
+    binary: item.binary,
     sparklineData: item.sparklineData,
     unavailable: item.unavailable,
     rawState: item.rawState,
