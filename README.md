@@ -268,10 +268,10 @@ Climate entities show temperature history with HVAC activity highlighted. The fi
 
 `switch.*`, `input_boolean.*`, and `binary_sensor.*` entities display **On** / **Off** and use your configured `color.high` and `color.low` colors.
 
-| State     | Color behavior                       |
-| --------- | ------------------------------------ |
-| On        | Uses `color.high` (default: green)   |
-| Off       | Uses `color.low` (default: red)      |
+| State | Color behavior                     |
+| ----- | ---------------------------------- |
+| On    | Uses `color.high` (default: green) |
+| Off   | Uses `color.low` (default: red)    |
 
 ```yaml
 type: custom:treemap-card
@@ -284,19 +284,19 @@ size:
   equal: true
 color:
   high: '#16a34a' # Green for On
-  low: '#6c757d'  # Gray for Off
+  low: '#6c757d' # Gray for Off
 ```
 
 ## Configuration Reference
 
 ### Data Source
 
-| Option           | Default | Description                                                                                                   |
-| ---------------- | ------- | ------------------------------------------------------------------------------------------------------------- |
+| Option           | Default | Description                                                                                                                                   |
+| ---------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `entities`       |         | List of entity IDs or patterns. Supports wildcards (`sensor.*`) and object format (`{ entity, name, icon, color, tap_action, hold_action }`). |
-| `exclude`        |         | List of entity patterns to exclude. Supports `*` wildcards.                                                   |
-| `entity`         |         | Single entity ID with array data in attributes (JSON mode).                                                   |
-| `data_attribute` | `items` | Which attribute contains the array (JSON mode).                                                               |
+| `exclude`        |         | List of entity patterns to exclude. Supports `*` wildcards.                                                                                   |
+| `entity`         |         | Single entity ID with array data in attributes (JSON mode).                                                                                   |
+| `data_attribute` | `items` | Which attribute contains the array (JSON mode).                                                                                               |
 
 ### Label
 
@@ -702,19 +702,19 @@ sparkline:
 
 ### Sparkline Options
 
-| Option                 | Default | Description                                                       |
-| ---------------------- | ------- | ----------------------------------------------------------------- |
-| `sparkline.show`       | `true`  | Show/hide sparklines.                                             |
-| `sparkline.attribute`  |         | Field containing sparkline data array (JSON mode).                |
-| `sparkline.period`     | `24h`   | Time period for entity history: `12h`, `24h`, `7d`, or `30d`.     |
-| `sparkline.mode`       | `dark`  | Color mode: `dark` (dark line/fill) or `light` (light line/fill). |
+| Option                 | Default | Description                                                                                                               |
+| ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `sparkline.show`       | `true`  | Show/hide sparklines.                                                                                                     |
+| `sparkline.attribute`  |         | Field containing sparkline data array (JSON mode).                                                                        |
+| `sparkline.period`     | `24h`   | Time period for entity history: `12h`, `24h`, `7d`, or `30d`.                                                             |
+| `sparkline.mode`       | `dark`  | Color mode: `dark` (dark line/fill) or `light` (light line/fill).                                                         |
 | `sparkline.min`        | auto    | Fixed Y-axis minimum. Useful for sensors with a known range (e.g., `0` for humidity) so small changes aren't exaggerated. |
-| `sparkline.max`        | auto    | Fixed Y-axis maximum. Pair with `sparkline.min` to pin both bounds. |
-| `sparkline.hvac.show`  | `true`  | Show HVAC activity bars for climate entities.                     |
-| `sparkline.line.show`  | `true`  | Show/hide the line.                                               |
-| `sparkline.line.style` |         | Custom CSS for line (SVG properties).                             |
-| `sparkline.fill.show`  | `true`  | Show/hide the filled area under the line.                         |
-| `sparkline.fill.style` |         | Custom CSS for fill (SVG properties).                             |
+| `sparkline.max`        | auto    | Fixed Y-axis maximum. Pair with `sparkline.min` to pin both bounds.                                                       |
+| `sparkline.hvac.show`  | `true`  | Show HVAC activity bars for climate entities.                                                                             |
+| `sparkline.line.show`  | `true`  | Show/hide the line.                                                                                                       |
+| `sparkline.line.style` |         | Custom CSS for line (SVG properties).                                                                                     |
+| `sparkline.fill.show`  | `true`  | Show/hide the filled area under the line.                                                                                 |
+| `sparkline.fill.style` |         | Custom CSS for fill (SVG properties).                                                                                     |
 
 ### Period Details
 
