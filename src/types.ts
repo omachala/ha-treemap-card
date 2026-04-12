@@ -239,6 +239,7 @@ export interface TreemapItem {
   unit?: string; // Unit of measurement (e.g., °C, %, kWh)
   light?: LightColorInfo; // Light-specific color info (only for light.* entities)
   climate?: ClimateInfo; // Climate-specific info (only for climate.* entities)
+  binary?: { isOn: boolean }; // Binary state info (only for switch.*, input_boolean.*, binary_sensor.*)
   sparklineData?: number[]; // Inline sparkline data (JSON mode)
   unavailable?: boolean; // True if entity state is unavailable/unknown/none
   rawState?: string; // Original state string (for unavailable entities)
@@ -258,6 +259,7 @@ export interface TreemapRect {
   unit?: string; // Unit of measurement (e.g., °C, %, kWh)
   light?: LightColorInfo; // Light-specific color info (only for light.* entities)
   climate?: ClimateInfo; // Climate-specific info (only for climate.* entities)
+  binary?: { isOn: boolean }; // Binary state info (only for switch.*, input_boolean.*, binary_sensor.*)
   sparklineData?: number[]; // Inline sparkline data (JSON mode)
   unavailable?: boolean; // True if entity state is unavailable/unknown/none
   rawState?: string; // Original state string (for unavailable entities)

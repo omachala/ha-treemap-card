@@ -13,6 +13,7 @@ import {
 
 import { getNumber, getString, matchesPattern, isUnavailableState } from './utils/predicates';
 import { isLightEntity, extractLightInfo, getLightBackgroundColor } from './utils/lights';
+import { isBinaryEntity, extractBinaryInfo, getBinaryBackgroundColor } from './utils/binary';
 import { isClimateEntity, extractClimateInfo, getClimateValue } from './utils/climate';
 import {
   getContrastColors,
@@ -443,6 +444,24 @@ export class TreemapCard extends LitElement {
           continue;
         }
 
+        // Special handling for binary entities (switch, input_boolean, binary_sensor)
+        if (isBinaryEntity(entityId)) {
+          const binaryInfo = extractBinaryInfo(entity);
+          const { isOn } = binaryInfo;
+
+          items.push({
+            label,
+            value: isOn ? 1 : 0,
+            sizeValue: 1, // Equal size for all binary entities
+            sortValue: isOn ? 1 : 0,
+            colorValue: isOn ? 1 : 0,
+            entity_id: entityId,
+            icon,
+            binary: binaryInfo,
+          });
+          continue;
+        }
+
         // Standard entity handling
         const valueAttribute = this._config?.value?.attribute || 'state';
         let value: number;
@@ -755,6 +774,13 @@ export class TreemapCard extends LitElement {
       return this._getLightColor(rect);
     }
 
+    // Binary entities use on/off color logic
+    if (rect.binary) {
+      const offColor = this._config?.color?.low ?? '#333333';
+      const onColor = this._config?.color?.high ?? '#22c55e'; // Green
+      return getBinaryBackgroundColor(rect.binary.isOn, offColor, onColor);
+    }
+
     // Default: use gradient color
     return this._getColor(rect.colorValue, min, max);
   }
@@ -797,6 +823,11 @@ export class TreemapCard extends LitElement {
     // Show raw state for unavailable entities, capitalized like HA does
     if (rect.unavailable && rect.rawState) {
       return rect.rawState.charAt(0).toUpperCase() + rect.rawState.slice(1);
+    }
+
+    // Show On/Off for binary entities
+    if (rect.binary) {
+      return rect.binary.isOn ? 'On' : 'Off';
     }
 
     // Format numeric value
