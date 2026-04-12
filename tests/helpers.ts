@@ -73,6 +73,7 @@ export function mockHass(
 export interface RenderedItem {
   label: string;
   value: number;
+  displayValue: string;
   x: number;
   y: number;
   width: number;
@@ -99,8 +100,8 @@ export function getRenderedItems(card: TreemapCard): RenderedItem[] {
     const style = item.style;
 
     const label = labelEl?.textContent || '';
-    const valueText = valueEl?.textContent || '';
-    const value = Number.parseFloat(valueText);
+    const displayValue = valueEl?.textContent || '';
+    const value = Number.parseFloat(displayValue);
 
     const leftMatch = /left:\s*calc\(([0-9.]+)%/.exec(style.cssText);
     const topMatch = /top:\s*calc\(([0-9.]+)%/.exec(style.cssText);
@@ -120,6 +121,7 @@ export function getRenderedItems(card: TreemapCard): RenderedItem[] {
     result.push({
       label,
       value,
+      displayValue,
       x: leftMatch?.[1] ? Number.parseFloat(leftMatch[1]) : 0,
       y: topMatch?.[1] ? Number.parseFloat(topMatch[1]) : 0,
       width: widthMatch?.[1] ? Number.parseFloat(widthMatch[1]) : 0,
