@@ -880,6 +880,18 @@ by BeardedTinker<br>
 
 ---
 
+<a href="https://www.youtube.com/watch?v=Xc7X43DSfCM">
+  <img src="https://img.youtube.com/vi/Xc7X43DSfCM/mqdefault.jpg" alt="Video" width="160" align="left" style="margin-right: 12px;">
+</a>
+
+**[I Found 5 Home Assistant Dashboard Cards You NEED to See in 2026](https://www.youtube.com/watch?v=Xc7X43DSfCM)**<br>
+by Byte of Geek<br>
+<a href="https://www.youtube.com/watch?v=Xc7X43DSfCM"><img src="https://img.shields.io/badge/YouTube-FF0000?style=flat&logo=youtube&logoColor=white" alt="YouTube"></a>
+
+<br clear="left">
+
+---
+
 **[Visualizing Your Smart Home Health with the HA Treemap Card](https://www.dima.pm/visualizing-your-smart-home-health-with-the-ha-treemap-card/)**<br>
 by Dima Tokar<br>
 In-depth guide on using the treemap card for maintenance dashboards: battery monitoring, MQTT reconnect tracking, and WiFi signal strength visualization.<br>
