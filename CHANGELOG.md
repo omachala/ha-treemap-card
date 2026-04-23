@@ -1,5 +1,11 @@
 # ha-treemap-card
 
+## 0.15.2
+
+### Patch Changes
+
+- 0a457b9: Fixed `sort_by: default` not preserving config entity order
+
 ## 0.15.1
 
 ### Patch Changes
