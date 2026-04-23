@@ -1,0 +1,827 @@
+- generic [ref=e4]:
+    - complementary [ref=e5]:
+        - generic [ref=e7]:
+            - generic [ref=e8]:
+                - generic "Sidebar toggle" [ref=e10]:
+                    - button "Sidebar toggle" [ref=e11] [cursor=pointer]:
+                        - generic [ref=e13]:
+                            - img
+                - generic [ref=e14]: Home Assistant
+            - generic [ref=e15]:
+                - generic [ref=e17]:
+                    - generic:
+                        - listitem [ref=e19] [cursor=pointer]:
+                            - generic [ref=e20]:
+                                - generic [ref=e22]:
+                                    - img
+                                - generic [ref=e24]: Overview
+                        - listitem [ref=e26] [cursor=pointer]:
+                            - generic [ref=e27]:
+                                - generic [ref=e29]:
+                                    - img
+                                - generic [ref=e31]: Files
+                        - listitem [ref=e33] [cursor=pointer]:
+                            - generic [ref=e34]:
+                                - generic [ref=e36]:
+                                    - img
+                                - generic [ref=e38]: Metrics
+                        - listitem [ref=e40] [cursor=pointer]:
+                            - generic [ref=e41]:
+                                - generic [ref=e43]:
+                                    - img
+                                - generic [ref=e45]: Node Red
+                        - listitem [ref=e47] [cursor=pointer]:
+                            - generic [ref=e48]:
+                                - generic [ref=e50]:
+                                    - img
+                                - generic [ref=e52]: Notes
+                        - listitem [ref=e54] [cursor=pointer]:
+                            - generic [ref=e55]:
+                                - generic [ref=e57]:
+                                    - img
+                                - generic [ref=e59]: Settings
+                        - listitem [ref=e61] [cursor=pointer]:
+                            - generic [ref=e62]:
+                                - generic [ref=e63]:
+                                    - img
+                                - generic [ref=e65]: Energy
+                        - listitem [ref=e67] [cursor=pointer]:
+                            - generic [ref=e68]:
+                                - generic [ref=e69]:
+                                    - img
+                                - generic [ref=e71]: Activity
+                        - listitem [ref=e73] [cursor=pointer]:
+                            - generic [ref=e74]:
+                                - generic [ref=e75]:
+                                    - img
+                                - generic [ref=e77]: History
+                        - listitem [ref=e79] [cursor=pointer]:
+                            - generic [ref=e80]:
+                                - generic [ref=e82]:
+                                    - img
+                                - generic [ref=e84]: Browser Mod
+                        - listitem [ref=e86] [cursor=pointer]:
+                            - generic [ref=e87]:
+                                - generic [ref=e88]:
+                                    - img
+                                - generic [ref=e90]: Calendar
+                        - listitem [ref=e92] [cursor=pointer]:
+                            - generic [ref=e93]:
+                                - generic [ref=e95]:
+                                    - img
+                                - generic [ref=e97]: HACS
+                        - listitem [ref=e99] [cursor=pointer]:
+                            - generic [ref=e100]:
+                                - generic [ref=e101]:
+                                    - img
+                                - generic [ref=e103]: Media
+                        - listitem [ref=e105] [cursor=pointer]:
+                            - generic [ref=e106]:
+                                - generic [ref=e107]:
+                                    - img
+                                - generic [ref=e109]: To-do lists
+                - generic [ref=e110]:
+                    - generic:
+                        - listitem [ref=e112] [cursor=pointer]:
+                            - generic [ref=e113]:
+                                - generic:
+                                    - generic:
+                                        - generic [ref=e114]:
+                                            - img
+                                        - generic: '5'
+                                - generic [ref=e116]: Settings
+                                - generic [ref=e117]: '5'
+                        - listitem [ref=e119] [cursor=pointer]:
+                            - generic [ref=e120]:
+                                - generic:
+                                    - generic:
+                                        - generic [ref=e121]:
+                                            - img
+                                        - generic: '1'
+                                - generic [ref=e123]: Notifications
+                                - generic [ref=e124]: '1'
+                        - listitem [ref=e126] [cursor=pointer]:
+                            - generic [ref=e127]:
+                                - generic [ref=e129]: o
+                                - generic [ref=e131]: ondrej
+    - generic [ref=e136]:
+        - generic [ref=e139]:
+            - tablist [ref=e144]:
+                - generic:
+                    - tab [selected] [ref=e145]:
+                        - generic [ref=e148] [cursor=pointer]:
+                            - img
+                    - tab "Diction" [ref=e149]:
+                        - generic "Diction" [ref=e151] [cursor=pointer]:
+                            - generic [ref=e152]:
+                                - img
+                    - tab "Lab" [ref=e153]:
+                        - generic "Lab" [ref=e155] [cursor=pointer]:
+                            - generic [ref=e156]:
+                                - img
+                    - tab "Trading" [ref=e157]:
+                        - generic "Trading" [ref=e159] [cursor=pointer]:
+                            - generic [ref=e160]:
+                                - img
+                    - tab "Treecard" [ref=e161]:
+                        - generic [ref=e162] [cursor=pointer]:
+                            - generic: Treecard
+            - generic [ref=e163]:
+                - generic [ref=e164]:
+                    - generic:
+                        - generic "Add to Home Assistant" [ref=e166]:
+                            - button [ref=e167] [cursor=pointer]:
+                                - generic [ref=e169]:
+                                    - img
+                        - generic:
+                            - generic: Add device
+                            - generic: Create automation
+                            - generic: Create area
+                            - generic: Add person
+                - button [ref=e172] [cursor=pointer]:
+                    - generic [ref=e174]:
+                        - img
+                - button [ref=e177] [cursor=pointer]:
+                    - generic [ref=e179]:
+                        - img
+                - button [ref=e182] [cursor=pointer]:
+                    - generic [ref=e184]:
+                        - img
+        - generic [ref=e189]:
+            - generic [ref=e196]:
+                - generic [ref=e200]:
+                    - generic [ref=e203]:
+                        - img
+                    - generic [ref=e206]: Turn On Dishwasher
+                - button "Kristina Home" [ref=e210] [cursor=pointer]:
+                    - generic [ref=e213]:
+                        - img
+                    - generic [ref=e214]:
+                        - generic [ref=e215]: Kristina
+                        - generic [ref=e217]: Home
+                - button "Ondrej Home" [ref=e221] [cursor=pointer]:
+                    - generic [ref=e224]:
+                        - img
+                    - generic [ref=e225]:
+                        - generic [ref=e226]: Ondrej
+                        - generic [ref=e228]: Home
+                - button "Check Car" [ref=e232] [cursor=pointer]:
+                    - generic [ref=e235]:
+                        - img
+                    - generic [ref=e237]:
+                        - generic: Check Car
+                - button "Jaccuzi 33.5 °C" [ref=e241] [cursor=pointer]:
+                    - generic [ref=e244]:
+                        - img
+                    - generic [ref=e245]:
+                        - generic [ref=e246]: Jaccuzi
+                        - generic [ref=e248]: 33.5 °C
+            - generic [ref=e251]:
+                - generic [ref=e257]:
+                    - generic [ref=e261]:
+                        - generic [ref=e266] [cursor=pointer]:
+                            - generic [ref=e267]: District Line
+                            - generic [ref=e268]: severe delays
+                        - generic [ref=e273] [cursor=pointer]:
+                            - generic [ref=e274]: Elizabeth Line
+                            - generic [ref=e275]: good service
+                    - generic [ref=e279]:
+                        - generic [ref=e284] [cursor=pointer]:
+                            - generic [ref=e285]: Elm Park
+                            - generic [ref=e286]: in 0, 15 mins
+                        - generic [ref=e291] [cursor=pointer]:
+                            - generic [ref=e292]: Romford
+                            - generic [ref=e293]: in 27 mins
+                        - generic [ref=e298] [cursor=pointer]:
+                            - generic [ref=e299]: Blackfriars
+                            - generic [ref=e300]: no trains 🤷‍♂️
+                        - generic [ref=e305] [cursor=pointer]:
+                            - generic [ref=e306]: from Elm Park
+                            - generic [ref=e307]: in 23 mins
+                    - generic [ref=e312]:
+                        - generic [ref=e313]:
+                            - generic [ref=e315]:
+                                - img
+                            - paragraph [ref=e316]: Security
+                        - generic "Home Alarm" [ref=e320]:
+                            - generic [ref=e321]:
+                                - generic [ref=e324]:
+                                    - img
+                                - generic [ref=e325]: Disarmed
+                    - generic [ref=e328]:
+                        - generic:
+                            - generic:
+                                - generic:
+                                    - generic:
+                                        - img:
+                                            - img
+                                    - generic: 7.1.0
+                                - generic:
+                                    - generic "Iris / Default View / Unhide menu" [ref=e330]:
+                                        - button "Iris / Default View / Unhide menu" [ref=e331] [cursor=pointer]:
+                                            - img [ref=e335]:
+                                                - img [ref=e336]
+                                    - generic:
+                                        - generic:
+                                            - generic:
+                                                - generic: Doorbell Fluent
+                                                - generic:
+                                                    - img:
+                                                        - img
+                    - generic [ref=e344]:
+                        - generic [ref=e346]:
+                            - img
+                        - paragraph [ref=e347]: Downstairs
+                    - generic [ref=e351]:
+                        - generic [ref=e354]:
+                            - generic:
+                                - button [ref=e355] [cursor=pointer]
+                                - generic [ref=e356]:
+                                    - generic:
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - generic:
+                                                        - generic:
+                                                            - generic:
+                                                                - img
+                        - generic [ref=e359]:
+                            - generic:
+                                - button [ref=e360] [cursor=pointer]
+                                - button [ref=e362] [cursor=pointer]:
+                                    - button [ref=e363]:
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - generic:
+                                                        - img
+                        - generic [ref=e366]:
+                            - generic:
+                                - button [ref=e367] [cursor=pointer]
+                                - button [ref=e369] [cursor=pointer]:
+                                    - button [ref=e370]:
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - generic:
+                                                        - img
+                        - generic [ref=e373]:
+                            - generic:
+                                - button [ref=e374] [cursor=pointer]
+                                - button [ref=e376] [cursor=pointer]:
+                                    - button [ref=e377]:
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - generic:
+                                                        - img
+                        - generic [ref=e380]:
+                            - generic:
+                                - button [ref=e381] [cursor=pointer]
+                                - button [ref=e383] [cursor=pointer]:
+                                    - button [ref=e384]:
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - generic:
+                                                        - img
+                        - generic [ref=e387]:
+                            - generic:
+                                - button [ref=e388] [cursor=pointer]
+                                - generic [ref=e389]:
+                                    - generic:
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - generic:
+                                                        - generic:
+                                                            - generic:
+                                                                - img
+                    - generic [ref=e393]:
+                        - generic [ref=e396]:
+                            - generic:
+                                - button "Kristina WFH" [ref=e397] [cursor=pointer]
+                                - generic [ref=e398]:
+                                    - generic:
+                                        - button [ref=e399] [cursor=pointer]:
+                                            - button [ref=e400]:
+                                                - generic:
+                                                    - generic:
+                                                        - generic:
+                                                            - generic:
+                                                                - img
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - generic: Kristina WFH
+                        - generic [ref=e403]:
+                            - generic:
+                                - button "Ondrej WFH" [ref=e404] [cursor=pointer]
+                                - generic [ref=e405]:
+                                    - generic:
+                                        - button [ref=e406] [cursor=pointer]:
+                                            - button [ref=e407]:
+                                                - generic:
+                                                    - generic:
+                                                        - generic:
+                                                            - generic:
+                                                                - img
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - generic: Ondrej WFH
+                        - generic [ref=e410]:
+                            - generic:
+                                - button "Go Bed" [ref=e411] [cursor=pointer]
+                                - generic [ref=e412]:
+                                    - generic:
+                                        - button [ref=e413] [cursor=pointer]:
+                                            - button [ref=e414]:
+                                                - generic:
+                                                    - generic:
+                                                        - generic:
+                                                            - generic:
+                                                                - img
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - generic: Go Bed
+                    - generic [ref=e418]:
+                        - generic [ref=e421]:
+                            - generic [ref=e427] [cursor=pointer]:
+                                - text: ;
+                                - generic [ref=e428]:
+                                    - generic [ref=e434]:
+                                        - img
+                                    - generic [ref=e437]:
+                                        - generic [ref=e438]: Upstairs
+                                        - generic [ref=e439]: 'Off'
+                            - generic [ref=e445] [cursor=pointer]:
+                                - text: ;
+                                - generic [ref=e446]:
+                                    - generic [ref=e452]:
+                                        - img
+                                    - generic [ref=e455]:
+                                        - generic [ref=e456]: Downstairs
+                                        - generic [ref=e457]: 100%
+                        - generic [ref=e462]:
+                            - generic:
+                                - generic [ref=e463] [cursor=pointer]:
+                                    - text: ;
+                                    - generic [ref=e464]:
+                                        - generic [ref=e470]:
+                                            - img
+                                        - generic [ref=e473]:
+                                            - generic [ref=e474]: Livingroom
+                                            - generic [ref=e475]: 'Off'
+                                - generic [ref=e476]:
+                                    - button [ref=e482] [cursor=pointer]:
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - img
+                                    - button [ref=e484] [cursor=pointer]:
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - img
+                        - generic [ref=e489]:
+                            - generic:
+                                - generic [ref=e490] [cursor=pointer]:
+                                    - text: ;
+                                    - generic [ref=e491]:
+                                        - generic [ref=e497]:
+                                            - img
+                                        - generic [ref=e500]:
+                                            - generic [ref=e501]: Dining
+                                            - generic [ref=e502]: 'Off'
+                                - button [ref=e509] [cursor=pointer]:
+                                    - generic:
+                                        - generic:
+                                            - generic:
+                                                - img
+                        - generic [ref=e512]:
+                            - generic [ref=e518] [cursor=pointer]:
+                                - text: ;
+                                - generic [ref=e519]:
+                                    - generic [ref=e525]:
+                                        - img
+                                    - generic:
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - generic: Dining lamp
+                                                    - generic: 'Off'
+                            - generic [ref=e536] [cursor=pointer]:
+                                - text: ;
+                                - generic [ref=e537]:
+                                    - generic [ref=e543]:
+                                        - img
+                                    - generic:
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - generic: Livingroom lamp
+                                                    - generic: 'Off'
+                        - generic [ref=e551]:
+                            - generic [ref=e556]:
+                                - generic:
+                                    - generic [ref=e557] [cursor=pointer]:
+                                        - text: ;
+                                        - generic [ref=e558]:
+                                            - generic [ref=e564]:
+                                                - img
+                                            - generic:
+                                                - generic:
+                                                    - generic:
+                                                        - generic:
+                                                            - generic: Stairs strip
+                                                            - generic: 'Off'
+                                    - button [ref=e571] [cursor=pointer]:
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - img
+                            - generic [ref=e576]:
+                                - generic:
+                                    - generic [ref=e577] [cursor=pointer]:
+                                        - text: ;
+                                        - generic [ref=e578]:
+                                            - generic [ref=e584]:
+                                                - img
+                                            - generic:
+                                                - generic:
+                                                    - generic:
+                                                        - generic:
+                                                            - generic: Floor strip
+                                                            - generic: 'Off'
+                                    - button [ref=e591] [cursor=pointer]:
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - img
+                        - generic [ref=e594]:
+                            - generic [ref=e600] [cursor=pointer]:
+                                - text: ;
+                                - generic [ref=e601]:
+                                    - generic [ref=e607]:
+                                        - img
+                                    - generic [ref=e610]:
+                                        - generic [ref=e611]: Fire
+                                        - generic [ref=e612]: 'Off'
+                            - generic [ref=e617]:
+                                - generic:
+                                    - generic [ref=e618] [cursor=pointer]:
+                                        - text: ;
+                                        - generic [ref=e619]:
+                                            - generic [ref=e625]:
+                                                - img
+                                            - generic:
+                                                - generic:
+                                                    - generic:
+                                                        - generic:
+                                                            - generic: Fireplace
+                                                            - generic: 'Off'
+                                    - button [ref=e632] [cursor=pointer]:
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - img
+                    - generic [ref=e638]:
+                        - generic [ref=e640]:
+                            - img
+                        - paragraph [ref=e641]: Garage
+                    - generic [ref=e648]:
+                        - generic [ref=e651]:
+                            - generic:
+                                - button "Open" [ref=e652] [cursor=pointer]
+                                - generic [ref=e653]:
+                                    - generic:
+                                        - button [ref=e654] [cursor=pointer]:
+                                            - button [ref=e655]:
+                                                - generic:
+                                                    - generic:
+                                                        - generic:
+                                                            - generic:
+                                                                - img
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - generic: Open
+                        - generic [ref=e658]:
+                            - generic:
+                                - button "80 %" [ref=e659] [cursor=pointer]
+                                - generic [ref=e660]:
+                                    - generic:
+                                        - button [ref=e661] [cursor=pointer]:
+                                            - button [ref=e662]:
+                                                - generic:
+                                                    - generic:
+                                                        - generic:
+                                                            - generic:
+                                                                - img
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - generic: 80 %
+                        - generic [ref=e665]:
+                            - generic:
+                                - button "Close" [ref=e666] [cursor=pointer]
+                                - generic [ref=e667]:
+                                    - generic:
+                                        - button [ref=e668] [cursor=pointer]:
+                                            - button [ref=e669]:
+                                                - generic:
+                                                    - generic:
+                                                        - generic:
+                                                            - generic:
+                                                                - img
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - generic: Close
+                - generic [ref=e675]:
+                    - generic [ref=e682]:
+                        - generic [ref=e683]:
+                            - text: '11.9'
+                            - generic [ref=e684]: °C
+                            - generic [ref=e686]: Sunny
+                        - generic [ref=e688]: 19:07
+                    - generic [ref=e700]:
+                        - generic [ref=e701]:
+                            - generic [ref=e703]:
+                                - img
+                            - paragraph [ref=e704]: Climate
+                        - generic [ref=e705]:
+                            - generic [ref=e709]:
+                                - generic [ref=e712]:
+                                    - img
+                                - generic [ref=e713]: £4.49
+                            - generic [ref=e717]:
+                                - generic [ref=e720]:
+                                    - img
+                                - generic [ref=e721]: £1.86
+                            - generic "Influx influx_energy_total_cost_today" [ref=e724]:
+                                - generic [ref=e725]:
+                                    - generic [ref=e728]:
+                                        - img
+                                    - generic [ref=e729]: £6.35
+                            - generic [ref=e733]:
+                                - generic [ref=e736]:
+                                    - img
+                                - generic [ref=e737]: £224
+                    - generic [ref=e741]:
+                        - generic [ref=e744]:
+                            - generic:
+                                - paragraph [ref=e745]: Livingroom
+                                - generic [ref=e748]:
+                                    - generic [ref=e749]:
+                                        - img:
+                                            - generic:
+                                                - generic:
+                                                    - slider
+                                    - paragraph [ref=e752]:
+                                        - generic [ref=e753]:
+                                            - generic [ref=e754]: '21'
+                                            - generic [ref=e755]:
+                                                - generic [ref=e756]: '.7'
+                                                - generic [ref=e757]: °C
+                                        - generic [ref=e758]: 21.7 °C
+                                - generic "Show more information" [ref=e760] [cursor=pointer]:
+                                    - button "Show more information" [ref=e761]:
+                                        - generic [ref=e763]:
+                                            - img
+                        - generic [ref=e766]:
+                            - generic:
+                                - paragraph [ref=e767]: Dining
+                                - generic [ref=e770]:
+                                    - generic [ref=e771]:
+                                        - img:
+                                            - generic:
+                                                - generic:
+                                                    - slider
+                                    - paragraph [ref=e774]:
+                                        - generic [ref=e775]:
+                                            - generic [ref=e776]: '22'
+                                            - generic [ref=e777]:
+                                                - generic [ref=e778]: '.1'
+                                                - generic [ref=e779]: °C
+                                        - generic [ref=e780]: 22.1 °C
+                                - generic "Show more information" [ref=e782] [cursor=pointer]:
+                                    - button "Show more information" [ref=e783]:
+                                        - generic [ref=e785]:
+                                            - img
+                        - generic [ref=e788]:
+                            - generic:
+                                - paragraph [ref=e789]: Kitchen
+                                - generic [ref=e792]:
+                                    - generic [ref=e793]:
+                                        - img:
+                                            - generic:
+                                                - generic:
+                                                    - slider
+                                    - paragraph [ref=e796]:
+                                        - generic [ref=e797]:
+                                            - generic [ref=e798]: '20'
+                                            - generic [ref=e799]:
+                                                - generic [ref=e800]: '.5'
+                                                - generic [ref=e801]: °C
+                                        - generic [ref=e802]: 20.5 °C
+                                - generic "Show more information" [ref=e804] [cursor=pointer]:
+                                    - button "Show more information" [ref=e805]:
+                                        - generic [ref=e807]:
+                                            - img
+                        - generic [ref=e810]:
+                            - generic:
+                                - paragraph [ref=e811]: Archer
+                                - generic [ref=e814]:
+                                    - generic [ref=e815]:
+                                        - img:
+                                            - generic:
+                                                - generic:
+                                                    - slider
+                                    - paragraph [ref=e818]:
+                                        - generic [ref=e819]:
+                                            - generic [ref=e820]: '21'
+                                            - generic [ref=e821]:
+                                                - generic [ref=e822]: '.9'
+                                                - generic [ref=e823]: °C
+                                        - generic [ref=e824]: 21.9 °C
+                                - generic "Show more information" [ref=e826] [cursor=pointer]:
+                                    - button "Show more information" [ref=e827]:
+                                        - generic [ref=e829]:
+                                            - img
+                        - generic [ref=e832]:
+                            - generic:
+                                - paragraph [ref=e833]: Bedroom
+                                - generic [ref=e836]:
+                                    - generic [ref=e837]:
+                                        - img:
+                                            - generic:
+                                                - generic:
+                                                    - slider
+                                    - paragraph [ref=e840]:
+                                        - generic [ref=e841]:
+                                            - generic [ref=e842]: '20'
+                                            - generic [ref=e843]:
+                                                - generic [ref=e844]: '.8'
+                                                - generic [ref=e845]: °C
+                                        - generic [ref=e846]: 20.8 °C
+                                - generic "Show more information" [ref=e848] [cursor=pointer]:
+                                    - button "Show more information" [ref=e849]:
+                                        - generic [ref=e851]:
+                                            - img
+                        - generic [ref=e854]:
+                            - generic:
+                                - paragraph [ref=e855]: Office
+                                - generic [ref=e858]:
+                                    - generic [ref=e859]:
+                                        - img:
+                                            - generic:
+                                                - generic:
+                                                    - slider
+                                    - paragraph [ref=e862]:
+                                        - generic [ref=e863]:
+                                            - generic [ref=e864]: '21'
+                                            - generic [ref=e865]:
+                                                - generic [ref=e866]: '.2'
+                                                - generic [ref=e867]: °C
+                                        - generic [ref=e868]: 21.2 °C
+                                - generic "Show more information" [ref=e870] [cursor=pointer]:
+                                    - button "Show more information" [ref=e871]:
+                                        - generic [ref=e873]:
+                                            - img
+                        - generic [ref=e876]:
+                            - generic:
+                                - paragraph [ref=e877]: Bathroom
+                                - generic [ref=e880]:
+                                    - generic [ref=e881]:
+                                        - img
+                                    - paragraph [ref=e883]:
+                                        - generic [ref=e884]:
+                                            - generic [ref=e885]: '22'
+                                            - generic [ref=e886]:
+                                                - generic [ref=e887]: '.6'
+                                                - generic [ref=e888]: °C
+                                        - generic [ref=e889]: 22.6 °C
+                                - generic "Show more information" [ref=e891] [cursor=pointer]:
+                                    - button "Show more information" [ref=e892]:
+                                        - generic [ref=e894]:
+                                            - img
+                        - generic [ref=e897]:
+                            - generic:
+                                - paragraph [ref=e898]: Ensuite
+                                - generic [ref=e901]:
+                                    - generic [ref=e902]:
+                                        - img
+                                    - paragraph [ref=e904]:
+                                        - generic [ref=e905]:
+                                            - generic [ref=e906]: '21'
+                                            - generic [ref=e907]:
+                                                - generic [ref=e908]: '.3'
+                                                - generic [ref=e909]: °C
+                                        - generic [ref=e910]: 21.3 °C
+                                - generic "Show more information" [ref=e912] [cursor=pointer]:
+                                    - button "Show more information" [ref=e913]:
+                                        - generic [ref=e915]:
+                                            - img
+                        - generic [ref=e918]:
+                            - generic:
+                                - paragraph [ref=e919]: Dressing
+                                - generic [ref=e922]:
+                                    - generic [ref=e923]:
+                                        - img
+                                    - paragraph [ref=e925]:
+                                        - generic [ref=e926]:
+                                            - generic [ref=e927]: '21'
+                                            - generic [ref=e928]:
+                                                - generic [ref=e929]: '.9'
+                                                - generic [ref=e930]: °C
+                                        - generic [ref=e931]: 21.9 °C
+                                - generic "Show more information" [ref=e933] [cursor=pointer]:
+                                    - button "Show more information" [ref=e934]:
+                                        - generic [ref=e936]:
+                                            - img
+                    - img [ref=e946]:
+                        - generic [ref=e972]:
+                            - generic "20:00" [ref=e973]
+                            - generic "23 Apr" [ref=e974]
+                            - generic "04:00" [ref=e975]
+                            - generic "08:00" [ref=e976]
+                            - generic "12:00" [ref=e977]
+                            - generic "16:00" [ref=e978]
+                    - generic [ref=e983]:
+                        - button "Archer Camera On" [ref=e984] [cursor=pointer]
+                        - generic [ref=e985]:
+                            - generic:
+                                - button [ref=e987] [cursor=pointer]:
+                                    - generic:
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - img
+                                - generic:
+                                    - generic:
+                                        - generic:
+                                            - generic:
+                                                - generic: Archer Camera
+                                            - generic:
+                                                - generic:
+                                                    - generic: 'On'
+                    - generic [ref=e992]:
+                        - button "YouTube 2 months ago" [ref=e993] [cursor=pointer]
+                        - generic [ref=e994]:
+                            - generic:
+                                - button [ref=e996] [cursor=pointer]:
+                                    - generic:
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - img
+                                - generic:
+                                    - generic:
+                                        - generic:
+                                            - generic:
+                                                - generic: YouTube
+                                            - generic:
+                                                - generic:
+                                                    - generic:
+                                                        - generic: 2 months ago
+                    - generic [ref=e1001]:
+                        - button "Netflix 2 months ago" [ref=e1002] [cursor=pointer]
+                        - generic [ref=e1003]:
+                            - generic:
+                                - button [ref=e1005] [cursor=pointer]:
+                                    - generic:
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - img
+                                - generic:
+                                    - generic:
+                                        - generic:
+                                            - generic:
+                                                - generic: Netflix
+                                            - generic:
+                                                - generic:
+                                                    - generic:
+                                                        - generic: 2 months ago
+                    - generic [ref=e1010]:
+                        - button "TV Off Last month" [ref=e1011] [cursor=pointer]
+                        - generic [ref=e1012]:
+                            - generic:
+                                - button [ref=e1014] [cursor=pointer]:
+                                    - generic:
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - img
+                                - generic:
+                                    - generic:
+                                        - generic:
+                                            - generic:
+                                                - generic: TV Off
+                                            - generic:
+                                                - generic:
+                                                    - generic:
+                                                        - generic: Last month

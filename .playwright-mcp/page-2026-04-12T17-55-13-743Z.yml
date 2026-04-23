@@ -1,0 +1,617 @@
+- generic [ref=e15]:
+    - generic [ref=e18]:
+        - generic "Sidebar toggle" [ref=e21]:
+            - button "Sidebar toggle" [ref=e22] [cursor=pointer]:
+                - generic [ref=e24]:
+                    - img
+        - tablist [ref=e29]:
+            - generic:
+                - tab [ref=e30]:
+                    - generic [ref=e33] [cursor=pointer]:
+                        - img
+                - tab "Lab" [ref=e34]:
+                    - generic "Lab" [ref=e36] [cursor=pointer]:
+                        - generic [ref=e37]:
+                            - img
+                - tab "Trading" [ref=e38]:
+                    - generic "Trading" [ref=e40] [cursor=pointer]:
+                        - generic [ref=e41]:
+                            - img
+                - tab "Treecard" [selected] [ref=e42]:
+                    - generic [ref=e43] [cursor=pointer]:
+                        - generic: Treecard
+        - generic [ref=e45]:
+            - generic:
+                - generic "Open dashboard menu" [ref=e47]:
+                    - button [ref=e48] [cursor=pointer]:
+                        - generic [ref=e50]:
+                            - img
+                - generic:
+                    - generic: Add to Home Assistant
+                    - generic: Search Home Assistant (Ctrl + K)
+                    - generic: Assist (A)
+                    - generic: Edit dashboard
+    - generic [ref=e55]:
+        - generic [ref=e56]:
+            - generic [ref=e59]:
+                - generic:
+                    - generic [ref=e60]: Humidity
+                    - generic [ref=e62]:
+                        - 'generic "Ensuite Humidity: 52.3" [ref=e63] [cursor=pointer]':
+                            - generic [ref=e65]:
+                                - img
+                            - generic [ref=e66]: Ensuite
+                            - generic [ref=e67]: 52 %
+                            - generic:
+                                - img
+                        - 'generic "Garage Humidity: 52.2" [ref=e68] [cursor=pointer]':
+                            - generic [ref=e70]:
+                                - img
+                            - generic [ref=e71]: Garage
+                            - generic [ref=e72]: 52 %
+                            - generic:
+                                - img
+                        - 'generic "Conservatory plants Humidity: 48.73" [ref=e73] [cursor=pointer]':
+                            - generic [ref=e75]:
+                                - img
+                            - generic [ref=e76]: Conservatory plants
+                            - generic [ref=e77]: 49 %
+                            - generic:
+                                - img
+                        - 'generic "Conservatory Humidity: 47.2" [ref=e78] [cursor=pointer]':
+                            - generic [ref=e80]:
+                                - img
+                            - generic [ref=e81]: Conservatory
+                            - generic [ref=e82]: 47 %
+                            - generic:
+                                - img
+                        - 'generic "Bedroom Humidity: 45.8" [ref=e83] [cursor=pointer]':
+                            - generic [ref=e85]:
+                                - img
+                            - generic [ref=e86]: Bedroom
+                            - generic [ref=e87]: 46 %
+                            - generic:
+                                - img
+                        - 'generic "Office Humidity: 45.4" [ref=e88] [cursor=pointer]':
+                            - generic [ref=e90]:
+                                - img
+                            - generic [ref=e91]: Office
+                            - generic [ref=e92]: 45 %
+                            - generic:
+                                - img
+                        - 'generic "Kitchen Humidity: 44.2" [ref=e93] [cursor=pointer]':
+                            - generic [ref=e95]:
+                                - img
+                            - generic [ref=e96]: Kitchen
+                            - generic [ref=e97]: 44 %
+                            - generic:
+                                - img
+                        - 'generic "Livingroom Humidity: 44" [ref=e98] [cursor=pointer]':
+                            - generic [ref=e100]:
+                                - img
+                            - generic [ref=e101]: Livingroom
+                            - generic [ref=e102]: 44 %
+                            - generic:
+                                - img
+                        - 'generic "Archer Humidity: 42.4" [ref=e103] [cursor=pointer]':
+                            - generic [ref=e105]:
+                                - img
+                            - generic [ref=e106]: Archer
+                            - generic [ref=e107]: 42 %
+                            - generic:
+                                - img
+            - generic [ref=e110]:
+                - generic:
+                    - generic [ref=e111]: Stocks
+                    - generic [ref=e113]:
+                        - 'generic "MU: -0.2" [ref=e114] [cursor=pointer]':
+                            - generic [ref=e115]: MU
+                            - generic [ref=e116]: '-0.2 %'
+                            - generic:
+                                - img
+                        - 'generic "VRT: 2.6" [ref=e117] [cursor=pointer]':
+                            - generic [ref=e118]: VRT
+                            - generic [ref=e119]: 2.6 %
+                            - generic:
+                                - img
+                        - 'generic "AVGO: 4.7" [ref=e120] [cursor=pointer]':
+                            - generic [ref=e121]: AVGO
+                            - generic [ref=e122]: 4.7 %
+                            - generic:
+                                - img
+                        - 'generic "NVDA: 2.6" [ref=e123] [cursor=pointer]':
+                            - generic [ref=e124]: NVDA
+                            - generic [ref=e125]: 2.6 %
+                            - generic:
+                                - img
+            - generic [ref=e128]:
+                - generic:
+                    - generic [ref=e129]: Climate
+                    - generic [ref=e131]:
+                        - 'generic "Wiser Bathroom: 23" [ref=e132] [cursor=pointer]':
+                            - generic [ref=e133]: Bathroom
+                            - generic [ref=e134]: 23.0°C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Dining: 22.3" [ref=e135] [cursor=pointer]':
+                            - generic [ref=e136]: Dining
+                            - generic [ref=e137]: 22.3°C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Ensuite: 22.3" [ref=e138] [cursor=pointer]':
+                            - generic [ref=e139]: Ensuite
+                            - generic [ref=e140]: 22.3°C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Dressing: 22.1" [ref=e141] [cursor=pointer]':
+                            - generic [ref=e142]: Dressing
+                            - generic [ref=e143]: 22.1°C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Archer: 21.7" [ref=e144] [cursor=pointer]':
+                            - generic [ref=e145]: Archer
+                            - generic [ref=e146]: 21.7°C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Livingroom: 21.2" [ref=e147] [cursor=pointer]':
+                            - generic [ref=e148]: Livingroom
+                            - generic [ref=e149]: 21.2°C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Kitchen: 21.1" [ref=e150] [cursor=pointer]':
+                            - generic [ref=e151]: Kitchen
+                            - generic [ref=e152]: 21.1°C
+                            - generic:
+                                - img
+                        - 'generic "Fireplace: 21" [ref=e153] [cursor=pointer]':
+                            - generic [ref=e154]: Fireplace
+                            - generic [ref=e155]: 21.0°C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Bedroom: 20.8" [ref=e156] [cursor=pointer]':
+                            - generic [ref=e157]: Bedroom
+                            - generic [ref=e158]: 20.8°C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Office: 20.5" [ref=e159] [cursor=pointer]':
+                            - generic [ref=e160]: Office
+                            - generic [ref=e161]: 20.5°C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Downstairs toilet: 18.9" [ref=e162] [cursor=pointer]':
+                            - generic [ref=e163]: Downstairs toilet
+                            - generic [ref=e164]: 18.9°C
+                            - generic:
+                                - img
+            - generic [ref=e169]:
+                - 'generic "Driveway Plant Right Battery: 0" [ref=e170] [cursor=pointer]':
+                    - generic [ref=e171]: Driveway Plant Right Battery
+                    - generic [ref=e172]: Unavailable
+                - 'generic "Driveway Plant Left Battery: 0" [ref=e173] [cursor=pointer]':
+                    - generic [ref=e174]: Driveway Plant Left Battery
+                    - generic [ref=e175]: Unavailable
+            - generic [ref=e178]:
+                - generic:
+                    - generic [ref=e179]: Door Sensors
+                    - generic [ref=e181]:
+                        - 'generic "Downstairs bathroom door sensor Opening: 1" [ref=e182] [cursor=pointer]':
+                            - generic [ref=e183]: Downstairs bathroom door
+                            - generic [ref=e184]: 'On'
+                        - 'generic "Main door Opening: 0" [ref=e185] [cursor=pointer]':
+                            - generic [ref=e186]: Main door
+                            - generic [ref=e187]: 'Off'
+                        - 'generic "Tech room door Opening: 0" [ref=e188] [cursor=pointer]':
+                            - generic [ref=e189]: Tech room door
+                            - generic [ref=e190]: 'Off'
+                        - 'generic "Garage door Opening: 0" [ref=e191] [cursor=pointer]':
+                            - generic [ref=e192]: Garage door
+                            - generic [ref=e193]: 'Off'
+        - generic [ref=e194]:
+            - generic [ref=e197]:
+                - generic:
+                    - generic [ref=e198]: Radiators
+                    - generic [ref=e200]:
+                        - 'generic "Wiser Bathroom Wiser LTS Temperature Bathroom: 23" [ref=e201] [cursor=pointer]':
+                            - generic [ref=e202]: Wiser Bathroom Wiser LTS Temperature Bathroom
+                            - generic [ref=e203]: 23.0 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Dining Wiser LTS Temperature Dining: 22.3" [ref=e204] [cursor=pointer]':
+                            - generic [ref=e205]: Wiser Dining Wiser LTS Temperature Dining
+                            - generic [ref=e206]: 22.3 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Ensuite Wiser LTS Temperature Ensuite: 22.3" [ref=e207] [cursor=pointer]':
+                            - generic [ref=e208]: Wiser Ensuite Wiser LTS Temperature Ensuite
+                            - generic [ref=e209]: 22.3 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Dressing Wiser LTS Temperature Dressing: 22.1" [ref=e210] [cursor=pointer]':
+                            - generic [ref=e211]: Wiser Dressing Wiser LTS Temperature Dressing
+                            - generic [ref=e212]: 22.1 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Archer Wiser LTS Temperature Archer: 21.7" [ref=e213] [cursor=pointer]':
+                            - generic [ref=e214]: Wiser Archer Wiser LTS Temperature Archer
+                            - generic [ref=e215]: 21.7 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Livingroom Wiser LTS Temperature Livingroom: 21.2" [ref=e216] [cursor=pointer]':
+                            - generic [ref=e217]: Wiser Livingroom Wiser LTS Temperature Livingroom
+                            - generic [ref=e218]: 21.2 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Kitchen Wiser LTS Temperature Kitchen: 21.1" [ref=e219] [cursor=pointer]':
+                            - generic [ref=e220]: Wiser Kitchen Wiser LTS Temperature Kitchen
+                            - generic [ref=e221]: 21.1 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Bedroom Wiser LTS Temperature Bedroom: 20.8" [ref=e222] [cursor=pointer]':
+                            - generic [ref=e223]: Wiser Bedroom Wiser LTS Temperature Bedroom
+                            - generic [ref=e224]: 20.8 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Office Wiser LTS Temperature Office: 20.5" [ref=e225] [cursor=pointer]':
+                            - generic [ref=e226]: Wiser Office Wiser LTS Temperature Office
+                            - generic [ref=e227]: 20.5 °C
+                            - generic:
+                                - img
+                        - 'generic "Downstairs Toilet Temperature: 18.9" [ref=e228] [cursor=pointer]':
+                            - generic [ref=e229]: Downstairs Toilet Temperature
+                            - generic [ref=e230]: 18.9 °C
+                            - generic:
+                                - img
+            - generic [ref=e233]:
+                - generic:
+                    - generic [ref=e234]: Lights
+                    - generic [ref=e236]:
+                        - 'generic "Garage: 100" [ref=e237] [cursor=pointer]':
+                            - generic [ref=e239]:
+                                - img
+                            - generic [ref=e240]: Garage
+                            - generic [ref=e241]: 100 %
+                        - 'generic "Home: 67" [ref=e242] [cursor=pointer]':
+                            - generic [ref=e244]:
+                                - img
+                            - generic [ref=e245]: Home
+                            - generic [ref=e246]: 67 %
+                        - 'generic "Tv floor strip: 35" [ref=e247] [cursor=pointer]':
+                            - generic [ref=e249]:
+                                - img
+                            - generic [ref=e250]: Tv floor strip
+                            - generic [ref=e251]: 35 %
+                        - 'generic "Living room: 35" [ref=e252] [cursor=pointer]':
+                            - generic [ref=e254]:
+                                - img
+                            - generic [ref=e255]: Living room
+                            - generic [ref=e256]: 35 %
+                        - 'generic "LivingArea: 35" [ref=e257] [cursor=pointer]':
+                            - generic [ref=e259]:
+                                - img
+                            - generic [ref=e260]: LivingArea
+                            - generic [ref=e261]: 35 %
+                        - 'generic "Downstairs: 35" [ref=e262] [cursor=pointer]':
+                            - generic [ref=e264]:
+                                - img
+                            - generic [ref=e265]: Downstairs
+                            - generic [ref=e266]: 35 %
+                        - 'generic "Strips: 35" [ref=e267] [cursor=pointer]':
+                            - generic [ref=e269]:
+                                - img
+                            - generic [ref=e270]: Strips
+                            - generic [ref=e271]: 35 %
+            - generic [ref=e274]:
+                - generic:
+                    - generic [ref=e275]: Resources
+                    - generic [ref=e277]:
+                        - 'generic "Kuiil Memory: 88.9" [ref=e278] [cursor=pointer]':
+                            - generic [ref=e280]:
+                                - img
+                            - generic [ref=e281]: Kuiil Memory
+                            - generic [ref=e282]: 89 %
+                            - generic:
+                                - img
+                        - 'generic "Armorer Memory: 74.7" [ref=e283] [cursor=pointer]':
+                            - generic [ref=e285]:
+                                - img
+                            - generic [ref=e286]: Armorer Memory
+                            - generic [ref=e287]: 75 %
+                            - generic:
+                                - img
+                        - 'generic "Armorer Disk: 65.8" [ref=e288] [cursor=pointer]':
+                            - generic [ref=e290]:
+                                - img
+                            - generic [ref=e291]: Armorer Disk
+                            - generic [ref=e292]: 66 %
+                            - generic:
+                                - img
+                        - 'generic "10.10.0.4 Containers CPU usage: 64.3" [ref=e293] [cursor=pointer]':
+                            - generic [ref=e294]: 10.10.0.4 Containers CPU usage
+                            - generic [ref=e295]: 64 %
+                        - 'generic "10.10.0.4 Memory usage: 46.3" [ref=e296] [cursor=pointer]':
+                            - generic [ref=e297]: 10.10.0.4 Memory usage
+                            - generic [ref=e298]: 46 %
+                            - generic:
+                                - img
+                        - 'generic "Armorer Swap: 38.5" [ref=e299] [cursor=pointer]':
+                            - generic [ref=e301]:
+                                - img
+                            - generic [ref=e302]: Armorer Swap
+                            - generic [ref=e303]: 39 %
+                            - generic:
+                                - img
+                        - 'generic "Kuiil Disk: 32.1" [ref=e304] [cursor=pointer]':
+                            - generic [ref=e306]:
+                                - img
+                            - generic [ref=e307]: Kuiil Disk
+                            - generic [ref=e308]: 32 %
+                            - generic:
+                                - img
+                        - 'generic "Kuiil Swap: 32" [ref=e309] [cursor=pointer]':
+                            - generic [ref=e311]:
+                                - img
+                            - generic [ref=e312]: Kuiil Swap
+                            - generic [ref=e313]: 32 %
+                            - generic:
+                                - img
+                        - 'generic "10.10.0.4 /etc/hostname disk usage: 30.9" [ref=e314] [cursor=pointer]':
+                            - generic [ref=e315]: 10.10.0.4 /etc/hostname disk usage
+                            - generic [ref=e316]: 31 %
+                            - generic:
+                                - img
+                        - 'generic "10.10.0.4 Quadro RTX 5000 (GPU nvidia0) memory usage: 26.5235900878906" [ref=e317] [cursor=pointer]':
+                            - generic [ref=e318]: 10.10.0.4 Quadro RTX 5000 (GPU nvidia0) memory usage
+                            - generic [ref=e319]: 27 %
+                            - generic:
+                                - img
+                        - 'generic "Armorer CPU: 2.8" [ref=e320] [cursor=pointer]':
+                            - generic [ref=e322]:
+                                - img
+                            - generic [ref=e323]: Armorer CPU
+                            - generic [ref=e324]: 3 %
+                            - generic:
+                                - img
+                        - 'generic "10.10.0.4 CPU usage: 4.7" [ref=e325] [cursor=pointer]':
+                            - generic [ref=e327]:
+                                - img
+                            - generic [ref=e328]: 10.10.0.4 CPU usage
+                            - generic [ref=e329]: 5 %
+                            - generic:
+                                - img
+                        - 'generic "Kuiil CPU: 7.5" [ref=e330] [cursor=pointer]':
+                            - generic [ref=e332]:
+                                - img
+                            - generic [ref=e333]: Kuiil CPU
+                            - generic [ref=e334]: 8 %
+                            - generic:
+                                - img
+                        - 'generic "10.10.0.4 Swap usage: 0.1" [ref=e335] [cursor=pointer]':
+                            - generic [ref=e336]: 10.10.0.4 Swap usage
+                            - generic [ref=e337]: 0 %
+                            - generic:
+                                - img
+            - generic [ref=e341]:
+                - generic:
+                    - generic [ref=e342]: Auto-Entities Demo
+                    - generic [ref=e344]:
+                        - 'generic "10.10.0.4 Sensor 2 temperature: 65" [ref=e345] [cursor=pointer]':
+                            - generic [ref=e346]: 10.10.0.4 Sensor 2 temperature
+                            - generic [ref=e347]: 65.0 °C
+                        - 'generic "10.10.0.4 Sensor 1 temperature: 49" [ref=e348] [cursor=pointer]':
+                            - generic [ref=e349]: 10.10.0.4 Sensor 1 temperature
+                            - generic [ref=e350]: 49.0 °C
+                        - 'generic "10.10.0.4 acpitz 0 temperature: 36" [ref=e351] [cursor=pointer]':
+                            - generic [ref=e352]: 10.10.0.4 acpitz 0 temperature
+                            - generic [ref=e353]: 36.0 °C
+                        - 'generic "10.10.0.4 Tctl temperature: 35" [ref=e354] [cursor=pointer]':
+                            - generic [ref=e355]: 10.10.0.4 Tctl temperature
+                            - generic [ref=e356]: 35.0 °C
+                        - 'generic "Jacuzzi: 33.5" [ref=e357] [cursor=pointer]':
+                            - generic [ref=e358]: Jacuzzi
+                            - generic [ref=e359]: 33.5 °C
+                            - generic:
+                                - img
+                        - 'generic "10.10.0.4 iwlwifi_1 0 temperature: 32" [ref=e360] [cursor=pointer]':
+                            - generic [ref=e361]: 10.10.0.4 iwlwifi_1 0 temperature
+                            - generic [ref=e362]: 32.0 °C
+                        - 'generic "10.10.0.4 Composite temperature: 31" [ref=e363] [cursor=pointer]':
+                            - generic [ref=e364]: 10.10.0.4 Composite temperature
+                            - generic [ref=e365]: 31.0 °C
+                        - 'generic "10.10.0.4 Sensor 3 temperature: 31" [ref=e366] [cursor=pointer]':
+                            - generic [ref=e367]: 10.10.0.4 Sensor 3 temperature
+                            - generic [ref=e368]: 31.0 °C
+                        - 'generic "10.10.0.4 edge temperature: 29" [ref=e369] [cursor=pointer]':
+                            - generic [ref=e370]: 10.10.0.4 edge temperature
+                            - generic [ref=e371]: 29.0 °C
+                        - 'generic "Ensuite Temperature: 23.5" [ref=e372] [cursor=pointer]':
+                            - generic [ref=e373]: Ensuite Temperature
+                            - generic [ref=e374]: 23.5 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Bathroom Wiser LTS Temperature Bathroom: 23" [ref=e375] [cursor=pointer]':
+                            - generic [ref=e377]:
+                                - img
+                            - generic [ref=e378]: Wiser Bathroom Wiser LTS Temperature Bathroom
+                            - generic [ref=e379]: 23.0 °C
+                            - generic:
+                                - img
+                        - 'generic "Bathroom Temperature: 22.5" [ref=e380] [cursor=pointer]':
+                            - generic [ref=e382]:
+                                - img
+                            - generic [ref=e383]: Bathroom Temperature
+                            - generic [ref=e384]: 22.5 °C
+                            - generic:
+                                - img
+                        - 'generic "Bedroom Temperature: 22.5" [ref=e385] [cursor=pointer]':
+                            - generic [ref=e386]: Bedroom Temperature
+                            - generic [ref=e387]: 22.5 °C
+                            - generic:
+                                - img
+                        - 'generic "Archer Temperature: 22.4" [ref=e388] [cursor=pointer]':
+                            - generic [ref=e389]: Archer Temperature
+                            - generic [ref=e390]: 22.4 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Dining Wiser LTS Temperature Dining: 22.3" [ref=e391] [cursor=pointer]':
+                            - generic [ref=e393]:
+                                - img
+                            - generic: Wiser Dining Wiser LTS Temperature Dining
+                            - generic [ref=e394]: 22.3 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Ensuite Wiser LTS Temperature Ensuite: 22.3" [ref=e395] [cursor=pointer]':
+                            - generic [ref=e397]:
+                                - img
+                            - generic: Wiser Ensuite Wiser LTS Temperature Ensuite
+                            - generic [ref=e398]: 22.3 °C
+                            - generic:
+                                - img
+                        - 'generic "Kitchen Temperature: 22.3" [ref=e399] [cursor=pointer]':
+                            - generic [ref=e400]: Kitchen Temperature
+                            - generic [ref=e401]: 22.3 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Dressing Wiser LTS Temperature Dressing: 22.1" [ref=e402] [cursor=pointer]':
+                            - generic [ref=e404]:
+                                - img
+                            - generic: Wiser Dressing Wiser LTS Temperature Dressing
+                            - generic [ref=e405]: 22.1 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Dining Wiser LTS Target Temperature Dining: 22" [ref=e406] [cursor=pointer]':
+                            - generic [ref=e408]:
+                                - img
+                            - generic: Wiser Dining Wiser LTS Target Temperature Dining
+                            - generic [ref=e409]: 22.0 °C
+                            - generic:
+                                - img
+                        - 'generic "Livingroom Temperature: 22" [ref=e410] [cursor=pointer]':
+                            - generic [ref=e411]: Livingroom Temperature
+                            - generic [ref=e412]: 22.0 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Archer Wiser LTS Temperature Archer: 21.7" [ref=e413] [cursor=pointer]':
+                            - generic [ref=e415]:
+                                - img
+                            - generic: Wiser Archer Wiser LTS Temperature Archer
+                            - generic [ref=e416]: 21.7 °C
+                            - generic:
+                                - img
+                        - 'generic "Office Temperature: 21.7" [ref=e417] [cursor=pointer]':
+                            - generic [ref=e419]:
+                                - img
+                            - generic: Office Temperature
+                            - generic [ref=e420]: 21.7 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Livingroom Wiser LTS Temperature Livingroom: 21.2" [ref=e421] [cursor=pointer]':
+                            - generic [ref=e423]:
+                                - img
+                            - generic: Wiser Livingroom Wiser LTS Temperature Livingroom
+                            - generic [ref=e424]: 21.2 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Kitchen Wiser LTS Temperature Kitchen: 21.1" [ref=e425] [cursor=pointer]':
+                            - generic [ref=e427]:
+                                - img
+                            - generic: Wiser Kitchen Wiser LTS Temperature Kitchen
+                            - generic [ref=e428]: 21.1 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Bedroom Wiser LTS Temperature Bedroom: 20.8" [ref=e429] [cursor=pointer]':
+                            - generic [ref=e431]:
+                                - img
+                            - generic: Wiser Bedroom Wiser LTS Temperature Bedroom
+                            - generic [ref=e432]: 20.8 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Office Wiser LTS Temperature Office: 20.5" [ref=e433] [cursor=pointer]':
+                            - generic [ref=e435]:
+                                - img
+                            - generic: Wiser Office Wiser LTS Temperature Office
+                            - generic [ref=e436]: 20.5 °C
+                            - generic:
+                                - img
+                        - 'generic "10.10.0.4 Quadro RTX 5000 (GPU nvidia0) temperature: 20" [ref=e437] [cursor=pointer]':
+                            - generic [ref=e438]: 10.10.0.4 Quadro RTX 5000 (GPU nvidia0) temperature
+                            - generic [ref=e439]: 20.0 °C
+                        - 'generic "Kitchen Temperature: 20" [ref=e440] [cursor=pointer]':
+                            - generic [ref=e442]:
+                                - img
+                            - generic: Kitchen Temperature
+                            - generic [ref=e443]: 20.0 °C
+                            - generic:
+                                - img
+                        - 'generic "Downstairs Toilet Temperature: 18.9" [ref=e444] [cursor=pointer]':
+                            - generic [ref=e446]:
+                                - img
+                            - generic: Downstairs Toilet Temperature
+                            - generic [ref=e447]: 18.9 °C
+                            - generic:
+                                - img
+                        - 'generic "Conservatory Temperature: 18.8" [ref=e448] [cursor=pointer]':
+                            - generic [ref=e450]:
+                                - img
+                            - generic: Conservatory Temperature
+                            - generic [ref=e451]: 18.8 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Downstairs toilet Wiser LTS Target Temperature Downstairs toilet: 18" [ref=e452] [cursor=pointer]':
+                            - generic [ref=e454]:
+                                - img
+                            - generic [ref=e455]: Wiser Downstairs toilet Wiser LTS Target Temperature Downstairs toilet
+                            - generic [ref=e456]: 18.0 °C
+                            - generic:
+                                - img
+                        - 'generic "Conservatory plants Temperature: 17.36" [ref=e457] [cursor=pointer]':
+                            - generic [ref=e459]:
+                                - img
+                            - generic [ref=e460]: Conservatory plants Temperature
+                            - generic [ref=e461]: 17.4 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Archer Wiser LTS Target Temperature Archer: 17" [ref=e462] [cursor=pointer]':
+                            - generic [ref=e464]:
+                                - img
+                            - generic [ref=e465]: Wiser Archer Wiser LTS Target Temperature Archer
+                            - generic [ref=e466]: 17.0 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Ensuite Wiser LTS Target Temperature Ensuite: 15" [ref=e467] [cursor=pointer]':
+                            - generic [ref=e469]:
+                                - img
+                            - generic [ref=e470]: Wiser Ensuite Wiser LTS Target Temperature Ensuite
+                            - generic [ref=e471]: 15.0 °C
+                            - generic:
+                                - img
+                        - 'generic "Wiser Bedroom Wiser LTS Target Temperature Bedroom: 15" [ref=e472] [cursor=pointer]':
+                            - generic [ref=e474]:
+                                - img
+                            - generic [ref=e475]: Wiser Bedroom Wiser LTS Target Temperature Bedroom
+                            - generic [ref=e476]: 15.0 °C
+                            - generic:
+                                - img
+                        - 'generic "Office Temperature: 15" [ref=e477] [cursor=pointer]':
+                            - generic [ref=e479]:
+                                - img
+                            - generic [ref=e480]: Office Temperature
+                            - generic [ref=e481]: 15.0 °C
+                            - generic:
+                                - img
+                        - 'generic "Garage Temperature: 15" [ref=e482] [cursor=pointer]':
+                            - generic [ref=e484]:
+                                - img
+                            - generic [ref=e485]: Garage Temperature
+                            - generic [ref=e486]: 15.0 °C
+                            - generic:
+                                - img
+                        - 'generic "Ensuite extractor switch Device temperature: 0.3" [ref=e487] [cursor=pointer]':
+                            - generic [ref=e488]: Ensuite extractor switch Device temperature
+                            - generic [ref=e489]: 0.3 °C
+                            - generic:
+                                - img
+                        - 'generic "Garage freezer: -16.6" [ref=e490] [cursor=pointer]':
+                            - generic [ref=e491]: Garage freezer
+                            - generic [ref=e492]: '-16.6 °C'
+                            - generic:
+                                - img
