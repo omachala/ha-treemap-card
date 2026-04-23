@@ -11,6 +11,7 @@ export interface PrepareDataOptions {
   limit?: number;
   sizeMin?: number;
   sizeMax?: number;
+  sortBy?: string;
 }
 
 export interface PreparedData {
@@ -123,7 +124,7 @@ export function prepareTreemapData(
   data: TreemapItem[],
   options: PrepareDataOptions = {}
 ): PreparedData {
-  const { inverse = false, ascending = false, limit, sizeMin, sizeMax } = options;
+  const { inverse = false, ascending = false, limit, sizeMin, sizeMax, sortBy } = options;
 
   if (data.length === 0) {
     return { items: [], colorMin: 0, colorMax: 0 };
@@ -148,8 +149,25 @@ export function prepareTreemapData(
   }
 
   // Sort and limit
-  const sortedData = sortBySize(data, inverse, ascending);
-  const limitedData = limit !== undefined && limit > 0 ? sortedData.slice(0, limit) : sortedData;
+  // When sortBy is NOT 'value', preserve original input order for squarify.
+  // We still need to sort temporarily for limit slicing (to pick the top-N items),
+  // but then restore the original order.
+  const needsValueSort = !sortBy || sortBy === 'value';
+
+  let limitedData: TreemapItem[];
+  if (needsValueSort) {
+    // Default behavior: sort by size value for both layout and limit
+    const sortedData = sortBySize(data, inverse, ascending);
+    limitedData = limit !== undefined && limit > 0 ? sortedData.slice(0, limit) : sortedData;
+  } else if (limit !== undefined && limit > 0) {
+    // Non-value sort with limit: sort to pick top-N, then restore original order
+    const sortedData = sortBySize(data, inverse, ascending);
+    const topN = new Set(sortedData.slice(0, limit).map(item => item.entity_id ?? item.label));
+    limitedData = data.filter(item => topN.has(item.entity_id ?? item.label));
+  } else {
+    // Non-value sort without limit: preserve original order
+    limitedData = [...data];
+  }
 
   // Apply size constraints
   const currentMax = applySizeMax(limitedData, sizeMax);

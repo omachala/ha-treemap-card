@@ -1021,6 +1021,54 @@ describe('Sensor Entities', () => {
     expect(negArea).toBeLessThan(midArea);
     expect(midArea).toBeLessThan(bigArea);
   });
+
+  it('preserves config entity order with sort_by: "default"', async () => {
+    // Bug: prepareTreemapData() unconditionally calls sortBySize(), which
+    // reorders items by value BEFORE squarify sees them. Even though squarify's
+    // normalizeAndSort() correctly skips sorting for sortBy === 'default',
+    // it receives already-sorted data so the config order is lost.
+    //
+    // This test uses entities whose values are NOT in config order to detect
+    // whether the pipeline preserves the original order.
+    const hass = mockHass([
+      mockEntity('sensor.cpu_din', '35', { friendly_name: 'Din CPU' }),
+      mockEntity('sensor.cpu_boba', '82', { friendly_name: 'Boba CPU' }),
+      mockEntity('sensor.cpu_armorer', '10', { friendly_name: 'Armorer CPU' }),
+      mockEntity('sensor.cpu_kuiil', '55', { friendly_name: 'Kuiil CPU' }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: ['sensor.cpu_din', 'sensor.cpu_boba', 'sensor.cpu_armorer', 'sensor.cpu_kuiil'],
+      sort_by: 'default',
+    });
+    card.hass = hass;
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    expect(items).toHaveLength(4);
+
+    const din = items.find(i => i.label === 'Din CPU');
+    const boba = items.find(i => i.label === 'Boba CPU');
+    const armorer = items.find(i => i.label === 'Armorer CPU');
+    const kuiil = items.find(i => i.label === 'Kuiil CPU');
+
+    expect(din).toBeDefined();
+    expect(boba).toBeDefined();
+    expect(armorer).toBeDefined();
+    expect(kuiil).toBeDefined();
+
+    // With sort_by: "default", tile positions should follow config order:
+    // Din (first/top-left), Boba (second), Armorer (third), Kuiil (last/bottom-right)
+    const dinPos = din!.y * 1000 + din!.x;
+    const bobaPos = boba!.y * 1000 + boba!.x;
+    const armorerPos = armorer!.y * 1000 + armorer!.x;
+    const kuiilPos = kuiil!.y * 1000 + kuiil!.x;
+
+    expect(dinPos).toBeLessThan(bobaPos);
+    expect(bobaPos).toBeLessThan(armorerPos);
+    expect(armorerPos).toBeLessThan(kuiilPos);
+  });
 });
 
 describe('Per-entity color override', () => {

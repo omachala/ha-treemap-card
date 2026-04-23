@@ -664,6 +664,7 @@ export class TreemapCard extends LitElement {
       limit: this._config?.limit,
       sizeMin: this._config?.size?.min,
       sizeMax: this._config?.size?.max,
+      sortBy: this._config?.sort_by ?? 'value',
     });
 
     // Generate treemap layout using sizeValue
