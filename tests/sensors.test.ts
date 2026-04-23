@@ -1039,12 +1039,7 @@ describe('Sensor Entities', () => {
 
     card.setConfig({
       type: 'custom:treemap-card',
-      entities: [
-        'sensor.cpu_din',
-        'sensor.cpu_boba',
-        'sensor.cpu_armorer',
-        'sensor.cpu_kuiil',
-      ],
+      entities: ['sensor.cpu_din', 'sensor.cpu_boba', 'sensor.cpu_armorer', 'sensor.cpu_kuiil'],
       sort_by: 'default',
     });
     card.hass = hass;
