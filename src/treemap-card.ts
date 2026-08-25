@@ -643,9 +643,11 @@ export class TreemapCard extends LitElement {
     if (data.length === 0) {
       return html`
         <ha-card header="${haTitle || nothing}" style="${cardStyle}">
-          ${showCustomHeader && customHeaderTitle
-            ? html`<div class="treemap-header" style="${headerStyle}">${customHeaderTitle}</div>`
-            : nothing}
+          ${
+            showCustomHeader && customHeaderTitle
+              ? html`<div class="treemap-header" style="${headerStyle}">${customHeaderTitle}</div>`
+              : nothing
+          }
           <div class="card-content">
             <div class="empty">No data available</div>
           </div>
@@ -726,9 +728,11 @@ export class TreemapCard extends LitElement {
 
     return html`
       <ha-card header="${haTitle || nothing}" style="${cardStyle}">
-        ${showCustomHeader && customHeaderTitle
-          ? html`<div class="treemap-header" style="${headerStyle}">${customHeaderTitle}</div>`
-          : nothing}
+        ${
+          showCustomHeader && customHeaderTitle
+            ? html`<div class="treemap-header" style="${headerStyle}">${customHeaderTitle}</div>`
+            : nothing
+        }
         <div class="card-content">
           <div class="treemap-container" style="height: ${height}px">
             ${rects.map(rect => this._renderRect(rect, min, max, height, gap))}
@@ -928,37 +932,45 @@ export class TreemapCard extends LitElement {
         @pointercancel="${() => this._clearHoldTimer()}"
         title="${rect.label}: ${rect.value}"
       >
-        ${showIcon && (rect.icon || this._config?.icon?.icon)
-          ? html`<ha-icon
-              class="treemap-icon ${isHvacActive ? 'hvac-active' : ''}"
-              style="${iconStyle}"
-              icon="${rect.icon || this._config?.icon?.icon}"
-            ></ha-icon>`
-          : nothing}
-        ${showLabel
-          ? html`<span class="treemap-label" style="${labelStyle}">${formattedLabel}</span>`
-          : nothing}
-        ${showValue
-          ? html`<span class="treemap-value" style="${valueStyle}">${formattedValue}</span>`
-          : nothing}
-        ${this._config?.sparkline?.show !== false
-          ? (() => {
-              const sparklineData =
-                rect.sparklineData ??
-                (rect.entity_id ? this._sparklineData.get(rect.entity_id) : undefined);
-              return html`<div class="treemap-sparkline">
-                ${renderSparklineWithData(sparklineData, {
-                  mode: this._config?.sparkline?.mode || 'dark',
-                  line: this._config?.sparkline?.line,
-                  fill: this._config?.sparkline?.fill,
-                  hvac: this._config?.sparkline?.hvac,
-                  periodHours: this._getPeriodHours(),
-                  min: this._config?.sparkline?.min,
-                  max: this._config?.sparkline?.max,
-                })}
-              </div>`;
-            })()
-          : nothing}
+        ${
+          showIcon && (rect.icon || this._config?.icon?.icon)
+            ? html`<ha-icon
+                class="treemap-icon ${isHvacActive ? 'hvac-active' : ''}"
+                style="${iconStyle}"
+                icon="${rect.icon || this._config?.icon?.icon}"
+              ></ha-icon>`
+            : nothing
+        }
+        ${
+          showLabel
+            ? html`<span class="treemap-label" style="${labelStyle}">${formattedLabel}</span>`
+            : nothing
+        }
+        ${
+          showValue
+            ? html`<span class="treemap-value" style="${valueStyle}">${formattedValue}</span>`
+            : nothing
+        }
+        ${
+          this._config?.sparkline?.show !== false
+            ? (() => {
+                const sparklineData =
+                  rect.sparklineData ??
+                  (rect.entity_id ? this._sparklineData.get(rect.entity_id) : undefined);
+                return html`<div class="treemap-sparkline">
+                  ${renderSparklineWithData(sparklineData, {
+                    mode: this._config?.sparkline?.mode || 'dark',
+                    line: this._config?.sparkline?.line,
+                    fill: this._config?.sparkline?.fill,
+                    hvac: this._config?.sparkline?.hvac,
+                    periodHours: this._getPeriodHours(),
+                    min: this._config?.sparkline?.min,
+                    max: this._config?.sparkline?.max,
+                  })}
+                </div>`;
+              })()
+            : nothing
+        }
       </div>
     `;
   }
