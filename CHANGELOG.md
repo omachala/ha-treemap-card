@@ -1,5 +1,11 @@
 # ha-treemap-card
 
+## 0.15.3
+
+### Patch Changes
+
+- b44f11e: Updated internal dependencies for improved stability and compatibility.
+
 ## 0.15.2
 
 ### Patch Changes
