@@ -457,6 +457,75 @@ describe('TreemapCardEditor', () => {
       const newConfig = await configChangedPromise;
       expect(newConfig.label?.prefix).toBe('Room: ');
     });
+
+    it('updates label.replace find part on input', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+
+      const inputs = editor.shadowRoot?.querySelectorAll(
+        '[data-testid="label-section"] ha-textfield'
+      );
+      const findInput = inputs?.[2];
+      if (isHaTextfield(findInput)) {
+        findInput.value = 'sensor.';
+        findInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.label?.replace).toBe('sensor./');
+    });
+
+    it('clears label.replace when both find and replace are empty', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+        label: { replace: 'sensor./' },
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+
+      // Clear the find input — both find and replace now empty → undefined
+      const inputs = editor.shadowRoot?.querySelectorAll(
+        '[data-testid="label-section"] ha-textfield'
+      );
+      const findInput = inputs?.[2];
+      if (isHaTextfield(findInput)) {
+        findInput.value = '';
+        findInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.label?.replace).toBeUndefined();
+    });
+
+    it('combines find and replace into label.replace format', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+        label: { replace: 'sensor./' },
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+
+      const inputs = editor.shadowRoot?.querySelectorAll(
+        '[data-testid="label-section"] ha-textfield'
+      );
+      const replaceInput = inputs?.[3];
+      if (isHaTextfield(replaceInput)) {
+        replaceInput.value = 'Temp ';
+        replaceInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.label?.replace).toBe('sensor./Temp ');
+    });
   });
 
   describe('value section', () => {
