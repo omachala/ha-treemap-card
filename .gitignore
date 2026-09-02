@@ -32,3 +32,6 @@ npm-debug.log*
 
 # Test coverage
 coverage/
+
+# Playwright MCP debug artifacts (local only)
+.playwright-mcp/
