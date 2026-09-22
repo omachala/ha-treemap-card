@@ -763,19 +763,20 @@ room, say).
 values match Home Assistant's own statistics, as used by the built-in
 Statistics Graph card:
 
-| Function | Plots                               | Use for                       |
-| -------- | ----------------------------------- | ----------------------------- |
-| `mean`   | Average across the bucket (default) | Temperature, humidity, power  |
-| `min`    | Lowest value in the bucket          | Overnight lows, voltage dips  |
-| `max`    | Highest value in the bucket         | Peak draw, daily highs        |
-| `sum`    | Running total                       | Cumulative counters           |
-| `state`  | Last value in the bucket            | Meter readings                |
-| `change` | Difference between start and end    | **Energy meters** - see below |
+| Function | Plots                               | Use for                                              |
+| -------- | ----------------------------------- | ---------------------------------------------------- |
+| `mean`   | Average across the bucket (default) | Temperature, humidity, power                         |
+| `min`    | Lowest value in the bucket          | Overnight lows, voltage dips                         |
+| `max`    | Highest value in the bucket         | Peak draw, daily highs                               |
+| `sum`    | Running total                       | Cumulative counters                                  |
+| `state`  | Last value in the bucket            | Meter readings                                       |
+| `change` | Difference between start and end    | **Energy meters** - the only one that works for them |
 
-**Energy sensors need `change`.** A `total_increasing` sensor such as
-`sensor.washer_energy` only ever counts upwards, so its mean is a straight
-diagonal ramp that tells you nothing. `change` plots how much was consumed in
-each bucket instead, which for hourly buckets is simply average power:
+**Energy sensors need `change`.** Home Assistant only records `sum`, `state` and
+`change` for `total` / `total_increasing` sensors - `mean`, `min` and `max` are
+never stored for them. So an energy meter shows **no sparkline at all** on the
+default `mean`. Switch it to `change` and you get how much was consumed in each
+bucket, which for hourly buckets is simply the average power draw:
 
 ```yaml
 entities:
