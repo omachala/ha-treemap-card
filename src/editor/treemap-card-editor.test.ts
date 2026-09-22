@@ -1335,4 +1335,173 @@ describe('TreemapCardEditor', () => {
       expect(isHaSelect(select) && select.value).toBe('change');
     });
   });
+
+  describe('card-level sparkline settings apply to every entity', () => {
+    const selectValue = (id: string): string | false => {
+      const el = getElement(editor, `[data-testid="${id}"]`);
+      return isHaSelect(el) ? el.value : false;
+    };
+
+    it('shows the card value when no entity overrides it', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.a', 'sensor.b'],
+        sparkline: { function: 'change' },
+      });
+      await editor.updateComplete;
+
+      expect(selectValue('sparkline-function')).toBe('change');
+    });
+
+    it('shows the shared value when every entity overrides it identically', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: [
+          { entity: 'sensor.a', sparkline: { function: 'max' } },
+          { entity: 'sensor.b', sparkline: { function: 'max' } },
+        ],
+      });
+      await editor.updateComplete;
+
+      expect(selectValue('sparkline-function')).toBe('max');
+    });
+
+    it('shows no selection when entities disagree', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: [
+          { entity: 'sensor.a', sparkline: { function: 'change' } },
+          { entity: 'sensor.b', sparkline: { function: 'max' } },
+        ],
+      });
+      await editor.updateComplete;
+
+      expect(selectValue('sparkline-function')).toBe('');
+    });
+
+    it('shows no selection when one entity differs from the card default', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.a', { entity: 'sensor.b', sparkline: { function: 'change' } }],
+        sparkline: { function: 'mean' },
+      });
+      await editor.updateComplete;
+
+      expect(selectValue('sparkline-function')).toBe('');
+    });
+
+    it('shows no selection when periods disagree', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.a', { entity: 'sensor.b', sparkline: { period: '7d' } }],
+      });
+      await editor.updateComplete;
+
+      expect(selectValue('sparkline-period')).toBe('');
+    });
+
+    it('strips per-entity overrides so the change really applies to all', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: [
+          { entity: 'sensor.a', sparkline: { function: 'change' } },
+          { entity: 'sensor.b', sparkline: { function: 'max' } },
+        ],
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+      const select = getElement(editor, '[data-testid="sparkline-function"]');
+      if (isHaSelect(select)) {
+        select.value = 'sum';
+        select.dispatchEvent(new Event('selected'));
+      }
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.sparkline?.function).toBe('sum');
+      // both entities lose their override and collapse back to plain strings
+      expect(newConfig.entities).toEqual(['sensor.a', 'sensor.b']);
+    });
+
+    it('leaves unrelated per-entity keys intact when stripping one', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: [
+          {
+            entity: 'sensor.a',
+            name: 'Alpha',
+            sparkline: { function: 'change', entity: 'sensor.a_power' },
+          },
+        ],
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+      const select = getElement(editor, '[data-testid="sparkline-function"]');
+      if (isHaSelect(select)) {
+        select.value = 'max';
+        select.dispatchEvent(new Event('selected'));
+      }
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.sparkline?.function).toBe('max');
+      expect(newConfig.entities?.[0]).toEqual({
+        entity: 'sensor.a',
+        name: 'Alpha',
+        sparkline: { entity: 'sensor.a_power' },
+      });
+    });
+
+    it('applies a period change to every entity', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.a', { entity: 'sensor.b', sparkline: { period: '7d' } }],
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+      const select = getElement(editor, '[data-testid="sparkline-period"]');
+      if (isHaSelect(select)) {
+        select.value = '30d';
+        select.dispatchEvent(new Event('selected'));
+      }
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.sparkline?.period).toBe('30d');
+      expect(newConfig.entities).toEqual(['sensor.a', 'sensor.b']);
+    });
+
+    it('applies a source entity change to every entity', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: [{ entity: 'sensor.a', sparkline: { entity: 'sensor.a_power' } }, 'sensor.b'],
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+      const field = getElement(editor, '[data-testid="sparkline-entity"]');
+      if (isHaTextfield(field)) {
+        field.value = 'sensor.grid';
+        field.dispatchEvent(new Event('input'));
+      }
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.sparkline?.entity).toBe('sensor.grid');
+      expect(newConfig.entities).toEqual(['sensor.a', 'sensor.b']);
+    });
+
+    it('shows no source entity when tiles plot different sources', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: [
+          { entity: 'sensor.a', sparkline: { entity: 'sensor.a_power' } },
+          { entity: 'sensor.b', sparkline: { entity: 'sensor.b_power' } },
+        ],
+      });
+      await editor.updateComplete;
+
+      const field = getElement(editor, '[data-testid="sparkline-entity"]');
+      expect(isHaTextfield(field) && field.value).toBe('');
+    });
+  });
 });

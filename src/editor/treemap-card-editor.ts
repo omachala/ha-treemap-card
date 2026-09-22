@@ -14,8 +14,9 @@ import {
   type TreemapCardConfig,
   type TreemapActionConfig,
   type TreemapEntityConfig,
+  type SparklineConfig,
 } from '../types';
-import { SPARKLINE_FUNCTIONS } from '../utils/sparkline-config';
+import { SPARKLINE_FUNCTIONS, resolveSparklineConfig } from '../utils/sparkline-config';
 import type { LovelaceCardEditor } from './types';
 import { editorStyles } from './styles';
 import { localize } from '../localize';
@@ -129,6 +130,83 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
       .map(entityId => existing.get(entityId) ?? entityId);
 
     this._config = set({ ...this._config }, 'entities', entities);
+    this._fireConfigChanged();
+  }
+
+  /**
+   * The value to display for a card-level sparkline field.
+   *
+   * The editor presents one setting for the whole card, but YAML may override a
+   * key per entity. When the tiles do not all resolve to the same value there is
+   * no honest value to show, so the control is left unselected rather than
+   * claiming a value that only some tiles use.
+   */
+  private _sparklineFieldValue(key: 'entity' | 'function' | 'period' | 'mode'): string {
+    const card = this._config?.sparkline;
+    const entities = this._config?.entities ?? [];
+
+    // Defaults come from the same resolver the card renders with, so the editor
+    // can never show a default the card does not actually use.
+    const cardValue = resolveSparklineConfig(card)[key];
+    if (entities.length === 0) return cardValue ?? '';
+
+    let common: string | undefined;
+    let first = true;
+
+    for (const input of entities) {
+      const override = isEntityConfig(input) ? input.sparkline : undefined;
+      const effective = resolveSparklineConfig(card, override)[key];
+
+      if (first) {
+        common = effective;
+        first = false;
+      } else if (common !== effective) {
+        return '';
+      }
+    }
+
+    return common ?? '';
+  }
+
+  /**
+   * Write a card-level sparkline setting and make it stick for every tile.
+   *
+   * Per-entity config takes precedence at render time, so setting the card value
+   * alone would silently do nothing for any entity that overrides the same key.
+   * Changing it here therefore also clears that key from every entity, which is
+   * what "one setting for the whole card" has to mean.
+   */
+  private _handleSparklineFieldChange(
+    key: 'entity' | 'function' | 'period' | 'mode',
+    e: Event
+  ): void {
+    if (!this._config) return;
+
+    const value = getEventValue(e).trim() || undefined;
+    const next = set({ ...this._config }, `sparkline.${key}`, value);
+
+    if (next.entities) {
+      next.entities = next.entities.map(input => {
+        if (!isEntityConfig(input) || !input.sparkline) return input;
+        if (input.sparkline[key] === undefined) return input;
+
+        const sparkline: SparklineConfig = {};
+        for (const name of Object.keys(input.sparkline)) {
+          if (name === key) continue;
+          const current: unknown = Reflect.get(input.sparkline, name);
+          if (current !== undefined) Object.assign(sparkline, { [name]: current });
+        }
+
+        const { sparkline: _dropped, ...rest } = input;
+        const config: TreemapEntityConfig =
+          Object.keys(sparkline).length > 0 ? { ...rest, sparkline } : rest;
+
+        // An object carrying nothing but the id is just the id
+        return Object.keys(config).length === 1 ? config.entity : config;
+      });
+    }
+
+    this._config = next;
     this._fireConfigChanged();
   }
 
@@ -386,8 +464,8 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
             <ha-select
               data-testid="sparkline-period"
               label=${this._t('editor.sparkline.period')}
-              .value=${this._config.sparkline?.period ?? '24h'}
-              @selected=${(e: Event) => this._handleTextChange('sparkline.period', e)}
+              .value=${this._sparklineFieldValue('period')}
+              @selected=${(e: Event) => this._handleSparklineFieldChange('period', e)}
               @closed=${(e: Event) => e.stopPropagation()}
             >
               <ha-list-item value="12h">${this._t('editor.sparkline.period_12h')}</ha-list-item>
@@ -398,8 +476,8 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
             <ha-select
               data-testid="sparkline-function"
               label=${this._t('editor.sparkline.function')}
-              .value=${this._config.sparkline?.function ?? 'mean'}
-              @selected=${(e: Event) => this._handleTextChange('sparkline.function', e)}
+              .value=${this._sparklineFieldValue('function')}
+              @selected=${(e: Event) => this._handleSparklineFieldChange('function', e)}
               @closed=${(e: Event) => e.stopPropagation()}
             >
               ${SPARKLINE_FUNCTIONS.map(
@@ -412,16 +490,16 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
             <ha-textfield
               data-testid="sparkline-entity"
               label=${this._t('editor.sparkline.entity')}
-              .value=${this._config.sparkline?.entity ?? ''}
-              @input=${(e: Event) => this._handleTextChange('sparkline.entity', e)}
+              .value=${this._sparklineFieldValue('entity')}
+              @input=${(e: Event) => this._handleSparklineFieldChange('entity', e)}
               placeholder="sensor.outdoor_humidity"
             ></ha-textfield>
             <span class="field-helper">${this._t('editor.sparkline.entity_helper')}</span>
             <ha-select
               data-testid="sparkline-mode"
               label=${this._t('editor.sparkline.mode')}
-              .value=${this._config.sparkline?.mode ?? 'dark'}
-              @selected=${(e: Event) => this._handleTextChange('sparkline.mode', e)}
+              .value=${this._sparklineFieldValue('mode')}
+              @selected=${(e: Event) => this._handleSparklineFieldChange('mode', e)}
               @closed=${(e: Event) => e.stopPropagation()}
             >
               <ha-list-item value="dark">${this._t('editor.sparkline.mode_dark')}</ha-list-item>
