@@ -46,7 +46,16 @@
       "show_fill": "Afficher le remplissage",
       "show_hvac": "Afficher les barres HVAC (entités climatiques)",
       "min": "Min axe Y",
-      "max": "Max axe Y"
+      "max": "Max axe Y",
+      "function": "Statistique",
+      "function_mean": "Moyenne",
+      "function_min": "Minimum",
+      "function_max": "Maximum",
+      "function_sum": "Somme (cumulée)",
+      "function_state": "État (dernière valeur)",
+      "function_change": "Variation (différence par intervalle)",
+      "entity": "Entité source",
+      "entity_helper": "Laisser vide pour tracer l’entité de la tuile. Toutes les statistiques proviennent des statistiques long terme : les capteurs sans state_class restent vides."
     },
     "colors": {
       "title": "Couleurs",
@@ -102,6 +111,12 @@
       "sort_by_entity_id": "ID d'entité",
       "sort_by_label": "Étiquette",
       "sort_by_default": "Ordre de configuration"
+    },
+    "entity_overrides": {
+      "title": "Sparklines par entité",
+      "helper": "Remplacer la source, la statistique ou la période de la sparkline pour certaines entités.",
+      "source": "Entité de la sparkline",
+      "inherit": "Hériter"
     }
   }
 }

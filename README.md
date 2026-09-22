@@ -705,6 +705,8 @@ sparkline:
 | Option                 | Default | Description                                                                                                               |
 | ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `sparkline.show`       | `true`  | Show/hide sparklines.                                                                                                     |
+| `sparkline.entity`     |         | Plot a **different entity** than the tile's own. See [Plotting a different entity](#plotting-a-different-entity).         |
+| `sparkline.function`   | `mean`  | Which statistic to plot: `mean`, `min`, `max`, `sum`, `state`, or `change`. See [Statistics](#statistics).                |
 | `sparkline.attribute`  |         | Field containing sparkline data array (JSON mode).                                                                        |
 | `sparkline.period`     | `24h`   | Time period for entity history: `12h`, `24h`, `7d`, or `30d`.                                                             |
 | `sparkline.mode`       | `dark`  | Color mode: `dark` (dark line/fill) or `light` (light line/fill).                                                         |
@@ -715,6 +717,76 @@ sparkline:
 | `sparkline.line.style` |         | Custom CSS for line (SVG properties).                                                                                     |
 | `sparkline.fill.show`  | `true`  | Show/hide the filled area under the line.                                                                                 |
 | `sparkline.fill.style` |         | Custom CSS for fill (SVG properties).                                                                                     |
+
+### Plotting a different entity
+
+A tile's value and its sparkline do not have to come from the same entity. Set
+`sparkline.entity` to plot anything you like underneath the value:
+
+```yaml
+type: custom:treemap-card
+entities:
+  # Value shows the room temperature, sparkline tracks outdoor humidity
+  - entity: sensor.living_room_temperature
+    sparkline:
+      entity: sensor.outdoor_humidity
+
+  # Value shows total energy, sparkline shows the live power draw
+  - entity: sensor.fridge_energy
+    sparkline:
+      entity: sensor.fridge_power
+```
+
+The whole `sparkline` block works per entity, so `period`, `function`, `min` and
+`max` can be overridden the same way. Card-level settings act as defaults:
+
+```yaml
+sparkline:
+  period: 24h # default for every tile
+  function: mean
+
+entities:
+  - sensor.bedroom_temperature # uses the defaults
+  - entity: sensor.washer_energy
+    sparkline:
+      period: 7d # just this tile
+      function: change
+```
+
+Setting `sparkline.entity` at card level points **every** tile at the same
+source, which is occasionally handy (an electricity price curve behind each
+room, say).
+
+### Statistics
+
+`sparkline.function` picks which number is taken from each time bucket. The
+values match Home Assistant's own statistics, as used by the built-in
+Statistics Graph card:
+
+| Function | Plots                               | Use for                       |
+| -------- | ----------------------------------- | ----------------------------- |
+| `mean`   | Average across the bucket (default) | Temperature, humidity, power  |
+| `min`    | Lowest value in the bucket          | Overnight lows, voltage dips  |
+| `max`    | Highest value in the bucket         | Peak draw, daily highs        |
+| `sum`    | Running total                       | Cumulative counters           |
+| `state`  | Last value in the bucket            | Meter readings                |
+| `change` | Difference between start and end    | **Energy meters** - see below |
+
+**Energy sensors need `change`.** A `total_increasing` sensor such as
+`sensor.washer_energy` only ever counts upwards, so its mean is a straight
+diagonal ramp that tells you nothing. `change` plots how much was consumed in
+each bucket instead, which for hourly buckets is simply average power:
+
+```yaml
+entities:
+  - sensor.*_energy
+sparkline:
+  function: change
+```
+
+> **Note:** every function reads Home Assistant's long-term statistics. Sensors
+> without a `state_class` are not recorded there and will show an empty
+> sparkline whichever function you pick.
 
 ### Period Details
 

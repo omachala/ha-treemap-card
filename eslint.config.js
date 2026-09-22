@@ -125,6 +125,11 @@ export default tseslint.config(
     files: ['**/*.test.ts'],
     rules: {
       '@typescript-eslint/no-non-null-assertion': 'off',
+      // Test doubles for generic APIs (hass.callWS<T>) cannot produce T without
+      // an assertion; the ban stays in force for production code.
+      'no-restricted-syntax': 'off',
+      '@typescript-eslint/no-empty-function': 'off',
+      '@typescript-eslint/require-await': 'off',
     },
   },
   {

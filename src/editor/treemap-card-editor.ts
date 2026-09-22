@@ -5,7 +5,7 @@
  * Uses Home Assistant's official form components for consistent UI.
  */
 
-import { LitElement, html, type TemplateResult } from 'lit';
+import { LitElement, html, nothing, type TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { set } from 'es-toolkit/compat';
 import {
@@ -13,7 +13,10 @@ import {
   type HomeAssistant,
   type TreemapCardConfig,
   type TreemapActionConfig,
+  type TreemapEntityConfig,
+  type SparklineConfig,
 } from '../types';
+import { SPARKLINE_FUNCTIONS } from '../utils/sparkline-config';
 import type { LovelaceCardEditor } from './types';
 import { editorStyles } from './styles';
 import { localize } from '../localize';
@@ -106,17 +109,82 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
   }
 
   /**
-   * Handler for entities textarea (splits lines into array)
+   * Handler for entities textarea (splits lines into array).
+   *
+   * Any entity that survives the edit keeps its object config, so per-entity
+   * settings the textarea cannot show - name, color, actions, sparkline
+   * overrides - are not destroyed by typing in it.
    */
   private _handleEntitiesChange(e: Event): void {
     if (!this._config) return;
-    const value = getEventValue(e);
-    const entities = value
+
+    const existing = new Map<string, TreemapEntityConfig>();
+    for (const input of this._config.entities ?? []) {
+      if (isEntityConfig(input)) existing.set(input.entity, input);
+    }
+
+    const entities = getEventValue(e)
       .split('\n')
       .map(s => s.trim())
-      .filter(s => s.length > 0);
+      .filter(s => s.length > 0)
+      .map(entityId => existing.get(entityId) ?? entityId);
+
     this._config = set({ ...this._config }, 'entities', entities);
     this._fireConfigChanged();
+  }
+
+  /**
+   * Apply a change to one entity's config, promoting a plain string to an
+   * object when it gains settings and demoting it back when it loses them.
+   */
+  private _updateEntityConfig(
+    entityId: string,
+    mutate: (config: TreemapEntityConfig) => TreemapEntityConfig
+  ): void {
+    if (!this._config?.entities) return;
+
+    const entities = this._config.entities.map(input => {
+      const id = isEntityConfig(input) ? input.entity : input;
+      if (id !== entityId) return input;
+
+      const current: TreemapEntityConfig = isEntityConfig(input) ? { ...input } : { entity: input };
+      const next = mutate(current);
+
+      // An object carrying nothing but the id is just the id
+      return Object.keys(next).length === 1 ? next.entity : next;
+    });
+
+    this._config = { ...this._config, entities };
+    this._fireConfigChanged();
+  }
+
+  /**
+   * Handler for a per-entity sparkline override field.
+   * An emptied field removes the key, and the last key removes the block.
+   */
+  private _handleEntitySparklineChange(
+    entityId: string,
+    key: 'entity' | 'function' | 'period',
+    e: Event
+  ): void {
+    const value = getEventValue(e).trim();
+
+    this._updateEntityConfig(entityId, config => {
+      // Rebuild rather than delete: an emptied field drops its key entirely
+      const source = { ...config.sparkline, [key]: value || undefined };
+      const sparkline: SparklineConfig = {};
+      for (const name of Object.keys(source)) {
+        const current: unknown = Reflect.get(source, name);
+        if (current !== undefined) Object.assign(sparkline, { [name]: current });
+      }
+
+      if (Object.keys(sparkline).length === 0) {
+        const { sparkline: _removed, ...rest } = config;
+        return rest;
+      }
+
+      return { ...config, sparkline };
+    });
   }
 
   /**
@@ -212,6 +280,76 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
         <span slot="header">${opts.title}</span>
         <div class="content">
           ${opts.content} ${opts.docsAnchor ? this._renderDocsLink(opts.docsAnchor) : ''}
+        </div>
+      </ha-expansion-panel>
+    `;
+  }
+
+  /**
+   * Per-entity sparkline overrides: one row per configured entry, wildcards
+   * included since an override applies to everything the pattern matches.
+   */
+  private _renderEntityOverrides(): TemplateResult | typeof nothing {
+    const entities = this._config?.entities ?? [];
+    if (entities.length === 0) return nothing;
+
+    return html`
+      <ha-expansion-panel outlined data-testid="entity-overrides-section">
+        <span slot="header">${this._t('editor.entity_overrides.title')}</span>
+        <div class="content">
+          <span class="field-helper">${this._t('editor.entity_overrides.helper')}</span>
+          ${entities.map(input => {
+            const entityId = isEntityConfig(input) ? input.entity : input;
+            const sparkline = isEntityConfig(input) ? (input.sparkline ?? {}) : {};
+            const testId = `entity-override-${entityId}`;
+
+            return html`
+              <div class="field" data-testid=${testId}>
+                <label class="field-label">${entityId}</label>
+                <ha-textfield
+                  data-testid="${testId}-sparkline-entity"
+                  label=${this._t('editor.entity_overrides.source')}
+                  .value=${sparkline.entity ?? ''}
+                  @input=${(e: Event) => this._handleEntitySparklineChange(entityId, 'entity', e)}
+                  placeholder=${entityId}
+                ></ha-textfield>
+                <ha-select
+                  data-testid="${testId}-sparkline-function"
+                  label=${this._t('editor.sparkline.function')}
+                  .value=${sparkline.function ?? ''}
+                  @selected=${(e: Event) =>
+                    this._handleEntitySparklineChange(entityId, 'function', e)}
+                  @closed=${(e: Event) => e.stopPropagation()}
+                >
+                  <ha-list-item value=""
+                    >${this._t('editor.entity_overrides.inherit')}</ha-list-item
+                  >
+                  ${SPARKLINE_FUNCTIONS.map(
+                    fn =>
+                      html`<ha-list-item value=${fn}
+                        >${this._t(`editor.sparkline.function_${fn}`)}</ha-list-item
+                      >`
+                  )}
+                </ha-select>
+                <ha-select
+                  data-testid="${testId}-sparkline-period"
+                  label=${this._t('editor.sparkline.period')}
+                  .value=${sparkline.period ?? ''}
+                  @selected=${(e: Event) =>
+                    this._handleEntitySparklineChange(entityId, 'period', e)}
+                  @closed=${(e: Event) => e.stopPropagation()}
+                >
+                  <ha-list-item value=""
+                    >${this._t('editor.entity_overrides.inherit')}</ha-list-item
+                  >
+                  <ha-list-item value="12h">${this._t('editor.sparkline.period_12h')}</ha-list-item>
+                  <ha-list-item value="24h">${this._t('editor.sparkline.period_24h')}</ha-list-item>
+                  <ha-list-item value="7d">${this._t('editor.sparkline.period_7d')}</ha-list-item>
+                  <ha-list-item value="30d">${this._t('editor.sparkline.period_30d')}</ha-list-item>
+                </ha-select>
+              </div>
+            `;
+          })}
         </div>
       </ha-expansion-panel>
     `;
@@ -371,6 +509,7 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
           <span slot="header">${this._t('editor.sparkline.title')}</span>
           <div class="content">
             <ha-select
+              data-testid="sparkline-period"
               label=${this._t('editor.sparkline.period')}
               .value=${this._config.sparkline?.period ?? '24h'}
               @selected=${(e: Event) => this._handleTextChange('sparkline.period', e)}
@@ -382,6 +521,29 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
               <ha-list-item value="30d">${this._t('editor.sparkline.period_30d')}</ha-list-item>
             </ha-select>
             <ha-select
+              data-testid="sparkline-function"
+              label=${this._t('editor.sparkline.function')}
+              .value=${this._config.sparkline?.function ?? 'mean'}
+              @selected=${(e: Event) => this._handleTextChange('sparkline.function', e)}
+              @closed=${(e: Event) => e.stopPropagation()}
+            >
+              ${SPARKLINE_FUNCTIONS.map(
+                fn =>
+                  html`<ha-list-item value=${fn}
+                    >${this._t(`editor.sparkline.function_${fn}`)}</ha-list-item
+                  >`
+              )}
+            </ha-select>
+            <ha-textfield
+              data-testid="sparkline-entity"
+              label=${this._t('editor.sparkline.entity')}
+              .value=${this._config.sparkline?.entity ?? ''}
+              @input=${(e: Event) => this._handleTextChange('sparkline.entity', e)}
+              placeholder="sensor.outdoor_humidity"
+            ></ha-textfield>
+            <span class="field-helper">${this._t('editor.sparkline.entity_helper')}</span>
+            <ha-select
+              data-testid="sparkline-mode"
               label=${this._t('editor.sparkline.mode')}
               .value=${this._config.sparkline?.mode ?? 'dark'}
               @selected=${(e: Event) => this._handleTextChange('sparkline.mode', e)}
@@ -433,6 +595,9 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
             ${this._renderDocsLink('sparkline')}
           </div>
         </ha-expansion-panel>
+
+        <!-- Per-entity sparkline overrides -->
+        ${this._renderEntityOverrides()}
 
         <!-- Colors section -->
         <ha-expansion-panel outlined data-testid="colors-section">

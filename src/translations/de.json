@@ -46,7 +46,16 @@
       "show_fill": "Füllung anzeigen",
       "show_hvac": "HVAC-Balken anzeigen (Klimaentitäten)",
       "min": "Y-Achse Min",
-      "max": "Y-Achse Max"
+      "max": "Y-Achse Max",
+      "function": "Statistik",
+      "function_mean": "Mittelwert",
+      "function_min": "Minimum",
+      "function_max": "Maximum",
+      "function_sum": "Summe (laufend)",
+      "function_state": "Zustand (letzter Wert)",
+      "function_change": "Änderung (Differenz je Intervall)",
+      "entity": "Quell-Entität",
+      "entity_helper": "Leer lassen, um die eigene Entität der Kachel zu zeichnen. Alle Statistiken stammen aus den Langzeitstatistiken, Sensoren ohne state_class bleiben daher leer."
     },
     "colors": {
       "title": "Farben",
@@ -102,6 +111,12 @@
       "sort_by_entity_id": "Entitäts-ID",
       "sort_by_label": "Bezeichnung",
       "sort_by_default": "Konfigurationsreihenfolge"
+    },
+    "entity_overrides": {
+      "title": "Sparklines je Entität",
+      "helper": "Quelle, Statistik oder Zeitraum der Sparkline für einzelne Entitäten überschreiben.",
+      "source": "Sparkline-Entität",
+      "inherit": "Übernehmen"
     }
   }
 }

@@ -46,7 +46,8 @@ export function mockEntity(
 }
 
 export function mockHass(
-  entities: (HassEntity & { _display_precision?: number })[]
+  entities: (HassEntity & { _display_precision?: number })[],
+  callWS?: <T>(message: Record<string, unknown>) => Promise<T>
 ): HomeAssistant {
   const states: Record<string, HassEntity> = {};
   const entitiesRegistry: Record<string, { entity_id: string; display_precision?: number }> = {};
@@ -66,8 +67,92 @@ export function mockHass(
     states,
     entities: entitiesRegistry,
     callService: async () => {},
-    callWS: async <T>() => ({}) as T,
+    callWS: callWS ?? (async <T>() => ({}) as T),
   };
+}
+
+/**
+ * Build a callWS stub that answers HA's statistics and history websocket commands.
+ *
+ * `statistics` maps a source entity id to the series it should return; the value is
+ * emitted under whichever field the caller asked for via `types`, so the same fixture
+ * works for mean/min/max/sum/state/change.
+ */
+export interface MockWsOptions {
+  statistics?: Record<string, number[]>;
+  history?: Record<string, unknown[]>;
+}
+
+export interface MockWs {
+  callWS: <T>(message: Record<string, unknown>) => Promise<T>;
+  calls: Record<string, unknown>[];
+}
+
+export function mockCallWS(options: MockWsOptions = {}): MockWs {
+  const calls: Record<string, unknown>[] = [];
+
+  const callWS = async <T>(message: Record<string, unknown>): Promise<T> => {
+    calls.push(message);
+
+    if (message['type'] === 'recorder/statistics_during_period') {
+      const ids = (message['statistic_ids'] as string[] | undefined) ?? [];
+      const types = (message['types'] as string[] | undefined) ?? ['mean'];
+      const field = types[0] ?? 'mean';
+      const result: Record<string, Record<string, number>[]> = {};
+      for (const id of ids) {
+        const series = options.statistics?.[id];
+        if (series) {
+          result[id] = series.map((value, index) => ({
+            start: index,
+            end: index + 1,
+            [field]: value,
+          }));
+        }
+      }
+      return result as T;
+    }
+
+    if (message['type'] === 'history/history_during_period') {
+      const ids = (message['entity_ids'] as string[] | undefined) ?? [];
+      const result: Record<string, unknown[]> = {};
+      for (const id of ids) {
+        const states = options.history?.[id];
+        if (states) result[id] = states;
+      }
+      return result as T;
+    }
+
+    return {} as T;
+  };
+
+  return { callWS, calls };
+}
+
+/**
+ * Extract the rendered sparkline polyline points for each tile, in render order.
+ * Returns null for tiles that rendered no sparkline.
+ */
+export function getSparklines(card: TreemapCard): (string | null)[] {
+  const shadow = card.shadowRoot;
+  if (!shadow) return [];
+
+  return [...shadow.querySelectorAll('.treemap-item')].map(item => {
+    const polyline = item.querySelector('.treemap-sparkline polyline');
+    return polyline?.getAttribute('points') ?? null;
+  });
+}
+
+/**
+ * Step past the 100ms sparkline fetch debounce and let the resulting
+ * re-render settle. `await card.updateComplete` alone is not enough.
+ */
+export async function flushSparklines(card: TreemapCard, ms = 150): Promise<void> {
+  await card.updateComplete;
+  await new Promise(resolve => setTimeout(resolve, ms));
+  await card.updateComplete;
+  // The fetch resolves asynchronously and assigns state, scheduling one more update.
+  await new Promise(resolve => setTimeout(resolve, 0));
+  await card.updateComplete;
 }
 
 export interface RenderedItem {

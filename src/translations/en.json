@@ -46,7 +46,16 @@
       "show_fill": "Show fill",
       "show_hvac": "Show HVAC bars (climate entities)",
       "min": "Y-axis min",
-      "max": "Y-axis max"
+      "max": "Y-axis max",
+      "function": "Statistic",
+      "function_mean": "Mean (average)",
+      "function_min": "Min",
+      "function_max": "Max",
+      "function_sum": "Sum (running total)",
+      "function_state": "State (last value)",
+      "function_change": "Change (difference per bucket)",
+      "entity": "Source entity",
+      "entity_helper": "Leave empty to plot each tile's own entity. All statistics come from long-term statistics, so sensors without a state_class stay blank."
     },
     "colors": {
       "title": "Colors",
@@ -102,6 +111,12 @@
       "above": "Filter above",
       "below": "Filter below",
       "unavailable": "Include unavailable entities"
+    },
+    "entity_overrides": {
+      "title": "Per-entity sparklines",
+      "helper": "Override the sparkline source, statistic or period for individual entities.",
+      "source": "Sparkline entity",
+      "inherit": "Inherit"
     }
   }
 }
