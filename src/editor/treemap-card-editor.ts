@@ -294,64 +294,57 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
     if (entities.length === 0) return nothing;
 
     return html`
-      <ha-expansion-panel outlined data-testid="entity-overrides-section">
-        <span slot="header">${this._t('editor.entity_overrides.title')}</span>
-        <div class="content">
-          <span class="field-helper">${this._t('editor.entity_overrides.helper')}</span>
-          ${entities.map(input => {
-            const entityId = isEntityConfig(input) ? input.entity : input;
-            const sparkline = isEntityConfig(input) ? (input.sparkline ?? {}) : {};
-            const testId = `entity-override-${entityId}`;
+      <div class="subsection" data-testid="entity-overrides-section">
+        <label class="field-label">${this._t('editor.entity_overrides.title')}</label>
+        <span class="field-helper">${this._t('editor.entity_overrides.helper')}</span>
+        ${entities.map(input => {
+          const entityId = isEntityConfig(input) ? input.entity : input;
+          const sparkline = isEntityConfig(input) ? (input.sparkline ?? {}) : {};
+          const testId = `entity-override-${entityId}`;
 
-            return html`
-              <div class="field" data-testid=${testId}>
-                <label class="field-label">${entityId}</label>
-                <ha-textfield
-                  data-testid="${testId}-sparkline-entity"
-                  label=${this._t('editor.entity_overrides.source')}
-                  .value=${sparkline.entity ?? ''}
-                  @input=${(e: Event) => this._handleEntitySparklineChange(entityId, 'entity', e)}
-                  placeholder=${entityId}
-                ></ha-textfield>
-                <ha-select
-                  data-testid="${testId}-sparkline-function"
-                  label=${this._t('editor.sparkline.function')}
-                  .value=${sparkline.function ?? ''}
-                  @selected=${(e: Event) =>
-                    this._handleEntitySparklineChange(entityId, 'function', e)}
-                  @closed=${(e: Event) => e.stopPropagation()}
-                >
-                  <ha-list-item value=""
-                    >${this._t('editor.entity_overrides.inherit')}</ha-list-item
-                  >
-                  ${SPARKLINE_FUNCTIONS.map(
-                    fn =>
-                      html`<ha-list-item value=${fn}
-                        >${this._t(`editor.sparkline.function_${fn}`)}</ha-list-item
-                      >`
-                  )}
-                </ha-select>
-                <ha-select
-                  data-testid="${testId}-sparkline-period"
-                  label=${this._t('editor.sparkline.period')}
-                  .value=${sparkline.period ?? ''}
-                  @selected=${(e: Event) =>
-                    this._handleEntitySparklineChange(entityId, 'period', e)}
-                  @closed=${(e: Event) => e.stopPropagation()}
-                >
-                  <ha-list-item value=""
-                    >${this._t('editor.entity_overrides.inherit')}</ha-list-item
-                  >
-                  <ha-list-item value="12h">${this._t('editor.sparkline.period_12h')}</ha-list-item>
-                  <ha-list-item value="24h">${this._t('editor.sparkline.period_24h')}</ha-list-item>
-                  <ha-list-item value="7d">${this._t('editor.sparkline.period_7d')}</ha-list-item>
-                  <ha-list-item value="30d">${this._t('editor.sparkline.period_30d')}</ha-list-item>
-                </ha-select>
-              </div>
-            `;
-          })}
-        </div>
-      </ha-expansion-panel>
+          return html`
+            <div class="field" data-testid=${testId}>
+              <label class="field-label">${entityId}</label>
+              <ha-textfield
+                data-testid="${testId}-sparkline-entity"
+                label=${this._t('editor.entity_overrides.source')}
+                .value=${sparkline.entity ?? ''}
+                @input=${(e: Event) => this._handleEntitySparklineChange(entityId, 'entity', e)}
+                placeholder=${entityId}
+              ></ha-textfield>
+              <ha-select
+                data-testid="${testId}-sparkline-function"
+                label=${this._t('editor.sparkline.function')}
+                .value=${sparkline.function ?? ''}
+                @selected=${(e: Event) =>
+                  this._handleEntitySparklineChange(entityId, 'function', e)}
+                @closed=${(e: Event) => e.stopPropagation()}
+              >
+                <ha-list-item value="">${this._t('editor.entity_overrides.inherit')}</ha-list-item>
+                ${SPARKLINE_FUNCTIONS.map(
+                  fn =>
+                    html`<ha-list-item value=${fn}
+                      >${this._t(`editor.sparkline.function_${fn}`)}</ha-list-item
+                    >`
+                )}
+              </ha-select>
+              <ha-select
+                data-testid="${testId}-sparkline-period"
+                label=${this._t('editor.sparkline.period')}
+                .value=${sparkline.period ?? ''}
+                @selected=${(e: Event) => this._handleEntitySparklineChange(entityId, 'period', e)}
+                @closed=${(e: Event) => e.stopPropagation()}
+              >
+                <ha-list-item value="">${this._t('editor.entity_overrides.inherit')}</ha-list-item>
+                <ha-list-item value="12h">${this._t('editor.sparkline.period_12h')}</ha-list-item>
+                <ha-list-item value="24h">${this._t('editor.sparkline.period_24h')}</ha-list-item>
+                <ha-list-item value="7d">${this._t('editor.sparkline.period_7d')}</ha-list-item>
+                <ha-list-item value="30d">${this._t('editor.sparkline.period_30d')}</ha-list-item>
+              </ha-select>
+            </div>
+          `;
+        })}
+      </div>
     `;
   }
 
@@ -592,12 +585,9 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
                 placeholder=${this._t('editor.colors.auto')}
               ></ha-textfield>
             </div>
-            ${this._renderDocsLink('sparkline')}
+            ${this._renderEntityOverrides()} ${this._renderDocsLink('sparkline')}
           </div>
         </ha-expansion-panel>
-
-        <!-- Per-entity sparkline overrides -->
-        ${this._renderEntityOverrides()}
 
         <!-- Colors section -->
         <ha-expansion-panel outlined data-testid="colors-section">

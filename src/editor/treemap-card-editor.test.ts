@@ -1337,6 +1337,23 @@ describe('TreemapCardEditor', () => {
   });
 
   describe('per-entity sparkline overrides', () => {
+    it('lives inside the sparkline section rather than as its own panel', async () => {
+      editor.setConfig({ type: 'custom:treemap-card', entities: ['sensor.a'] });
+      await editor.updateComplete;
+
+      const nested = getElement(
+        editor,
+        '[data-testid="sparkline-section"] [data-testid="entity-overrides-section"]'
+      );
+      expect(nested).toBeTruthy();
+
+      // and not as a second top-level expansion panel
+      const panels = editor.shadowRoot?.querySelectorAll(
+        '.editor > ha-expansion-panel[data-testid="entity-overrides-section"]'
+      );
+      expect(panels?.length ?? 0).toBe(0);
+    });
+
     it('renders one override row per configured entity', async () => {
       editor.setConfig({
         type: 'custom:treemap-card',
