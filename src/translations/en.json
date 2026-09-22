@@ -62,10 +62,10 @@
       "target": "Apply color to",
       "target_background": "Background",
       "target_foreground": "Foreground (text)",
-      "gradient": "Color gradient (low \u2192 mid \u2192 high)",
-      "low": "Low \u2264",
+      "gradient": "Color gradient (low → mid → high)",
+      "low": "Low ≤",
       "mid": "Mid =",
-      "high": "High \u2265",
+      "high": "High ≥",
       "auto": "auto",
       "middle": "middle",
       "hvac_colors": "HVAC colors (climate entities)",
@@ -111,12 +111,6 @@
       "above": "Filter above",
       "below": "Filter below",
       "unavailable": "Include unavailable entities"
-    },
-    "entity_overrides": {
-      "title": "Per-entity sparklines",
-      "helper": "Override the sparkline source, statistic or period for individual entities.",
-      "source": "Sparkline entity",
-      "inherit": "Inherit"
     }
   }
 }

@@ -5,7 +5,7 @@
  * Uses Home Assistant's official form components for consistent UI.
  */
 
-import { LitElement, html, nothing, type TemplateResult } from 'lit';
+import { LitElement, html, type TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { set } from 'es-toolkit/compat';
 import {
@@ -14,7 +14,6 @@ import {
   type TreemapCardConfig,
   type TreemapActionConfig,
   type TreemapEntityConfig,
-  type SparklineConfig,
 } from '../types';
 import { SPARKLINE_FUNCTIONS } from '../utils/sparkline-config';
 import type { LovelaceCardEditor } from './types';
@@ -134,60 +133,6 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
   }
 
   /**
-   * Apply a change to one entity's config, promoting a plain string to an
-   * object when it gains settings and demoting it back when it loses them.
-   */
-  private _updateEntityConfig(
-    entityId: string,
-    mutate: (config: TreemapEntityConfig) => TreemapEntityConfig
-  ): void {
-    if (!this._config?.entities) return;
-
-    const entities = this._config.entities.map(input => {
-      const id = isEntityConfig(input) ? input.entity : input;
-      if (id !== entityId) return input;
-
-      const current: TreemapEntityConfig = isEntityConfig(input) ? { ...input } : { entity: input };
-      const next = mutate(current);
-
-      // An object carrying nothing but the id is just the id
-      return Object.keys(next).length === 1 ? next.entity : next;
-    });
-
-    this._config = { ...this._config, entities };
-    this._fireConfigChanged();
-  }
-
-  /**
-   * Handler for a per-entity sparkline override field.
-   * An emptied field removes the key, and the last key removes the block.
-   */
-  private _handleEntitySparklineChange(
-    entityId: string,
-    key: 'entity' | 'function' | 'period',
-    e: Event
-  ): void {
-    const value = getEventValue(e).trim();
-
-    this._updateEntityConfig(entityId, config => {
-      // Rebuild rather than delete: an emptied field drops its key entirely
-      const source = { ...config.sparkline, [key]: value || undefined };
-      const sparkline: SparklineConfig = {};
-      for (const name of Object.keys(source)) {
-        const current: unknown = Reflect.get(source, name);
-        if (current !== undefined) Object.assign(sparkline, { [name]: current });
-      }
-
-      if (Object.keys(sparkline).length === 0) {
-        const { sparkline: _removed, ...rest } = config;
-        return rest;
-      }
-
-      return { ...config, sparkline };
-    });
-  }
-
-  /**
    * Handler for ha-icon-picker value-changed event
    */
   private _handleIconChange(e: CustomEvent): void {
@@ -282,69 +227,6 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
           ${opts.content} ${opts.docsAnchor ? this._renderDocsLink(opts.docsAnchor) : ''}
         </div>
       </ha-expansion-panel>
-    `;
-  }
-
-  /**
-   * Per-entity sparkline overrides: one row per configured entry, wildcards
-   * included since an override applies to everything the pattern matches.
-   */
-  private _renderEntityOverrides(): TemplateResult | typeof nothing {
-    const entities = this._config?.entities ?? [];
-    if (entities.length === 0) return nothing;
-
-    return html`
-      <div class="subsection" data-testid="entity-overrides-section">
-        <label class="field-label">${this._t('editor.entity_overrides.title')}</label>
-        <span class="field-helper">${this._t('editor.entity_overrides.helper')}</span>
-        ${entities.map(input => {
-          const entityId = isEntityConfig(input) ? input.entity : input;
-          const sparkline = isEntityConfig(input) ? (input.sparkline ?? {}) : {};
-          const testId = `entity-override-${entityId}`;
-
-          return html`
-            <div class="field" data-testid=${testId}>
-              <label class="field-label">${entityId}</label>
-              <ha-textfield
-                data-testid="${testId}-sparkline-entity"
-                label=${this._t('editor.entity_overrides.source')}
-                .value=${sparkline.entity ?? ''}
-                @input=${(e: Event) => this._handleEntitySparklineChange(entityId, 'entity', e)}
-                placeholder=${entityId}
-              ></ha-textfield>
-              <ha-select
-                data-testid="${testId}-sparkline-function"
-                label=${this._t('editor.sparkline.function')}
-                .value=${sparkline.function ?? ''}
-                @selected=${(e: Event) =>
-                  this._handleEntitySparklineChange(entityId, 'function', e)}
-                @closed=${(e: Event) => e.stopPropagation()}
-              >
-                <ha-list-item value="">${this._t('editor.entity_overrides.inherit')}</ha-list-item>
-                ${SPARKLINE_FUNCTIONS.map(
-                  fn =>
-                    html`<ha-list-item value=${fn}
-                      >${this._t(`editor.sparkline.function_${fn}`)}</ha-list-item
-                    >`
-                )}
-              </ha-select>
-              <ha-select
-                data-testid="${testId}-sparkline-period"
-                label=${this._t('editor.sparkline.period')}
-                .value=${sparkline.period ?? ''}
-                @selected=${(e: Event) => this._handleEntitySparklineChange(entityId, 'period', e)}
-                @closed=${(e: Event) => e.stopPropagation()}
-              >
-                <ha-list-item value="">${this._t('editor.entity_overrides.inherit')}</ha-list-item>
-                <ha-list-item value="12h">${this._t('editor.sparkline.period_12h')}</ha-list-item>
-                <ha-list-item value="24h">${this._t('editor.sparkline.period_24h')}</ha-list-item>
-                <ha-list-item value="7d">${this._t('editor.sparkline.period_7d')}</ha-list-item>
-                <ha-list-item value="30d">${this._t('editor.sparkline.period_30d')}</ha-list-item>
-              </ha-select>
-            </div>
-          `;
-        })}
-      </div>
     `;
   }
 
@@ -585,7 +467,7 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
                 placeholder=${this._t('editor.colors.auto')}
               ></ha-textfield>
             </div>
-            ${this._renderEntityOverrides()} ${this._renderDocsLink('sparkline')}
+            ${this._renderDocsLink('sparkline')}
           </div>
         </ha-expansion-panel>
 

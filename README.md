@@ -757,6 +757,10 @@ Setting `sparkline.entity` at card level points **every** tile at the same
 source, which is occasionally handy (an electricity price curve behind each
 room, say).
 
+> **Visual editor:** the Sparkline section sets **Statistic**, **Period** and
+> **Source entity** once for the whole card. Per-entity overrides are YAML only -
+> the editor leaves them untouched when you edit the entity list.
+
 ### Statistics
 
 `sparkline.function` picks which number is taken from each time bucket. The

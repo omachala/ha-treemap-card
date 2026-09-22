@@ -89,28 +89,6 @@ export const editorStyles = css`
     gap: 12px;
   }
 
-  /* Per-entity overrides nested inside a section */
-  .subsection {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding-top: 12px;
-    border-top: 1px solid var(--divider-color, #e0e0e0);
-  }
-
-  .subsection .field {
-    gap: 8px;
-    padding: 8px 10px;
-    border: 1px solid var(--divider-color, #e0e0e0);
-    border-radius: 6px;
-  }
-
-  .subsection .field .field-label {
-    font-family: var(--code-font-family, monospace);
-    font-size: 11px;
-    color: var(--primary-text-color, #212121);
-  }
-
   /* Docs link at end of section */
   .docs-link {
     align-self: flex-end;

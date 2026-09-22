@@ -111,12 +111,6 @@
       "sort_by_entity_id": "ID d'entité",
       "sort_by_label": "Étiquette",
       "sort_by_default": "Ordre de configuration"
-    },
-    "entity_overrides": {
-      "title": "Sparklines par entité",
-      "helper": "Remplacer la source, la statistique ou la période de la sparkline pour certaines entités.",
-      "source": "Entité de la sparkline",
-      "inherit": "Hériter"
     }
   }
 }
