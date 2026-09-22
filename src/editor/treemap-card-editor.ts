@@ -14,7 +14,6 @@ import {
   type TreemapCardConfig,
   type TreemapActionConfig,
   type TreemapEntityConfig,
-  type SparklineConfig,
 } from '../types';
 import { SPARKLINE_FUNCTIONS, resolveSparklineConfig } from '../utils/sparkline-config';
 import type { LovelaceCardEditor } from './types';
@@ -169,12 +168,12 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
   }
 
   /**
-   * Write a card-level sparkline setting and make it stick for every tile.
+   * Write a card-level sparkline setting.
    *
-   * Per-entity config takes precedence at render time, so setting the card value
-   * alone would silently do nothing for any entity that overrides the same key.
-   * Changing it here therefore also clears that key from every entity, which is
-   * what "one setting for the whole card" has to mean.
+   * Per-entity overrides are left alone, exactly as a card-level colour change
+   * leaves per-entity `color` alone. A tile that overrides this key keeps its
+   * own value; the control renders blank in that case, which is the signal that
+   * the tiles do not all agree.
    */
   private _handleSparklineFieldChange(
     key: 'entity' | 'function' | 'period' | 'mode',
@@ -183,30 +182,7 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
     if (!this._config) return;
 
     const value = getEventValue(e).trim() || undefined;
-    const next = set({ ...this._config }, `sparkline.${key}`, value);
-
-    if (next.entities) {
-      next.entities = next.entities.map(input => {
-        if (!isEntityConfig(input) || !input.sparkline) return input;
-        if (input.sparkline[key] === undefined) return input;
-
-        const sparkline: SparklineConfig = {};
-        for (const name of Object.keys(input.sparkline)) {
-          if (name === key) continue;
-          const current: unknown = Reflect.get(input.sparkline, name);
-          if (current !== undefined) Object.assign(sparkline, { [name]: current });
-        }
-
-        const { sparkline: _dropped, ...rest } = input;
-        const config: TreemapEntityConfig =
-          Object.keys(sparkline).length > 0 ? { ...rest, sparkline } : rest;
-
-        // An object carrying nothing but the id is just the id
-        return Object.keys(config).length === 1 ? config.entity : config;
-      });
-    }
-
-    this._config = next;
+    this._config = set({ ...this._config }, `sparkline.${key}`, value);
     this._fireConfigChanged();
   }
 

@@ -1400,7 +1400,7 @@ describe('TreemapCardEditor', () => {
       expect(selectValue('sparkline-period')).toBe('');
     });
 
-    it('strips per-entity overrides so the change really applies to all', async () => {
+    it('leaves per-entity overrides untouched, the way a colour change does', async () => {
       editor.setConfig({
         type: 'custom:treemap-card',
         entities: [
@@ -1419,40 +1419,14 @@ describe('TreemapCardEditor', () => {
 
       const newConfig = await configChangedPromise;
       expect(newConfig.sparkline?.function).toBe('sum');
-      // both entities lose their override and collapse back to plain strings
-      expect(newConfig.entities).toEqual(['sensor.a', 'sensor.b']);
+      // Per-entity config is the user's, not the editor's, to rewrite
+      expect(newConfig.entities).toEqual([
+        { entity: 'sensor.a', sparkline: { function: 'change' } },
+        { entity: 'sensor.b', sparkline: { function: 'max' } },
+      ]);
     });
 
-    it('leaves unrelated per-entity keys intact when stripping one', async () => {
-      editor.setConfig({
-        type: 'custom:treemap-card',
-        entities: [
-          {
-            entity: 'sensor.a',
-            name: 'Alpha',
-            sparkline: { function: 'change', entity: 'sensor.a_power' },
-          },
-        ],
-      });
-      await editor.updateComplete;
-
-      const configChangedPromise = waitForConfigChange(editor);
-      const select = getElement(editor, '[data-testid="sparkline-function"]');
-      if (isHaSelect(select)) {
-        select.value = 'max';
-        select.dispatchEvent(new Event('selected'));
-      }
-
-      const newConfig = await configChangedPromise;
-      expect(newConfig.sparkline?.function).toBe('max');
-      expect(newConfig.entities?.[0]).toEqual({
-        entity: 'sensor.a',
-        name: 'Alpha',
-        sparkline: { entity: 'sensor.a_power' },
-      });
-    });
-
-    it('applies a period change to every entity', async () => {
+    it('writes a card-level period without touching entity overrides', async () => {
       editor.setConfig({
         type: 'custom:treemap-card',
         entities: ['sensor.a', { entity: 'sensor.b', sparkline: { period: '7d' } }],
@@ -1468,10 +1442,13 @@ describe('TreemapCardEditor', () => {
 
       const newConfig = await configChangedPromise;
       expect(newConfig.sparkline?.period).toBe('30d');
-      expect(newConfig.entities).toEqual(['sensor.a', 'sensor.b']);
+      expect(newConfig.entities).toEqual([
+        'sensor.a',
+        { entity: 'sensor.b', sparkline: { period: '7d' } },
+      ]);
     });
 
-    it('applies a source entity change to every entity', async () => {
+    it('writes a card-level source entity without touching entity overrides', async () => {
       editor.setConfig({
         type: 'custom:treemap-card',
         entities: [{ entity: 'sensor.a', sparkline: { entity: 'sensor.a_power' } }, 'sensor.b'],
@@ -1487,7 +1464,10 @@ describe('TreemapCardEditor', () => {
 
       const newConfig = await configChangedPromise;
       expect(newConfig.sparkline?.entity).toBe('sensor.grid');
-      expect(newConfig.entities).toEqual(['sensor.a', 'sensor.b']);
+      expect(newConfig.entities).toEqual([
+        { entity: 'sensor.a', sparkline: { entity: 'sensor.a_power' } },
+        'sensor.b',
+      ]);
     });
 
     it('shows no source entity when tiles plot different sources', async () => {
