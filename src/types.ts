@@ -61,6 +61,48 @@ export interface TreemapEntityConfig extends EntityConfig {
   hold_action?: TreemapActionConfig;
   double_tap_action?: TreemapActionConfig;
   color?: string; // Direct color override for this entity (e.g. '#F68C00')
+  sparkline?: SparklineConfig; // Per-entity sparkline override (same shape as card level)
+}
+
+/**
+ * Time period covered by a sparkline
+ */
+export type HistoryPeriod = '12h' | '24h' | '7d' | '30d';
+
+/**
+ * Which statistic a sparkline plots.
+ *
+ * These map 1:1 onto Home Assistant's `recorder/statistics_during_period` `types`
+ * parameter, minus `last_reset` (a timestamp, not a plottable series).
+ */
+export type StatisticFunction = 'mean' | 'min' | 'max' | 'sum' | 'state' | 'change';
+
+/**
+ * Sparkline configuration.
+ *
+ * Valid at card level (defaults for every tile) and per entity, where it overrides
+ * the card level key by key.
+ */
+export interface SparklineConfig {
+  show?: boolean; // Show sparklines (default: true)
+  entity?: string; // Source entity to plot (default: the tile's own entity)
+  attribute?: string; // Field/attribute containing sparkline data array (JSON mode)
+  period?: HistoryPeriod; // Time period for entity history (default: '24h')
+  function?: StatisticFunction; // Statistic to plot (default: 'mean')
+  mode?: 'light' | 'dark'; // Color mode (default: 'dark')
+  min?: number; // Fixed Y-axis minimum (default: auto from data)
+  max?: number; // Fixed Y-axis maximum (default: auto from data)
+  line?: {
+    show?: boolean; // Show line (default: true)
+    style?: string; // Custom CSS for line (stroke, stroke-width, etc.)
+  };
+  fill?: {
+    show?: boolean; // Show fill (default: true)
+    style?: string; // Custom CSS for fill (fill color, opacity, etc.)
+  };
+  hvac?: {
+    show?: boolean; // Show HVAC action bars for climate entities (default: true)
+  };
 }
 
 /**
@@ -183,26 +225,8 @@ export interface TreemapCardConfig {
   tap_action?: TreemapActionConfig;
   hold_action?: TreemapActionConfig;
   double_tap_action?: TreemapActionConfig;
-  // Sparkline configuration
-  sparkline?: {
-    show?: boolean; // Show sparklines (default: true)
-    attribute?: string; // Field/attribute containing sparkline data array (JSON mode)
-    period?: '12h' | '24h' | '7d' | '30d'; // Time period for entity history (default: '24h')
-    mode?: 'light' | 'dark'; // Color mode (default: 'dark')
-    min?: number; // Fixed Y-axis minimum (default: auto from data)
-    max?: number; // Fixed Y-axis maximum (default: auto from data)
-    line?: {
-      show?: boolean; // Show line (default: true)
-      style?: string; // Custom CSS for line (stroke, stroke-width, etc.)
-    };
-    fill?: {
-      show?: boolean; // Show fill (default: true)
-      style?: string; // Custom CSS for fill (fill color, opacity, etc.)
-    };
-    hvac?: {
-      show?: boolean; // Show HVAC action bars for climate entities (default: true)
-    };
-  };
+  // Sparkline configuration (defaults for every tile; overridable per entity)
+  sparkline?: SparklineConfig;
 }
 
 /**

@@ -9,6 +9,8 @@ import {
   type TreemapRect,
   type TreemapEntityConfig,
   type TreemapActionConfig,
+  type SparklineConfig,
+  type HistoryPeriod,
 } from './types';
 
 import { getNumber, getString, matchesPattern, isUnavailableState } from './utils/predicates';
@@ -22,7 +24,14 @@ import {
   type GradientColorOptions,
 } from './utils/colors';
 import { renderSparklineWithData } from './utils/sparkline';
-import { getHistoryData, type HistoryPeriod, type SparklineData } from './utils/history';
+import { getHistoryData, type SparklineData, type SparklineSpec } from './utils/history';
+import {
+  SPARKLINE_FUNCTIONS,
+  isStatisticFunction,
+  resolveSparklineConfig,
+  resolveSparklineSource,
+  type ResolvedSparklineConfig,
+} from './utils/sparkline-config';
 import { squarify } from './utils/squarify';
 import { prepareTreemapData } from './utils/data';
 import { formatNumber, resolvePrecision } from './utils/format';
@@ -36,6 +45,15 @@ console.info(
   'color: white; background: #3498db; font-weight: bold;',
   'color: #3498db; background: white; font-weight: bold;'
 );
+
+/**
+ * Shallow numeric array comparison, used to decide whether refetched sparkline
+ * data differs from what is already rendered.
+ */
+function arraysEqual(a: number[], b: number[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((value, index) => value === b[index]);
+}
 
 @customElement('treemap-card')
 export class TreemapCard extends LitElement {
@@ -79,6 +97,10 @@ export class TreemapCard extends LitElement {
   private readonly _debouncedFetchSparklines = debounce(() => void this._fetchSparklineData(), 100);
   // Map from entity_id to its config object, for per-entity action overrides
   private _entityConfigMap = new Map<string, TreemapEntityConfig>();
+  // Map from entity_id (or wildcard pattern) to its per-entity sparkline override
+  private _sparklineConfigMap = new Map<string, SparklineConfig>();
+  // Memoized resolved sparkline config per entity; cleared whenever config changes
+  private _sparklineConfigCache = new Map<string, ResolvedSparklineConfig>();
   // Hold action detection
   private _holdTimer: ReturnType<typeof setTimeout> | null = null;
   private _holdFired = false;
@@ -167,6 +189,8 @@ export class TreemapCard extends LitElement {
       throw new Error('Please define "entities" (list) or "entity" (single with JSON array)');
     }
 
+    this._validateSparklineFunction(config.sparkline);
+
     this._config = {
       gap: 4, // smaller gap
       ...config,
@@ -174,6 +198,8 @@ export class TreemapCard extends LitElement {
 
     // Rebuild entity config map for per-entity action lookups
     this._entityConfigMap = new Map();
+    this._sparklineConfigMap = new Map();
+    this._sparklineConfigCache = new Map();
     if (config.entities) {
       for (const input of config.entities) {
         const cfg = this._normalizeEntity(input);
@@ -181,8 +207,57 @@ export class TreemapCard extends LitElement {
         if (cfg.tap_action || cfg.hold_action || cfg.double_tap_action) {
           this._entityConfigMap.set(cfg.entity, cfg);
         }
+        if (cfg.sparkline) {
+          this._validateSparklineFunction(cfg.sparkline, cfg.entity);
+          this._sparklineConfigMap.set(cfg.entity, cfg.sparkline);
+        }
       }
     }
+  }
+
+  /**
+   * Reject an unknown sparkline function up front.
+   *
+   * Home Assistant validates the `types` parameter server side and rejects the
+   * whole websocket call, which would blank every sparkline sharing that request
+   * rather than just the misconfigured one.
+   */
+  private _validateSparklineFunction(sparkline?: SparklineConfig, entityId?: string): void {
+    const fn = sparkline?.function;
+    if (fn === undefined || isStatisticFunction(fn)) return;
+
+    const where = entityId ? ` for "${entityId}"` : '';
+    throw new Error(
+      `Invalid sparkline function "${String(fn)}"${where}. ` +
+        `Must be one of: ${SPARKLINE_FUNCTIONS.join(', ')}`
+    );
+  }
+
+  /**
+   * Effective sparkline config for a tile: card-level defaults with the
+   * per-entity override applied. Matches an exact entity id first, then
+   * wildcard patterns, mirroring how per-entity actions resolve.
+   */
+  private _getSparklineConfig(entityId?: string): ResolvedSparklineConfig {
+    const cardLevel = this._config?.sparkline;
+    if (!entityId) return resolveSparklineConfig(cardLevel);
+
+    const cached = this._sparklineConfigCache.get(entityId);
+    if (cached) return cached;
+
+    let override = this._sparklineConfigMap.get(entityId);
+    if (!override) {
+      for (const [pattern, cfg] of this._sparklineConfigMap) {
+        if (matchesPattern(entityId, pattern)) {
+          override = cfg;
+          break;
+        }
+      }
+    }
+
+    const resolved = resolveSparklineConfig(cardLevel, override);
+    this._sparklineConfigCache.set(entityId, resolved);
+    return resolved;
   }
 
   /**
@@ -208,23 +283,30 @@ export class TreemapCard extends LitElement {
   private async _fetchSparklineData(): Promise<void> {
     if (!this.hass || this._fetchingSparklines) return;
 
-    // Check if sparklines are disabled
-    if (this._config?.sparkline?.show === false) return;
+    // Build one spec per tile: which entity to plot, over what period, for which
+    // statistic. Tiles that opt out contribute no spec, so a fully disabled card
+    // issues no request at all.
+    const specs = new Map<string, SparklineSpec>();
+    for (const { entity_id } of this._resolveData()) {
+      if (!entity_id) continue;
 
-    // Get entity IDs from resolved data
-    const data = this._resolveData();
-    const entityIds = data.map(({ entity_id }) => entity_id).filter((id): id is string => !!id);
+      const config = this._getSparklineConfig(entity_id);
+      if (!config.show) continue;
 
-    if (entityIds.length === 0) return;
+      specs.set(entity_id, {
+        entityId: resolveSparklineSource(config, entity_id),
+        period: config.period,
+        statistic: config.function,
+      });
+    }
+
+    if (specs.size === 0) return;
 
     this._fetchingSparklines = true;
 
     try {
-      // Get period from config (default: 24h)
-      const period: HistoryPeriod = this._config?.sparkline?.period || '24h';
-
       // Fetch history data (uses cache internally)
-      const historyData = await getHistoryData(this.hass, entityIds, period);
+      const historyData = await getHistoryData(this.hass, specs);
 
       // Only update state if data actually changed (avoid triggering re-renders)
       if (historyData.size > 0 && !this._sparklineDataEquals(historyData)) {
@@ -237,6 +319,11 @@ export class TreemapCard extends LitElement {
 
   /**
    * Compare sparkline data maps to avoid unnecessary re-renders.
+   *
+   * Compares values rather than just lengths: pointing a tile at a different
+   * source entity usually yields the same number of buckets, and a length-only
+   * check would discard the new series. If the values really are identical the
+   * render is identical too, so skipping the update stays safe.
    */
   private _sparklineDataEquals(newData: Map<string, SparklineData>): boolean {
     if (this._sparklineData.size !== newData.size) return false;
@@ -245,23 +332,30 @@ export class TreemapCard extends LitElement {
       const oldValue = this._sparklineData.get(key);
       if (!oldValue) return false;
 
-      // Compare temperature arrays
-      if (oldValue.temperature.length !== newValue.temperature.length) return false;
+      if (!arraysEqual(oldValue.temperature, newValue.temperature)) return false;
 
-      // Compare hvacActions arrays
-      const oldHvac = oldValue.hvacActions?.length ?? 0;
-      const newHvac = newValue.hvacActions?.length ?? 0;
-      if (oldHvac !== newHvac) return false;
+      const oldHvac = oldValue.hvacActions ?? [];
+      const newHvac = newValue.hvacActions ?? [];
+      if (oldHvac.length !== newHvac.length) return false;
+      for (const [index, segment] of oldHvac.entries()) {
+        const other = newHvac[index];
+        if (
+          segment.action !== other?.action ||
+          segment.start !== other.start ||
+          segment.end !== other.end
+        ) {
+          return false;
+        }
+      }
     }
 
     return true;
   }
 
   /**
-   * Get period hours from config for HVAC quantization.
+   * Get period hours for HVAC quantization.
    */
-  private _getPeriodHours(): number {
-    const period = this._config?.sparkline?.period || '24h';
+  private _getPeriodHours(period: HistoryPeriod): number {
     const periodMap: Record<string, number> = {
       '12h': 12,
       '24h': 24,
@@ -951,26 +1045,26 @@ export class TreemapCard extends LitElement {
             ? html`<span class="treemap-value" style="${valueStyle}">${formattedValue}</span>`
             : nothing
         }
-        ${
-          this._config?.sparkline?.show !== false
-            ? (() => {
-                const sparklineData =
-                  rect.sparklineData ??
-                  (rect.entity_id ? this._sparklineData.get(rect.entity_id) : undefined);
-                return html`<div class="treemap-sparkline">
-                  ${renderSparklineWithData(sparklineData, {
-                    mode: this._config?.sparkline?.mode || 'dark',
-                    line: this._config?.sparkline?.line,
-                    fill: this._config?.sparkline?.fill,
-                    hvac: this._config?.sparkline?.hvac,
-                    periodHours: this._getPeriodHours(),
-                    min: this._config?.sparkline?.min,
-                    max: this._config?.sparkline?.max,
-                  })}
-                </div>`;
-              })()
-            : nothing
-        }
+        ${(() => {
+          const sparkline = this._getSparklineConfig(rect.entity_id);
+          if (!sparkline.show) return nothing;
+
+          const sparklineData =
+            rect.sparklineData ??
+            (rect.entity_id ? this._sparklineData.get(rect.entity_id) : undefined);
+
+          return html`<div class="treemap-sparkline">
+            ${renderSparklineWithData(sparklineData, {
+              mode: sparkline.mode,
+              line: sparkline.line,
+              fill: sparkline.fill,
+              hvac: sparkline.hvac,
+              periodHours: this._getPeriodHours(sparkline.period),
+              min: sparkline.min,
+              max: sparkline.max,
+            })}
+          </div>`;
+        })()}
       </div>
     `;
   }

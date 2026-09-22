@@ -21,7 +21,6 @@ export default defineConfig({
         'src/editor/index.ts', // Re-exports only
         'src/editor/types.ts', // Type definitions only
         'src/editor/styles.ts', // CSS-in-JS styles
-        'src/utils/history.ts', // Async HA API calls - tested via integration
         'vite.dev.config.ts',
         'vite.config.ts',
         'vitest.config.ts',

@@ -1,6 +1,4 @@
-import type { HomeAssistant } from '../types';
-
-export type HistoryPeriod = '12h' | '24h' | '7d' | '30d';
+import type { HomeAssistant, HistoryPeriod, StatisticFunction } from '../types';
 
 export interface SparklineData {
   temperature: number[];
@@ -13,13 +11,24 @@ export interface HvacActionSegment {
   action: 'heating' | 'cooling' | 'idle' | 'off';
 }
 
+/**
+ * What one tile's sparkline should plot.
+ *
+ * `entityId` is the *source* entity, which is not necessarily the tile's own
+ * entity - see the `sparkline.entity` config option.
+ */
+export interface SparklineSpec {
+  entityId: string;
+  period: HistoryPeriod;
+  statistic: StatisticFunction;
+}
+
 function isHvacAction(value: unknown): value is HvacActionSegment['action'] {
   return value === 'heating' || value === 'cooling' || value === 'idle' || value === 'off';
 }
 
-interface CacheEntry {
-  data: SparklineData;
-  fetchedAt: number;
+function isClimateEntityId(entityId: string): boolean {
+  return entityId.startsWith('climate.');
 }
 
 interface PeriodConfig {
@@ -34,143 +43,189 @@ const PERIOD_CONFIG: Record<HistoryPeriod, PeriodConfig> = {
   '30d': { hours: 30 * 24, statsPeriod: 'day' },
 };
 
-// Module-level cache: "entityId:period" -> { data, fetchedAt }
-const cache = new Map<string, CacheEntry>();
-
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-/**
- * Get historical sparkline data for multiple entities.
- * For climate entities, also fetches HVAC action history.
- */
-export async function getHistoryData(
-  hass: HomeAssistant,
-  entityIds: string[],
-  period: HistoryPeriod = '24h'
-): Promise<Map<string, SparklineData>> {
-  const result = new Map<string, SparklineData>();
-  const now = Date.now();
-  const staleIds: string[] = [];
-
-  // Check cache first (cache key includes period)
-  for (const entityId of entityIds) {
-    const cacheKey = `${entityId}:${period}`;
-    const cached = cache.get(cacheKey);
-    if (cached && now - cached.fetchedAt < CACHE_TTL) {
-      result.set(entityId, cached.data);
-    } else {
-      staleIds.push(entityId);
-    }
-  }
-
-  // Fetch stale/missing data
-  if (staleIds.length > 0) {
-    const freshData = await fetchSparklineData(hass, staleIds, period);
-    for (const [entityId, data] of freshData) {
-      const cacheKey = `${entityId}:${period}`;
-      cache.set(cacheKey, { data, fetchedAt: now });
-      result.set(entityId, data);
-    }
-  }
-
-  return result;
+interface CacheEntry<T> {
+  data: T;
+  fetchedAt: number;
 }
+
+// "entityId:period:statistic" -> plotted series
+const seriesCache = new Map<string, CacheEntry<number[]>>();
+// "entityId|period" -> climate temperature + hvac segments
+const climateCache = new Map<string, CacheEntry<ClimateHistoryData>>();
 
 /**
  * Clear all cached history data.
- * Currently unused but kept for future debugging/testing needs.
+ * Exported so tests can isolate the module-level caches between cases.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function clearHistoryCache(): void {
-  cache.clear();
+export function clearHistoryCache(): void {
+  seriesCache.clear();
+  climateCache.clear();
+}
+
+function seriesKey({ entityId, period, statistic }: SparklineSpec): string {
+  return `${entityId}:${period}:${statistic}`;
+}
+
+function climateKey(entityId: string, period: HistoryPeriod): string {
+  return `${entityId}|${period}`;
 }
 
 /**
- * Fetch sparkline data (temperature + HVAC actions) for entities.
+ * Get sparkline data for a set of tiles.
+ *
+ * Both the spec map and the returned map are keyed by the *tile's* entity id, so
+ * the render path never needs to know about source entities. Identical
+ * (source, period, statistic) fetches are deduplicated internally.
  */
-async function fetchSparklineData(
+export async function getHistoryData(
   hass: HomeAssistant,
-  entityIds: string[],
-  period: HistoryPeriod
+  specs: Map<string, SparklineSpec>
 ): Promise<Map<string, SparklineData>> {
   const result = new Map<string, SparklineData>();
+  if (specs.size === 0) return result;
 
-  if (entityIds.length === 0) {
-    return result;
-  }
+  const now = Date.now();
 
-  // Separate climate entities from others
-  const climateEntities = entityIds.filter(id => id.startsWith('climate.'));
-  const otherEntities = entityIds.filter(id => !id.startsWith('climate.'));
-
-  // Fetch statistics for non-climate entities
-  if (otherEntities.length > 0) {
-    const stats = await fetchStatistics(hass, otherEntities, period);
-    for (const [entityId, data] of stats) {
-      result.set(entityId, { temperature: data });
+  // Climate history is needed for two reasons: HVAC bars always describe the
+  // tile's own thermostat, and a climate *source* may need its temperature read
+  // from attributes when it has no long-term statistics.
+  const climateRequests = new Map<string, ClimateRequest>();
+  for (const [tileId, spec] of specs) {
+    if (isClimateEntityId(tileId)) {
+      climateRequests.set(climateKey(tileId, spec.period), {
+        entityId: tileId,
+        period: spec.period,
+      });
+    }
+    if (isClimateEntityId(spec.entityId)) {
+      climateRequests.set(climateKey(spec.entityId, spec.period), {
+        entityId: spec.entityId,
+        period: spec.period,
+      });
     }
   }
 
-  // For climate entities, fetch temperature stats AND hvac action history
-  if (climateEntities.length > 0) {
-    const climateData = await fetchClimateSparklineData(hass, climateEntities, period);
-    for (const [entityId, data] of climateData) {
-      result.set(entityId, data);
-    }
+  const climateData = await fetchClimateHistories(hass, climateRequests, now);
+  const series = await fetchSeries(hass, specs, climateData, now);
+
+  for (const [tileId, spec] of specs) {
+    const temperature = series.get(seriesKey(spec)) ?? [];
+    const hvacActions = isClimateEntityId(tileId)
+      ? climateData.get(climateKey(tileId, spec.period))?.hvacActions
+      : undefined;
+
+    result.set(tileId, hvacActions ? { temperature, hvacActions } : { temperature });
   }
 
   return result;
 }
 
 /**
- * Fetch sparkline data for climate entities.
- * Tries climate entity stats first, falls back to associated temperature sensor.
+ * Resolve the plotted series for every spec, batching one statistics call per
+ * distinct (period, statistic) pair and serving fresh cache entries directly.
  */
-async function fetchClimateSparklineData(
+async function fetchSeries(
   hass: HomeAssistant,
-  climateEntityIds: string[],
-  period: HistoryPeriod
-): Promise<Map<string, SparklineData>> {
-  const result = new Map<string, SparklineData>();
-  const config = PERIOD_CONFIG[period];
-  const startTime = new Date(Date.now() - config.hours * 60 * 60 * 1000);
+  specs: Map<string, SparklineSpec>,
+  climateData: Map<string, ClimateHistoryData>,
+  now: number
+): Promise<Map<string, number[]>> {
+  const resolved = new Map<string, number[]>();
 
-  // First try to get statistics directly for climate entities
-  const directStats = await fetchStatistics(hass, climateEntityIds, period);
+  // Group the stale specs by the websocket call they would produce
+  const groups = new Map<string, { spec: SparklineSpec; entityIds: Set<string> }>();
 
-  // Find entities that need fallback (no data or empty array)
-  const needFallback: string[] = [];
-  for (const entityId of climateEntityIds) {
-    const stats = directStats.get(entityId);
-    if (!stats || stats.length === 0) {
-      needFallback.push(entityId);
+  for (const spec of specs.values()) {
+    const key = seriesKey(spec);
+    if (resolved.has(key)) continue;
+
+    const cached = seriesCache.get(key);
+    if (cached && now - cached.fetchedAt < CACHE_TTL) {
+      resolved.set(key, cached.data);
+      continue;
+    }
+
+    const groupKey = `${spec.period}|${spec.statistic}`;
+    const group = groups.get(groupKey);
+    if (group) {
+      group.entityIds.add(spec.entityId);
     } else {
-      result.set(entityId, { temperature: stats });
+      groups.set(groupKey, { spec, entityIds: new Set([spec.entityId]) });
     }
   }
 
-  // Fetch climate history (for HVAC action AND temperature from attributes)
-  const climateHistory = await fetchClimateHistory(hass, climateEntityIds, startTime, config);
+  await Promise.all(
+    [...groups.values()].map(async ({ spec, entityIds }) => {
+      const ids = [...entityIds];
+      const stats = await fetchStatistics(hass, ids, spec.period, spec.statistic);
 
-  // Use temperature from climate history for entities without stats
-  for (const entityId of needFallback) {
-    const historyData = climateHistory.get(entityId);
-    if (historyData && historyData.temperature.length > 0) {
-      result.set(entityId, { temperature: historyData.temperature });
+      for (const entityId of ids) {
+        let data = stats.get(entityId) ?? [];
+
+        // A climate entity without statistics can still expose its temperature
+        // through the current_temperature attribute in plain history.
+        if (data.length === 0 && isClimateEntityId(entityId)) {
+          data = climateData.get(climateKey(entityId, spec.period))?.temperature ?? [];
+        }
+
+        const key = seriesKey({ ...spec, entityId });
+        seriesCache.set(key, { data, fetchedAt: now });
+        resolved.set(key, data);
+      }
+    })
+  );
+
+  return resolved;
+}
+
+/**
+ * Fetch climate history (temperature + HVAC actions), one call per period.
+ */
+async function fetchClimateHistories(
+  hass: HomeAssistant,
+  requests: Map<string, ClimateRequest>,
+  now: number
+): Promise<Map<string, ClimateHistoryData>> {
+  const result = new Map<string, ClimateHistoryData>();
+  if (requests.size === 0) return result;
+
+  const byPeriod = new Map<HistoryPeriod, string[]>();
+
+  for (const [key, { entityId, period }] of requests) {
+    const cached = climateCache.get(key);
+    if (cached && now - cached.fetchedAt < CACHE_TTL) {
+      result.set(key, cached.data);
+      continue;
     }
-  }
 
-  // Add HVAC action segments to all climate entities
-  for (const [entityId, historyData] of climateHistory) {
-    const existing = result.get(entityId);
+    const existing = byPeriod.get(period);
     if (existing) {
-      existing.hvacActions = historyData.hvacActions;
+      existing.push(entityId);
     } else {
-      result.set(entityId, { temperature: [], hvacActions: historyData.hvacActions });
+      byPeriod.set(period, [entityId]);
     }
   }
 
+  await Promise.all(
+    [...byPeriod].map(async ([period, entityIds]) => {
+      const fetched = await fetchClimateHistory(hass, entityIds, period, now);
+      for (const entityId of entityIds) {
+        const data = fetched.get(entityId) ?? { temperature: [], hvacActions: [] };
+        const key = climateKey(entityId, period);
+        climateCache.set(key, { data, fetchedAt: now });
+        result.set(key, data);
+      }
+    })
+  );
+
   return result;
+}
+
+interface ClimateRequest {
+  entityId: string;
+  period: HistoryPeriod;
 }
 
 interface ClimateHistoryData {
@@ -178,20 +233,18 @@ interface ClimateHistoryData {
   hvacActions: HvacActionSegment[];
 }
 
-/**
- * Fetch climate history (temperature + HVAC actions) from history API.
- */
 async function fetchClimateHistory(
   hass: HomeAssistant,
   climateEntityIds: string[],
-  startTime: Date,
-  config: PeriodConfig
+  period: HistoryPeriod,
+  now: number
 ): Promise<Map<string, ClimateHistoryData>> {
   const result = new Map<string, ClimateHistoryData>();
+  if (climateEntityIds.length === 0) return result;
 
-  if (climateEntityIds.length === 0) {
-    return result;
-  }
+  const config = PERIOD_CONFIG[period];
+  const periodMs = config.hours * 60 * 60 * 1000;
+  const startTime = new Date(now - periodMs);
 
   try {
     // Use HA history API - need full response to get attributes
@@ -204,19 +257,12 @@ async function fetchClimateHistory(
     });
 
     if (response) {
-      const periodMs = config.hours * 60 * 60 * 1000;
-      const now = Date.now();
-
       for (const entityId of climateEntityIds) {
         const history = response[entityId];
         if (history && history.length > 0) {
-          // Extract temperature values and HVAC segments
-          const temperatures = extractTemperatures(history);
-          const hvacSegments = convertToHvacSegments(history, startTime.getTime(), now, periodMs);
-
           result.set(entityId, {
-            temperature: temperatures,
-            hvacActions: hvacSegments,
+            temperature: extractTemperatures(history),
+            hvacActions: convertToHvacSegments(history, startTime.getTime(), now, periodMs),
           });
         }
       }
@@ -303,11 +349,17 @@ function convertToHvacSegments(
 
 /**
  * Fetch statistics from Home Assistant using WebSocket API.
+ *
+ * The requested statistic is passed through as `types` and read back from that
+ * same field. There is deliberately no fallback to `mean`: when `types` is
+ * honoured the other fields are absent by construction, so a fallback could only
+ * ever plot a different series than the one that was asked for.
  */
 async function fetchStatistics(
   hass: HomeAssistant,
   entityIds: string[],
-  period: HistoryPeriod
+  period: HistoryPeriod,
+  statistic: StatisticFunction
 ): Promise<Map<string, number[]>> {
   const result = new Map<string, number[]>();
 
@@ -324,14 +376,14 @@ async function fetchStatistics(
       start_time: startTime,
       statistic_ids: entityIds,
       period: config.statsPeriod,
+      types: [statistic],
     });
 
     if (response) {
       for (const [entityId, stats] of Object.entries(response)) {
-        // Extract mean values from statistics
         const data = stats
-          .map(({ mean }) => mean)
-          .filter((v): v is number => v !== null && v !== undefined);
+          .map(row => row[statistic])
+          .filter((v): v is number => typeof v === 'number' && !Number.isNaN(v));
         result.set(entityId, data);
       }
     }
@@ -348,14 +400,10 @@ async function fetchStatistics(
   return result;
 }
 
-interface StatisticsResult {
+type StatisticsResult = {
   start: number;
   end: number;
-  mean: number | null;
-  min: number | null;
-  max: number | null;
-  state: number | null;
-}
+} & Partial<Record<StatisticFunction | 'last_reset', number | null>>;
 
 interface HistoryState {
   // Full response format (no_attributes: false)

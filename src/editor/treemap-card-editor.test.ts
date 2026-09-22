@@ -1064,10 +1064,7 @@ describe('TreemapCardEditor', () => {
 
       const configChangedPromise = waitForConfigChange(editor);
 
-      const selects = editor.shadowRoot?.querySelectorAll(
-        '[data-testid="sparkline-section"] ha-select'
-      );
-      const periodSelect = selects?.[0];
+      const periodSelect = getElement(editor, '[data-testid="sparkline-period"]');
       if (isHaSelect(periodSelect)) {
         periodSelect.value = '7d';
         periodSelect.dispatchEvent(new Event('selected', { bubbles: true }));
@@ -1086,10 +1083,7 @@ describe('TreemapCardEditor', () => {
 
       const configChangedPromise = waitForConfigChange(editor);
 
-      const selects = editor.shadowRoot?.querySelectorAll(
-        '[data-testid="sparkline-section"] ha-select'
-      );
-      const modeSelect = selects?.[1];
+      const modeSelect = getElement(editor, '[data-testid="sparkline-mode"]');
       if (isHaSelect(modeSelect)) {
         modeSelect.value = 'light';
         modeSelect.dispatchEvent(new Event('selected', { bubbles: true }));
@@ -1211,6 +1205,283 @@ describe('TreemapCardEditor', () => {
       expect(newConfig.tap_action?.action).toBe('navigate');
       expect(newConfig.hold_action?.action).toBe('none');
       expect(newConfig.height).toBe(300);
+    });
+  });
+
+  describe('per-entity config preservation', () => {
+    it('keeps object entity configs when the textarea is edited', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: [
+          { entity: 'sensor.a', name: 'Alpha', sparkline: { entity: 'sensor.a_power' } },
+          'sensor.b',
+        ],
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+      const textarea = getElement(editor, '[data-testid="entities-field"] textarea');
+      if (textarea instanceof HTMLTextAreaElement) {
+        textarea.value = 'sensor.a\nsensor.b';
+        textarea.dispatchEvent(new Event('input'));
+      }
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.entities?.[0]).toEqual({
+        entity: 'sensor.a',
+        name: 'Alpha',
+        sparkline: { entity: 'sensor.a_power' },
+      });
+      expect(newConfig.entities?.[1]).toBe('sensor.b');
+    });
+
+    it('preserves existing configs while appending a new entity', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: [{ entity: 'sensor.a', color: '#ff0000' }],
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+      const textarea = getElement(editor, '[data-testid="entities-field"] textarea');
+      if (textarea instanceof HTMLTextAreaElement) {
+        textarea.value = 'sensor.a\nsensor.new';
+        textarea.dispatchEvent(new Event('input'));
+      }
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.entities?.[0]).toEqual({ entity: 'sensor.a', color: '#ff0000' });
+      expect(newConfig.entities?.[1]).toBe('sensor.new');
+    });
+
+    it('drops the config of an entity removed from the textarea', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: [{ entity: 'sensor.a', name: 'Alpha' }, 'sensor.b'],
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+      const textarea = getElement(editor, '[data-testid="entities-field"] textarea');
+      if (textarea instanceof HTMLTextAreaElement) {
+        textarea.value = 'sensor.b';
+        textarea.dispatchEvent(new Event('input'));
+      }
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.entities).toEqual(['sensor.b']);
+    });
+  });
+
+  describe('sparkline function and source', () => {
+    it('defaults the function dropdown to mean', async () => {
+      editor.setConfig({ type: 'custom:treemap-card', entities: ['sensor.*'] });
+      await editor.updateComplete;
+
+      const select = getElement(editor, '[data-testid="sparkline-function"]');
+      expect(isHaSelect(select) && select.value).toBe('mean');
+    });
+
+    it('offers every supported function', async () => {
+      editor.setConfig({ type: 'custom:treemap-card', entities: ['sensor.*'] });
+      await editor.updateComplete;
+
+      const items =
+        editor.shadowRoot?.querySelectorAll('[data-testid="sparkline-function"] ha-list-item') ??
+        [];
+      const values = [...items].map(item => item.getAttribute('value'));
+      expect(values).toEqual(['mean', 'min', 'max', 'sum', 'state', 'change']);
+    });
+
+    it('writes sparkline.function on change', async () => {
+      editor.setConfig({ type: 'custom:treemap-card', entities: ['sensor.*'] });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+      const select = getElement(editor, '[data-testid="sparkline-function"]');
+      if (isHaSelect(select)) {
+        select.value = 'change';
+        select.dispatchEvent(new Event('selected'));
+      }
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.sparkline?.function).toBe('change');
+    });
+
+    it('writes a card-level sparkline.entity', async () => {
+      editor.setConfig({ type: 'custom:treemap-card', entities: ['sensor.*'] });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+      const field = getElement(editor, '[data-testid="sparkline-entity"]');
+      if (isHaTextfield(field)) {
+        field.value = 'sensor.grid_price';
+        field.dispatchEvent(new Event('input'));
+      }
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.sparkline?.entity).toBe('sensor.grid_price');
+    });
+
+    it('shows a configured function', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.*'],
+        sparkline: { function: 'change' },
+      });
+      await editor.updateComplete;
+
+      const select = getElement(editor, '[data-testid="sparkline-function"]');
+      expect(isHaSelect(select) && select.value).toBe('change');
+    });
+  });
+
+  describe('card-level sparkline settings apply to every entity', () => {
+    const selectValue = (id: string): string | false => {
+      const el = getElement(editor, `[data-testid="${id}"]`);
+      return isHaSelect(el) ? el.value : false;
+    };
+
+    it('shows the card value when no entity overrides it', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.a', 'sensor.b'],
+        sparkline: { function: 'change' },
+      });
+      await editor.updateComplete;
+
+      expect(selectValue('sparkline-function')).toBe('change');
+    });
+
+    it('shows the shared value when every entity overrides it identically', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: [
+          { entity: 'sensor.a', sparkline: { function: 'max' } },
+          { entity: 'sensor.b', sparkline: { function: 'max' } },
+        ],
+      });
+      await editor.updateComplete;
+
+      expect(selectValue('sparkline-function')).toBe('max');
+    });
+
+    it('shows no selection when entities disagree', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: [
+          { entity: 'sensor.a', sparkline: { function: 'change' } },
+          { entity: 'sensor.b', sparkline: { function: 'max' } },
+        ],
+      });
+      await editor.updateComplete;
+
+      expect(selectValue('sparkline-function')).toBe('');
+    });
+
+    it('shows no selection when one entity differs from the card default', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.a', { entity: 'sensor.b', sparkline: { function: 'change' } }],
+        sparkline: { function: 'mean' },
+      });
+      await editor.updateComplete;
+
+      expect(selectValue('sparkline-function')).toBe('');
+    });
+
+    it('shows no selection when periods disagree', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.a', { entity: 'sensor.b', sparkline: { period: '7d' } }],
+      });
+      await editor.updateComplete;
+
+      expect(selectValue('sparkline-period')).toBe('');
+    });
+
+    it('leaves per-entity overrides untouched, the way a colour change does', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: [
+          { entity: 'sensor.a', sparkline: { function: 'change' } },
+          { entity: 'sensor.b', sparkline: { function: 'max' } },
+        ],
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+      const select = getElement(editor, '[data-testid="sparkline-function"]');
+      if (isHaSelect(select)) {
+        select.value = 'sum';
+        select.dispatchEvent(new Event('selected'));
+      }
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.sparkline?.function).toBe('sum');
+      // Per-entity config is the user's, not the editor's, to rewrite
+      expect(newConfig.entities).toEqual([
+        { entity: 'sensor.a', sparkline: { function: 'change' } },
+        { entity: 'sensor.b', sparkline: { function: 'max' } },
+      ]);
+    });
+
+    it('writes a card-level period without touching entity overrides', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: ['sensor.a', { entity: 'sensor.b', sparkline: { period: '7d' } }],
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+      const select = getElement(editor, '[data-testid="sparkline-period"]');
+      if (isHaSelect(select)) {
+        select.value = '30d';
+        select.dispatchEvent(new Event('selected'));
+      }
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.sparkline?.period).toBe('30d');
+      expect(newConfig.entities).toEqual([
+        'sensor.a',
+        { entity: 'sensor.b', sparkline: { period: '7d' } },
+      ]);
+    });
+
+    it('writes a card-level source entity without touching entity overrides', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: [{ entity: 'sensor.a', sparkline: { entity: 'sensor.a_power' } }, 'sensor.b'],
+      });
+      await editor.updateComplete;
+
+      const configChangedPromise = waitForConfigChange(editor);
+      const field = getElement(editor, '[data-testid="sparkline-entity"]');
+      if (isHaTextfield(field)) {
+        field.value = 'sensor.grid';
+        field.dispatchEvent(new Event('input'));
+      }
+
+      const newConfig = await configChangedPromise;
+      expect(newConfig.sparkline?.entity).toBe('sensor.grid');
+      expect(newConfig.entities).toEqual([
+        { entity: 'sensor.a', sparkline: { entity: 'sensor.a_power' } },
+        'sensor.b',
+      ]);
+    });
+
+    it('shows no source entity when tiles plot different sources', async () => {
+      editor.setConfig({
+        type: 'custom:treemap-card',
+        entities: [
+          { entity: 'sensor.a', sparkline: { entity: 'sensor.a_power' } },
+          { entity: 'sensor.b', sparkline: { entity: 'sensor.b_power' } },
+        ],
+      });
+      await editor.updateComplete;
+
+      const field = getElement(editor, '[data-testid="sparkline-entity"]');
+      expect(isHaTextfield(field) && field.value).toBe('');
     });
   });
 });
