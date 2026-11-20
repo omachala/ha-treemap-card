@@ -1,10 +1,10 @@
 /**
- * Binary entity extraction (switch, input_boolean, binary_sensor)
+ * Binary entity extraction (switch, input_boolean, binary_sensor, fan)
  */
 
 import type { HassEntity } from '../types';
 
-const BINARY_DOMAINS = ['switch', 'input_boolean', 'binary_sensor'];
+const BINARY_DOMAINS = ['switch', 'input_boolean', 'binary_sensor', 'fan'];
 
 /**
  * Check if entity is a binary (on/off) entity

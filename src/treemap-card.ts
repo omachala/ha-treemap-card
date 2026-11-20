@@ -541,7 +541,7 @@ export class TreemapCard extends LitElement {
           continue;
         }
 
-        // Special handling for binary entities (switch, input_boolean, binary_sensor)
+        // Special handling for binary entities (switch, input_boolean, binary_sensor, fan)
         if (isBinaryEntity(entityId)) {
           const binaryInfo = extractBinaryInfo(entity);
           const { isOn } = binaryInfo;

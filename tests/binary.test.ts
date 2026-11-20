@@ -1,5 +1,5 @@
 /**
- * Integration tests for binary entities (switch, input_boolean, binary_sensor)
+ * Integration tests for binary entities (switch, input_boolean, binary_sensor, fan)
  */
 
 import { describe, expect, it, beforeEach } from 'vitest';
@@ -80,6 +80,25 @@ describe('Binary Entities', () => {
     expect(items).toHaveLength(1);
     expect(items[0]?.label).toBe('Front Door');
     expect(items[0]?.displayValue).toBe('Off');
+  });
+
+  it('renders fan entity as on/off', async () => {
+    const hass = mockHass([
+      mockEntity('fan.bedroom', 'on', { friendly_name: 'Bedroom Fan', percentage: 50 }),
+      mockEntity('fan.office', 'off', { friendly_name: 'Office Fan' }),
+    ]);
+
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: ['fan.*'],
+    });
+    card.hass = hass;
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    expect(items).toHaveLength(2);
+    expect(items.find(i => i.label === 'Bedroom Fan')?.displayValue).toBe('On');
+    expect(items.find(i => i.label === 'Office Fan')?.displayValue).toBe('Off');
   });
 
   it('uses high color for on and low color for off', async () => {

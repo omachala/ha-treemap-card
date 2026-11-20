@@ -266,7 +266,7 @@ Climate entities show temperature history with HVAC activity highlighted. The fi
 
 ### Binary Sensors & Switches
 
-`switch.*`, `input_boolean.*`, and `binary_sensor.*` entities display **On** / **Off** and use your configured `color.high` and `color.low` colors.
+`switch.*`, `input_boolean.*`, `binary_sensor.*`, and `fan.*` entities display **On** / **Off** and use your configured `color.high` and `color.low` colors.
 
 | State | Color behavior                     |
 | ----- | ---------------------------------- |
