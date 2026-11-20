@@ -1,5 +1,11 @@
 # ha-treemap-card
 
+## 0.16.1
+
+### Patch Changes
+
+- 99fe5a7: `fan.*` entities now appear in the treemap and display On / Off like switches
+
 ## 0.16.0
 
 ### Minor Changes
