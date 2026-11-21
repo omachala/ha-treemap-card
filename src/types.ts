@@ -253,6 +253,17 @@ export interface ClimateInfo {
 }
 
 /**
+ * Cover state normalized for treemap display.
+ *
+ * Home Assistant reports open as 100% and closed as 0%. The card deliberately
+ * inverts that for treemaps so an open cover reads 0% and a closed cover 100%.
+ */
+export interface CoverInfo {
+  position: number;
+  isOpen: boolean;
+}
+
+/**
  * Treemap data item
  */
 export interface TreemapItem {
@@ -267,6 +278,7 @@ export interface TreemapItem {
   light?: LightColorInfo; // Light-specific color info (only for light.* entities)
   climate?: ClimateInfo; // Climate-specific info (only for climate.* entities)
   binary?: { isOn: boolean }; // Binary state info (only for switch.*, input_boolean.*, binary_sensor.*, fan.*)
+  cover?: CoverInfo; // Cover state info (only for cover.* entities)
   color?: string; // Per-entity color override (bypasses gradient)
   sparklineData?: number[]; // Inline sparkline data (JSON mode)
   unavailable?: boolean; // True if entity state is unavailable/unknown/none
@@ -288,6 +300,7 @@ export interface TreemapRect {
   light?: LightColorInfo; // Light-specific color info (only for light.* entities)
   climate?: ClimateInfo; // Climate-specific info (only for climate.* entities)
   binary?: { isOn: boolean }; // Binary state info (only for switch.*, input_boolean.*, binary_sensor.*, fan.*)
+  cover?: CoverInfo; // Cover state info (only for cover.* entities)
   color?: string; // Per-entity color override (bypasses gradient)
   sparklineData?: number[]; // Inline sparkline data (JSON mode)
   unavailable?: boolean; // True if entity state is unavailable/unknown/none
