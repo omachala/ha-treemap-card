@@ -23,7 +23,7 @@ A custom Lovelace card that dynamically visualizes entities as a treemap. Rectan
 ### Why Treemap Card?
 
 - Optimized for thousands of entities without breaking a sweat
-- Works beautifully with [sensors](#sensors), [lights](#lights), [thermostats](#climate), [switches & binary sensors](#binary-sensors--switches), and [custom data](#json-attribute-mode)
+- Works beautifully with [sensors](#sensors), [lights](#lights), [thermostats](#climate), [covers](#covers), [switches & binary sensors](#binary-sensors--switches), and [custom data](#json-attribute-mode)
 - Smart defaults, fully customizable - including [tap/hold actions](#tap--hold-actions) and [per-tile CSS](#styling-guide)
 - Works with [auto-entities](#auto-entities-guide) for advanced filtering (area, device, label)
 - 18 KB gzipped, 90%+ test coverage
@@ -90,7 +90,7 @@ value:
 
 ## Entity Types
 
-The card is optimized for three entity types, each with special handling.
+The card is optimized for four entity types, each with special handling.
 
 ### Sensors
 
@@ -149,6 +149,33 @@ height: 300
 | Color     | Actual light color (RGB/HS) if available |
 | Off state | Uses `color.low` value                   |
 | Value     | Shows brightness percentage              |
+
+### Covers
+
+Cover tiles use `current_position`, with the display intentionally reversed so an open cover is `0%` and a closed cover is `100%`. The icon follows the state: an open shutter for open or partially open covers, and a closed shutter for fully closed covers.
+
+```yaml
+type: custom:treemap-card
+header:
+  title: Covers
+entities:
+  - cover.*
+size:
+  equal: true
+value:
+  precision: 0
+  suffix: '%'
+color:
+  low: '#16a34a' # Open
+  mid: '#d97706' # Partially open
+  high: '#6b7280' # Closed
+```
+
+| Cover state | Displayed value | Default icon              |
+| ----------- | --------------- | ------------------------- |
+| Open        | `0%`            | `mdi:window-shutter-open` |
+| Partial     | Inverted value  | `mdi:window-shutter-open` |
+| Closed      | `100%`          | `mdi:window-shutter`      |
 
 ### Climate
 

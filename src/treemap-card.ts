@@ -16,6 +16,7 @@ import {
 import { getNumber, getString, matchesPattern, isUnavailableState } from './utils/predicates';
 import { isLightEntity, extractLightInfo, getLightBackgroundColor } from './utils/lights';
 import { isBinaryEntity, extractBinaryInfo, getBinaryBackgroundColor } from './utils/binary';
+import { isCoverEntity, extractCoverInfo } from './utils/cover';
 import { isClimateEntity, extractClimateInfo, getClimateValue } from './utils/climate';
 import {
   getContrastColors,
@@ -536,6 +537,28 @@ export class TreemapCard extends LitElement {
             icon: climateIcon,
             unit: getString(entity.attributes['unit_of_measurement']),
             climate: climateInfo,
+            color: colorOverride,
+          });
+          continue;
+        }
+
+        // Cover positions are inverted for display: 0% open, 100% closed.
+        if (isCoverEntity(entityId)) {
+          const coverInfo = extractCoverInfo(entity);
+          const { position } = coverInfo;
+
+          items.push({
+            label,
+            value: position,
+            sizeValue: Math.max(1, position),
+            sortValue: position,
+            colorValue: position,
+            entity_id: entityId,
+            icon:
+              icon ??
+              (coverInfo.isOpen ? 'mdi:window-shutter-open' : 'mdi:window-shutter'),
+            unit: '%',
+            cover: coverInfo,
             color: colorOverride,
           });
           continue;
