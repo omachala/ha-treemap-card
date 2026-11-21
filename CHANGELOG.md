@@ -1,5 +1,12 @@
 # ha-treemap-card
 
+## 0.16.2
+
+### Patch Changes
+
+- 309f3aa: Cover entities (blinds, shutters, garage doors) now appear in the treemap, showing how closed they are: 0% is fully open, 100% is fully closed
+- d91cb9e: Fixed the visual editor dropdowns (sort by, order, color target, sparkline period, function and mode) not saving your choice on recent Home Assistant versions
+
 ## 0.16.1
 
 ### Patch Changes
