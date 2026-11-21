@@ -23,7 +23,7 @@ A custom Lovelace card that dynamically visualizes entities as a treemap. Rectan
 ### Why Treemap Card?
 
 - Optimized for thousands of entities without breaking a sweat
-- Works beautifully with [sensors](#sensors), [lights](#lights), [thermostats](#climate), [covers](#covers), [switches & binary sensors](#binary-sensors--switches), and [custom data](#json-attribute-mode)
+- Works beautifully with [sensors](#sensors), [lights](#lights), [thermostats](#climate), [covers](#covers), [switches, fans & binary sensors](#binary-sensors--switches), and [custom data](#json-attribute-mode)
 - Smart defaults, fully customizable - including [tap/hold actions](#tap--hold-actions) and [per-tile CSS](#styling-guide)
 - Works with [auto-entities](#auto-entities-guide) for advanced filtering (area, device, label)
 - 18 KB gzipped, 90%+ test coverage
@@ -153,6 +153,8 @@ height: 300
 ### Covers
 
 Cover tiles use `current_position`, with the display intentionally reversed so an open cover is `0%` and a closed cover is `100%`. The icon follows the state: an open shutter for open or partially open covers, and a closed shutter for fully closed covers.
+
+If a cover has no `current_position`, it falls back to its state (`open` is `0%`, `closed` is `100%`). Covers that are `unavailable` or `unknown` are skipped, or shown as unavailable when `filter.unavailable` is on.
 
 ```yaml
 type: custom:treemap-card
@@ -293,7 +295,7 @@ Climate entities show temperature history with HVAC activity highlighted. The fi
 
 ### Binary Sensors & Switches
 
-`switch.*`, `input_boolean.*`, `binary_sensor.*`, and `fan.*` entities display **On** / **Off** and use your configured `color.high` and `color.low` colors.
+`switch.*`, `input_boolean.*`, `binary_sensor.*`, and `fan.*` entities display **On** / **Off** and use your configured `color.high` and `color.low` colors. Fans show on/off only, not their speed.
 
 | State | Color behavior                     |
 | ----- | ---------------------------------- |
@@ -307,6 +309,7 @@ header:
 entities:
   - switch.*
   - input_boolean.*
+  - fan.*
 size:
   equal: true
 color:
