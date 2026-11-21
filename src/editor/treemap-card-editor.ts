@@ -7,6 +7,7 @@
 
 import { LitElement, html, type TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { ifDefined } from 'lit/directives/if-defined.js';
 import { set } from 'es-toolkit/compat';
 import {
   isEntityConfig,
@@ -22,10 +23,23 @@ import { localize } from '../localize';
 
 const REPO_URL = 'https://github.com/omachala/ha-treemap-card';
 
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
 /**
- * Get value from HA component or native input
+ * Get value from HA component or native input.
+ *
+ * Newer Home Assistant dropdowns put the picked value in `detail.value` and their own
+ * `.value` is still the previous one when the event fires, so the detail wins. Older
+ * dropdowns send `detail: { index }`, and the picked value is on the element.
  */
 function getEventValue(e: Event): string {
+  const detail: unknown = e instanceof CustomEvent ? e.detail : undefined;
+  if (detail && typeof detail === 'object' && 'value' in detail) {
+    return String(detail.value ?? '');
+  }
   const target = e.target;
   // HA components and native inputs both have .value
   if (target && typeof target === 'object' && 'value' in target) {
@@ -63,6 +77,39 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
    */
   private _t(key: string): string {
     return localize(this.hass, key);
+  }
+
+  /**
+   * Dropdown that works on both generations of Home Assistant's ha-select.
+   *
+   * New ha-select (2025.11+) renders from `.options` and ignores its children.
+   * Old ha-select ignores `.options` and renders the `<ha-list-item>` children.
+   * The close events are stopped so picking an option does not close the editor dialog.
+   */
+  private _renderSelect(select: {
+    testId?: string;
+    label: string;
+    value: string;
+    options: SelectOption[];
+    onSelected: (e: Event) => void;
+  }): TemplateResult {
+    const stop = (e: Event): void => e.stopPropagation();
+    return html`
+      <ha-select
+        data-testid=${ifDefined(select.testId)}
+        label=${select.label}
+        .value=${select.value}
+        .options=${select.options}
+        @selected=${select.onSelected}
+        @closed=${stop}
+        @wa-hide=${stop}
+        @wa-after-hide=${stop}
+      >
+        ${select.options.map(
+          option => html`<ha-list-item value=${option.value}>${option.label}</ha-list-item>`
+        )}
+      </ha-select>
+    `;
   }
 
   private _fireConfigChanged(): void {
@@ -437,32 +484,28 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
           />
           <span slot="header">${this._t('editor.sparkline.title')}</span>
           <div class="content">
-            <ha-select
-              data-testid="sparkline-period"
-              label=${this._t('editor.sparkline.period')}
-              .value=${this._sparklineFieldValue('period')}
-              @selected=${(e: Event) => this._handleSparklineFieldChange('period', e)}
-              @closed=${(e: Event) => e.stopPropagation()}
-            >
-              <ha-list-item value="12h">${this._t('editor.sparkline.period_12h')}</ha-list-item>
-              <ha-list-item value="24h">${this._t('editor.sparkline.period_24h')}</ha-list-item>
-              <ha-list-item value="7d">${this._t('editor.sparkline.period_7d')}</ha-list-item>
-              <ha-list-item value="30d">${this._t('editor.sparkline.period_30d')}</ha-list-item>
-            </ha-select>
-            <ha-select
-              data-testid="sparkline-function"
-              label=${this._t('editor.sparkline.function')}
-              .value=${this._sparklineFieldValue('function')}
-              @selected=${(e: Event) => this._handleSparklineFieldChange('function', e)}
-              @closed=${(e: Event) => e.stopPropagation()}
-            >
-              ${SPARKLINE_FUNCTIONS.map(
-                fn =>
-                  html`<ha-list-item value=${fn}
-                    >${this._t(`editor.sparkline.function_${fn}`)}</ha-list-item
-                  >`
-              )}
-            </ha-select>
+            ${this._renderSelect({
+              testId: 'sparkline-period',
+              label: this._t('editor.sparkline.period'),
+              value: this._sparklineFieldValue('period'),
+              options: [
+                { value: '12h', label: this._t('editor.sparkline.period_12h') },
+                { value: '24h', label: this._t('editor.sparkline.period_24h') },
+                { value: '7d', label: this._t('editor.sparkline.period_7d') },
+                { value: '30d', label: this._t('editor.sparkline.period_30d') },
+              ],
+              onSelected: e => this._handleSparklineFieldChange('period', e),
+            })}
+            ${this._renderSelect({
+              testId: 'sparkline-function',
+              label: this._t('editor.sparkline.function'),
+              value: this._sparklineFieldValue('function'),
+              options: SPARKLINE_FUNCTIONS.map(fn => ({
+                value: fn,
+                label: this._t(`editor.sparkline.function_${fn}`),
+              })),
+              onSelected: e => this._handleSparklineFieldChange('function', e),
+            })}
             <ha-textfield
               data-testid="sparkline-entity"
               label=${this._t('editor.sparkline.entity')}
@@ -471,16 +514,16 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
               placeholder="sensor.outdoor_humidity"
             ></ha-textfield>
             <span class="field-helper">${this._t('editor.sparkline.entity_helper')}</span>
-            <ha-select
-              data-testid="sparkline-mode"
-              label=${this._t('editor.sparkline.mode')}
-              .value=${this._sparklineFieldValue('mode')}
-              @selected=${(e: Event) => this._handleSparklineFieldChange('mode', e)}
-              @closed=${(e: Event) => e.stopPropagation()}
-            >
-              <ha-list-item value="dark">${this._t('editor.sparkline.mode_dark')}</ha-list-item>
-              <ha-list-item value="light">${this._t('editor.sparkline.mode_light')}</ha-list-item>
-            </ha-select>
+            ${this._renderSelect({
+              testId: 'sparkline-mode',
+              label: this._t('editor.sparkline.mode'),
+              value: this._sparklineFieldValue('mode'),
+              options: [
+                { value: 'dark', label: this._t('editor.sparkline.mode_dark') },
+                { value: 'light', label: this._t('editor.sparkline.mode_light') },
+              ],
+              onSelected: e => this._handleSparklineFieldChange('mode', e),
+            })}
             <label class="checkbox-field">
               <input
                 type="checkbox"
@@ -529,19 +572,15 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
         <ha-expansion-panel outlined data-testid="colors-section">
           <span slot="header">${this._t('editor.colors.title')}</span>
           <div class="content">
-            <ha-select
-              label=${this._t('editor.colors.target')}
-              .value=${this._config.color?.target ?? 'background'}
-              @selected=${(e: Event) => this._handleTextChange('color.target', e)}
-              @closed=${(e: Event) => e.stopPropagation()}
-            >
-              <ha-list-item value="background"
-                >${this._t('editor.colors.target_background')}</ha-list-item
-              >
-              <ha-list-item value="foreground"
-                >${this._t('editor.colors.target_foreground')}</ha-list-item
-              >
-            </ha-select>
+            ${this._renderSelect({
+              label: this._t('editor.colors.target'),
+              value: this._config.color?.target ?? 'background',
+              options: [
+                { value: 'background', label: this._t('editor.colors.target_background') },
+                { value: 'foreground', label: this._t('editor.colors.target_foreground') },
+              ],
+              onSelected: e => this._handleTextChange('color.target', e),
+            })}
             <span class="field-label">${this._t('editor.colors.gradient')}</span>
             <div class="color-scale-row">
               <label class="color-field">
@@ -679,28 +718,26 @@ export class TreemapCardEditor extends LitElement implements LovelaceCardEditor 
         <ha-expansion-panel outlined data-testid="data-section">
           <span slot="header">${this._t('editor.data.title')}</span>
           <div class="content">
-            <ha-select
-              label=${this._t('editor.data.sort_by')}
-              .value=${this._config.sort_by ?? 'value'}
-              @selected=${(e: Event) => this._handleTextChange('sort_by', e)}
-              @closed=${(e: Event) => e.stopPropagation()}
-            >
-              <ha-list-item value="value">${this._t('editor.data.sort_by_value')}</ha-list-item>
-              <ha-list-item value="entity_id"
-                >${this._t('editor.data.sort_by_entity_id')}</ha-list-item
-              >
-              <ha-list-item value="label">${this._t('editor.data.sort_by_label')}</ha-list-item>
-              <ha-list-item value="default">${this._t('editor.data.sort_by_default')}</ha-list-item>
-            </ha-select>
-            <ha-select
-              label=${this._t('editor.data.order')}
-              .value=${this._config.order ?? 'desc'}
-              @selected=${(e: Event) => this._handleTextChange('order', e)}
-              @closed=${(e: Event) => e.stopPropagation()}
-            >
-              <ha-list-item value="desc">${this._t('editor.data.desc')}</ha-list-item>
-              <ha-list-item value="asc">${this._t('editor.data.asc')}</ha-list-item>
-            </ha-select>
+            ${this._renderSelect({
+              label: this._t('editor.data.sort_by'),
+              value: this._config.sort_by ?? 'value',
+              options: [
+                { value: 'value', label: this._t('editor.data.sort_by_value') },
+                { value: 'entity_id', label: this._t('editor.data.sort_by_entity_id') },
+                { value: 'label', label: this._t('editor.data.sort_by_label') },
+                { value: 'default', label: this._t('editor.data.sort_by_default') },
+              ],
+              onSelected: e => this._handleTextChange('sort_by', e),
+            })}
+            ${this._renderSelect({
+              label: this._t('editor.data.order'),
+              value: this._config.order ?? 'desc',
+              options: [
+                { value: 'desc', label: this._t('editor.data.desc') },
+                { value: 'asc', label: this._t('editor.data.asc') },
+              ],
+              onSelected: e => this._handleTextChange('order', e),
+            })}
             <ha-textfield
               type="number"
               label=${this._t('editor.data.limit')}

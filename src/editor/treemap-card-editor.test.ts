@@ -1484,4 +1484,125 @@ describe('TreemapCardEditor', () => {
       expect(isHaTextfield(field) && field.value).toBe('');
     });
   });
+
+  describe('dropdown compatibility (old and new Home Assistant ha-select)', () => {
+    interface SelectCase {
+      name: string;
+      selector: string;
+      index: number;
+      values: string[];
+      pick: string;
+      read: (config: TreemapCardConfig) => unknown;
+    }
+
+    const cases: SelectCase[] = [
+      {
+        name: 'sort by',
+        selector: '[data-testid="data-section"] ha-select',
+        index: 0,
+        values: ['value', 'entity_id', 'label', 'default'],
+        pick: 'label',
+        read: c => c.sort_by,
+      },
+      {
+        name: 'order',
+        selector: '[data-testid="data-section"] ha-select',
+        index: 1,
+        values: ['desc', 'asc'],
+        pick: 'asc',
+        read: c => c.order,
+      },
+      {
+        name: 'color target',
+        selector: '[data-testid="colors-section"] ha-select',
+        index: 0,
+        values: ['background', 'foreground'],
+        pick: 'foreground',
+        read: c => c.color?.target,
+      },
+      {
+        name: 'sparkline period',
+        selector: '[data-testid="sparkline-period"]',
+        index: 0,
+        values: ['12h', '24h', '7d', '30d'],
+        pick: '7d',
+        read: c => c.sparkline?.period,
+      },
+      {
+        name: 'sparkline function',
+        selector: '[data-testid="sparkline-function"]',
+        index: 0,
+        values: ['mean', 'min', 'max', 'sum', 'state', 'change'],
+        pick: 'max',
+        read: c => c.sparkline?.function,
+      },
+      {
+        name: 'sparkline mode',
+        selector: '[data-testid="sparkline-mode"]',
+        index: 0,
+        values: ['dark', 'light'],
+        pick: 'light',
+        read: c => c.sparkline?.mode,
+      },
+    ];
+
+    async function getSelect(testCase: SelectCase): Promise<HTMLElement> {
+      editor.setConfig({ type: 'custom:treemap-card', entities: ['sensor.*'] });
+      await editor.updateComplete;
+      const el = editor.shadowRoot?.querySelectorAll(testCase.selector)[testCase.index];
+      if (!(el instanceof HTMLElement)) throw new Error(`select not found: ${testCase.name}`);
+      return el;
+    }
+
+    it.each(cases)('$name: passes .options for the new ha-select', async testCase => {
+      const select = await getSelect(testCase);
+      const options: unknown = Reflect.get(select, 'options');
+      expect(Array.isArray(options)).toBe(true);
+      const list = Array.isArray(options) ? (options as { value: string; label: string }[]) : [];
+      expect(list.map(o => o.value)).toEqual(testCase.values);
+      expect(list.every(o => typeof o.label === 'string' && o.label.length > 0)).toBe(true);
+    });
+
+    it.each(cases)('$name: still renders list items for the old ha-select', async testCase => {
+      const select = await getSelect(testCase);
+      const values = [...select.querySelectorAll('ha-list-item')].map(i => i.getAttribute('value'));
+      expect(values).toEqual(testCase.values);
+    });
+
+    it.each(cases)('$name: reads the pick from the selected event detail', async testCase => {
+      const select = await getSelect(testCase);
+      const configChangedPromise = waitForConfigChange(editor);
+
+      // New ha-select: the element's own .value is still the old one when the event fires
+      select.dispatchEvent(
+        new CustomEvent('selected', { detail: { value: testCase.pick }, bubbles: true })
+      );
+
+      expect(testCase.read(await configChangedPromise)).toBe(testCase.pick);
+    });
+
+    it.each(cases)(
+      '$name: reads the pick from the element for the old ha-select',
+      async testCase => {
+        const select = await getSelect(testCase);
+        const configChangedPromise = waitForConfigChange(editor);
+
+        // Old ha-select: detail is { index }, the new value is on the element
+        Reflect.set(select, 'value', testCase.pick);
+        select.dispatchEvent(new CustomEvent('selected', { detail: { index: 1 }, bubbles: true }));
+
+        expect(testCase.read(await configChangedPromise)).toBe(testCase.pick);
+      }
+    );
+
+    it.each(cases)('$name: keeps dropdown close events inside the editor', async testCase => {
+      const select = await getSelect(testCase);
+      const leaked: string[] = [];
+      for (const type of ['closed', 'wa-hide', 'wa-after-hide']) {
+        editor.addEventListener(type, () => leaked.push(type));
+        select.dispatchEvent(new Event(type, { bubbles: true, composed: true }));
+      }
+      expect(leaked).toEqual([]);
+    });
+  });
 });
