@@ -30,7 +30,18 @@ describe('cover utilities', () => {
   });
 
   it('limits malformed positions to the valid range', () => {
-    expect(extractCoverInfo(entity('open', 120)).position).toBe(0);
-    expect(extractCoverInfo(entity('closed', -10)).position).toBe(100);
+    expect(extractCoverInfo(entity('open', 120))?.position).toBe(0);
+    expect(extractCoverInfo(entity('closed', -10))?.position).toBe(100);
+  });
+
+  it('uses the reported position while a cover is moving', () => {
+    expect(extractCoverInfo(entity('opening', 40))).toEqual({ position: 60, isOpen: true });
+    expect(extractCoverInfo(entity('closing', 90))).toEqual({ position: 10, isOpen: true });
+  });
+
+  it('has no position for covers that are unavailable or moving without a position', () => {
+    expect(extractCoverInfo(entity('unavailable'))).toBeUndefined();
+    expect(extractCoverInfo(entity('unknown'))).toBeUndefined();
+    expect(extractCoverInfo(entity('opening'))).toBeUndefined();
   });
 });

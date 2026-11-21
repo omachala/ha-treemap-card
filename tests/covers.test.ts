@@ -32,4 +32,55 @@ describe('cover entities', () => {
       icon: 'mdi:window-shutter',
     });
   });
+
+  it('does not show an unavailable cover as closed', async () => {
+    const card = createCard();
+    card.setConfig({ type: 'custom:treemap-card', entities: ['cover.*'] });
+    card.hass = mockHass([
+      mockEntity('cover.offline', 'unavailable', { friendly_name: 'Offline' }),
+      mockEntity('cover.closed_window', 'closed', {
+        friendly_name: 'Closed Window',
+        current_position: 0,
+      }),
+    ]);
+    await card.updateComplete;
+
+    const labels = getRenderedItems(card).map(item => item.label);
+    expect(labels).toEqual(['Closed Window']);
+  });
+
+  it('shows an unavailable cover as unavailable when filter.unavailable is on', async () => {
+    const card = createCard();
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: ['cover.offline', 'sensor.offline'],
+      filter: { unavailable: true },
+    });
+    card.hass = mockHass([
+      mockEntity('cover.offline', 'unavailable', { friendly_name: 'Cover' }),
+      mockEntity('sensor.offline', 'unavailable', { friendly_name: 'Sensor' }),
+    ]);
+    await card.updateComplete;
+
+    const items = getRenderedItems(card);
+    expect(items).toHaveLength(2);
+    const cover = items.find(item => item.label === 'Cover');
+    const sensor = items.find(item => item.label === 'Sensor');
+    expect(cover?.displayValue).toBe(sensor?.displayValue);
+  });
+
+  it('shows the real position of a cover that is moving', async () => {
+    const card = createCard();
+    card.setConfig({
+      type: 'custom:treemap-card',
+      entities: ['cover.*'],
+      value: { precision: 0, suffix: '%' },
+    });
+    card.hass = mockHass([
+      mockEntity('cover.moving', 'opening', { friendly_name: 'Moving', current_position: 40 }),
+    ]);
+    await card.updateComplete;
+
+    expect(getRenderedItems(card)[0]?.displayValue).toBe('60%');
+  });
 });

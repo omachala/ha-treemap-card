@@ -543,8 +543,8 @@ export class TreemapCard extends LitElement {
         }
 
         // Cover positions are inverted for display: 0% open, 100% closed.
-        if (isCoverEntity(entityId)) {
-          const coverInfo = extractCoverInfo(entity);
+        const coverInfo = isCoverEntity(entityId) ? extractCoverInfo(entity) : undefined;
+        if (coverInfo) {
           const { position } = coverInfo;
 
           items.push({
@@ -554,9 +554,7 @@ export class TreemapCard extends LitElement {
             sortValue: position,
             colorValue: position,
             entity_id: entityId,
-            icon:
-              icon ??
-              (coverInfo.isOpen ? 'mdi:window-shutter-open' : 'mdi:window-shutter'),
+            icon: icon ?? (coverInfo.isOpen ? 'mdi:window-shutter-open' : 'mdi:window-shutter'),
             unit: '%',
             cover: coverInfo,
             color: colorOverride,
